@@ -1,0 +1,6 @@
+main
+debug
+.vscode
+debug.dSYM
+test.dSYM
+*.o

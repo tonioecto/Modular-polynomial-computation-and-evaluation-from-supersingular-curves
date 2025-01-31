@@ -1,0 +1,80 @@
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+////   This code implements the method to enable the Weber variants (header file)
+///////////////////////////////////////////////////////////////////////////////////////////////
+
+
+#pragma once
+
+#include <NTL/ZZ_pE.h>
+#include <NTL/ZZ_pEX.h>
+#include <iostream>
+#include <vector>
+#include <cmath> 
+#include "choosetorsion.hpp"
+#include "hashmap.hpp"
+
+typedef std::vector<std::pair< Fp2, std::vector<std::vector<std::pair<Integer,Integer>>>>> weber_enum;
+
+struct weber_bas 
+{
+    ecp P16;
+    ecp Q16;
+    ecp P3;
+    ecp Q3;
+};
+
+struct weber_full_data 
+{
+    weber_bas basis;
+    weber_enum enumerator;
+};
+
+inline std::pair<Integer,Integer> Zp_mat_application(const mat_Fp &mat, const std::pair<Integer,Integer> &x) {
+    return { NTL::conv<Integer>( mat[0][0] * NTL::conv<Fp>(x.first) + mat[1][0] * NTL::conv<Fp>(x.second) ), NTL::conv<Integer>(mat[0][1] * NTL::conv<Fp>(x.first) + mat[1][1] * NTL::conv<Fp>(x.second)) };
+}
+
+Fp2 WeberGetFromEnum(const std::vector<std::vector<std::pair<Integer,Integer>>> &coeffs, const weber_enum &webdat, const std::pair<mat_Fp, mat_Fp> change_mats);
+std::vector<Fp2> get_powers(Fp2 a, unsigned k);
+
+FpE_elem CommonRootTwoResultants(std::vector<FpEX_elem> rs);
+FpE_elem GetCommonRoot(std::vector<FpE_elem> cs);
+FpE_elem _getWeberThirdPowerFromRoot(FpE_elem x, FpE_elem y);
+FpE_elem _getWeberThirdPower(bool *check, std::vector<FpE_elem> cs);
+FpE_elem _getWeberEighthPower(FpE_elem gamma2, FpE_elem t_inv);
+std::vector<std::vector<ecp>> GetLevelStructureFromWeber(ec E, FpE_elem w, const std::map<unsigned,Fp2k> &Fexts);
+bool GetWeberOfLevelStruct(Fp2 *w, const ec E, const std::vector<std::vector<ecp>> levelstruc, const std::map<unsigned,Fp2k> &Fexts);
+bool GetWeberOfLevelStruct_j0(Fp2 *w, std::vector<std::vector<ecp>> levelstruc, const std::map<unsigned,Fp2k> &Fexts);
+bool GetWeberOfImage(Fp2 *w, ec E, isog phi, std::vector<std::vector<ecp>> levelstruc, const std::map<unsigned,Fp2k> &Fexts);
+bool GetWeberOfImage_chain(Fp2* w, isog_chain phi, std::vector<std::vector<ecp>> levelstruc, const std::map<unsigned,Fp2k> &Fexts, bool retry = false);
+FpE_elem GetWeberDomain(FpE_elem j);
+NTL::ZZ_pE GetWeberDomainBig(NTL::ZZ_pE j);
+//Assures the result is defined over Fp
+FpE_elem GetWeberDomainFp(FpE_elem j);
+NTL::ZZ_pE GetWeberDomainFpBig(NTL::ZZ_pE j);
+std::vector<FpE_elem> GetWeberDomainAll(FpE_elem const &j);
+std::vector<std::vector<ecp>> BasCoeffToLevelStructure(const weber_bas &web, const std::vector<std::vector<std::pair<Integer,Integer>>> coeff);
+bool BasCoeffToWeber(Fp2 *w, const weber_bas &web, const std::vector<std::vector<std::pair<Integer,Integer>>> coeff, const std::map<unsigned,Fp2k> &Fexts);
+
+weber_enum EnumerateAllWeberFast(const weber_bas &web, const std::map<unsigned,Fp2k> &Fexts);
+Fp2 WeberGetFromEnum(const std::vector<std::vector<std::pair<Integer,Integer>>> &coeffs, const weber_enum &webdat, const std::pair<NTL::mat_ZZ_p, NTL::mat_ZZ_p> change_mats);
+
+std::vector<std::vector<std::vector<std::pair<Integer,Integer>>>> EnumerateAllWeberCoeff();
+weber_enum EnumerateAllWeber(const weber_bas &web, const std::vector<std::vector<std::vector<std::pair<Integer,Integer>>>> &coeff_list, const std::map<unsigned,Fp2k> &Fexts);
+
+Fp2X eval_phi11_weber( Fp2 w );
+
+inline FpE_elem w_to_j(FpE_elem const &w) {
+    FpE_elem w_24 = NTL::power(w, 24);
+    return NTL::power(w_24 - FpE_elem(16), 3)/w_24;
+}
+
+inline NTL::ZZ_pE w_to_j_BIG(NTL::ZZ_pE const &w) {
+    NTL::ZZ_pE w_24 = NTL::power(w, 24);
+    return NTL::power(w_24 - NTL::ZZ_pE(16), 3)/w_24;
+}
+
+inline NTL::ZZ_p w_to_j_prime(NTL::ZZ_p const &w) {
+    NTL::ZZ_p w_24 = NTL::power(w, 24);
+    return NTL::power(w_24 - NTL::ZZ_p(16), 3)/w_24;
+}

@@ -1,0 +1,131 @@
+
+//////////////////////////////////////////////
+///////// TEST FOR crt_coeffs BELOW //////////
+//////////////////////////////////////////////
+
+int main()
+{	
+	
+	int n; // number of m_i
+
+	std::vector<std::vector<NTL::ZZ>> ms = {{NTL::ZZ(23), NTL::ZZ(131), NTL::ZZ(61), NTL::ZZ(127)},
+			{NTL::ZZ(109), NTL::ZZ(223), NTL::ZZ(167), NTL::ZZ(41), NTL::ZZ(43)},
+			{NTL::ZZ(229), NTL::ZZ(233), NTL::ZZ(113), NTL::ZZ(47), NTL::ZZ(151), NTL::ZZ(181)},
+			{NTL::ZZ(197), NTL::ZZ(73), NTL::ZZ(239), NTL::ZZ(11), NTL::ZZ(59), NTL::ZZ(13), NTL::ZZ(61)},
+			{NTL::ZZ(193), NTL::ZZ(43), NTL::ZZ(239), NTL::ZZ(199), NTL::ZZ(59), NTL::ZZ(197), NTL::ZZ(101), NTL::ZZ(139)},
+			{NTL::ZZ(83), NTL::ZZ(163), NTL::ZZ(71), NTL::ZZ(251), NTL::ZZ(113), NTL::ZZ(107), NTL::ZZ(137), NTL::ZZ(53), NTL::ZZ(73)},
+			{NTL::ZZ(47), NTL::ZZ(137), NTL::ZZ(191), NTL::ZZ(193), NTL::ZZ(43), NTL::ZZ(53), NTL::ZZ(101), NTL::ZZ(151), NTL::ZZ(59), NTL::ZZ(19)},
+			{NTL::ZZ(181), NTL::ZZ(223), NTL::ZZ(97), NTL::ZZ(83), NTL::ZZ(107), NTL::ZZ(53), NTL::ZZ(103), NTL::ZZ(191), NTL::ZZ(241), NTL::ZZ(13), NTL::ZZ(227)},
+			{NTL::ZZ(61), NTL::ZZ(59), NTL::ZZ(67), NTL::ZZ(101), NTL::ZZ(107), NTL::ZZ(193), NTL::ZZ(53), NTL::ZZ(23), NTL::ZZ(223), NTL::ZZ(71), NTL::ZZ(103), NTL::ZZ(131)},
+			{NTL::ZZ(83), NTL::ZZ(29), NTL::ZZ(151), NTL::ZZ(211), NTL::ZZ(37), NTL::ZZ(59), NTL::ZZ(89), NTL::ZZ(193), NTL::ZZ(107), NTL::ZZ(19), NTL::ZZ(31), NTL::ZZ(23), NTL::ZZ(47)},
+			{NTL::ZZ(109), NTL::ZZ(127), NTL::ZZ(31), NTL::ZZ(241), NTL::ZZ(193), NTL::ZZ(19), NTL::ZZ(29), NTL::ZZ(139), NTL::ZZ(173), NTL::ZZ(229), NTL::ZZ(251), NTL::ZZ(43), NTL::ZZ(103), NTL::ZZ(149)},
+			{NTL::ZZ(103), NTL::ZZ(89), NTL::ZZ(23), NTL::ZZ(181), NTL::ZZ(41), NTL::ZZ(17), NTL::ZZ(163), NTL::ZZ(173), NTL::ZZ(71), NTL::ZZ(13), NTL::ZZ(37), NTL::ZZ(109), NTL::ZZ(59), NTL::ZZ(151), NTL::ZZ(127)},
+			{NTL::ZZ(229), NTL::ZZ(23), NTL::ZZ(239), NTL::ZZ(53), NTL::ZZ(73), NTL::ZZ(241), NTL::ZZ(223), NTL::ZZ(89), NTL::ZZ(211), NTL::ZZ(251), NTL::ZZ(103), NTL::ZZ(233), NTL::ZZ(131), NTL::ZZ(67), NTL::ZZ(151), NTL::ZZ(59)},
+			{NTL::ZZ(233),NTL::ZZ(211),NTL::ZZ(89),NTL::ZZ(157),NTL::ZZ(31),NTL::ZZ(151),NTL::ZZ(109),NTL::ZZ(181),NTL::ZZ(191),NTL::ZZ(103),NTL::ZZ(13),NTL::ZZ(43),NTL::ZZ(239),NTL::ZZ(23),NTL::ZZ(241),NTL::ZZ(163),NTL::ZZ(53)},
+			{NTL::ZZ(227),NTL::ZZ(127),NTL::ZZ(181),NTL::ZZ(191),NTL::ZZ(67),NTL::ZZ(251),NTL::ZZ(37),NTL::ZZ(223),NTL::ZZ(23),NTL::ZZ(73),NTL::ZZ(101),NTL::ZZ(163),NTL::ZZ(47),NTL::ZZ(173),NTL::ZZ(109),NTL::ZZ(11),NTL::ZZ(239),NTL::ZZ(59)},
+			{NTL::ZZ(151),NTL::ZZ(97),NTL::ZZ(251),NTL::ZZ(13),NTL::ZZ(89),NTL::ZZ(233),NTL::ZZ(229),NTL::ZZ(17),NTL::ZZ(59),NTL::ZZ(29),NTL::ZZ(103),NTL::ZZ(241),NTL::ZZ(239),NTL::ZZ(19),NTL::ZZ(67),NTL::ZZ(211),NTL::ZZ(31),NTL::ZZ(181),NTL::ZZ(71)},
+			{NTL::ZZ(151),NTL::ZZ(251),NTL::ZZ(127),NTL::ZZ(137),NTL::ZZ(31),NTL::ZZ(67),NTL::ZZ(97),NTL::ZZ(199),NTL::ZZ(139),NTL::ZZ(241),NTL::ZZ(43),NTL::ZZ(19),NTL::ZZ(227),NTL::ZZ(131),NTL::ZZ(29),NTL::ZZ(191),NTL::ZZ(71),NTL::ZZ(107),NTL::ZZ(163),NTL::ZZ(37)},
+			{NTL::ZZ(19), NTL::ZZ(229),NTL::ZZ(11),NTL::ZZ(239),NTL::ZZ(97),NTL::ZZ(151),NTL::ZZ(89),NTL::ZZ(23),NTL::ZZ(73),NTL::ZZ(17),NTL::ZZ(29),NTL::ZZ(223),NTL::ZZ(139),NTL::ZZ(211),NTL::ZZ(251),NTL::ZZ(47),NTL::ZZ(43),NTL::ZZ(167),NTL::ZZ(37),NTL::ZZ(191),NTL::ZZ(241)},
+			{NTL::ZZ(193),NTL::ZZ(227),NTL::ZZ(89),NTL::ZZ(31),NTL::ZZ(29),NTL::ZZ(37),NTL::ZZ(151),NTL::ZZ(61),NTL::ZZ(113),NTL::ZZ(157),NTL::ZZ(197),NTL::ZZ(173),NTL::ZZ(179),NTL::ZZ(163),NTL::ZZ(149),NTL::ZZ(233),NTL::ZZ(167),NTL::ZZ(13),NTL::ZZ(191),NTL::ZZ(43),NTL::ZZ(211),NTL::ZZ(59)},
+			{NTL::ZZ(17),NTL::ZZ(109),NTL::ZZ(31),NTL::ZZ(179),NTL::ZZ(103),NTL::ZZ(139),NTL::ZZ(151),NTL::ZZ(173),NTL::ZZ(251),NTL::ZZ(71),NTL::ZZ(79),NTL::ZZ(163),NTL::ZZ(83),NTL::ZZ(107),NTL::ZZ(19),NTL::ZZ(197),NTL::ZZ(53),NTL::ZZ(73),NTL::ZZ(23),NTL::ZZ(113),NTL::ZZ(97),NTL::ZZ(157),NTL::ZZ(11)},
+			{NTL::ZZ(139),NTL::ZZ(199),NTL::ZZ(127),NTL::ZZ(173),NTL::ZZ(23),NTL::ZZ(113),NTL::ZZ(149),NTL::ZZ(97),NTL::ZZ(43),NTL::ZZ(163),NTL::ZZ(101),NTL::ZZ(19),NTL::ZZ(67),NTL::ZZ(137),NTL::ZZ(107),NTL::ZZ(83),NTL::ZZ(233),NTL::ZZ(227),NTL::ZZ(41),NTL::ZZ(11),NTL::ZZ(181),NTL::ZZ(151),NTL::ZZ(191),NTL::ZZ(71)}};
+
+	std::vector<std::vector<int>> as = {{5, 21,59, 24},
+			{60, 182, 39, 5, 34},
+			{111, 159, 111, 20, 142, 90},
+			{79, 59, 105, 7, 51, 8, 22},
+			{137, 42, 27, 54, 22, 112, 32, 94},
+			{56, 89, 60, 235, 63, 66, 128, 21, 53},
+			{11, 119, 2, 149, 13, 15, 92, 98, 55, 4},
+			{49, 85, 26, 34, 101, 44, 45, 132, 138, 11, 172},
+			{14, 7, 34, 12, 5, 90, 26, 15, 152, 60, 20, 14},
+			{45, 26, 150, 117, 31, 29, 88, 156, 8, 15, 9, 21, 1},
+			{80, 74, 15, 197, 174, 11, 17, 94, 18, 16, 85, 21, 14, 62},
+			{14, 80, 12, 109, 3, 4, 54, 64, 23, 12, 33, 99, 12, 50, 33},
+			{202, 10, 95, 7, 13, 227, 96, 18, 187, 241, 44, 191, 62, 43, 64, 49},
+			{171, 101, 16, 115, 23, 123, 104, 148, 189, 81, 6, 21, 4, 20, 142, 139, 43},
+			{200, 53, 147, 96, 10, 198, 11, 48, 4, 7, 12, 22, 3, 1, 101, 8, 16, 54},
+			{102,36,147,8,80,132,219,16,19,24,2,227,45,10,48,142,7,13,12},
+			{47,161,8,99,10,30,93,168,87,214,14,15,177,72,26,156,66,15,75,27},
+			{2,89,6,197,96,99,82,19,35,8,10,70,76,206,117,6,17,4,4,29,166},
+			{16,132,61,10,14,30,13,39,75,78,168,118,49,113,40,189,80,6,120,25,30,45},
+			{9,54,1,12,98,5,73,162,160,14,72,87,18,57,5,71,31,6,10,3,20,91,10},
+			{54,196,99,113,13,4,30,40,32,105,66,15,23,53,14,18,190,222,9,7,86,67,18,57}};
+
+	int k = 0;
+
+	for(int i = 4; i < 24; i++){
+		n = i;
+
+		std::vector<int> a_real = as[k];
+		std::vector<NTL::ZZ> m = ms[k];
+		std::vector<NTL::ZZ> a(n);
+
+		std::cout << "Checking new method for n = ...." << n << "." << std::endl; 
+		crt_coeff(a, m, n);
+		bool b;
+		for(int i = 0; i < n; i++){ 
+			b = a[i] == NTL::conv<NTL::ZZ>(a_real[i]);
+			if(b != 1){
+				std::cout << "a" << i << " is not correct" << std::endl;
+			}
+		}
+		std::cout << "Done!" << std::endl;
+		k++;
+	}
+}
+
+
+
+//////////////////////////////////////////
+/////////// TEST FOR crt_init ////////////
+//////////////////////////////////////////
+
+// int main(){
+// 	crt_context crt; 
+// 	std::vector<NTL::ZZ> m = {NTL::ZZ(109), NTL::ZZ(223), NTL::ZZ(167), NTL::ZZ(41), NTL::ZZ(43)};
+// 	int n = 5;
+// 	int k = 7;
+// 	NTL::ZZ P = NTL::ZZ(1000000007);
+
+// 	crt.m.resize(n); // is this the best way to do this?
+// 	crt.a.resize(n); // is this the best way to do this?
+// 	crt_init(crt, m, n, k, P);
+
+// 	std::vector<int> a_real = {20, 87, 30, 33, 19};
+
+// 	bool b;
+// 	for(int i = 0; i < n; i++){  
+// 		b = crt.a[i] == NTL::conv<NTL::ZZ>(a_real[i]);
+// 		if(b == 0){
+// 			std::cout << "a" << i << " is not correct, it's " << crt.a[i] << " and a[i] is " << a_real[i] << std::endl;
+// 		}
+// 	}
+// 	for(int i = 0; i < n; i++){ 
+// 		b = crt.m[i] == m[i];
+// 		if(b == 0){
+// 			std::cout << "m" << i << " is not correct, it's " << crt.m[i] << " and m[i] is " << m[i] << std::endl;
+// 		}
+// 	}
+// 	b = crt.n == n;
+// 	if(b == 0){
+// 		std::cout << "n is not correct, it's " << crt.n << std::endl;
+// 		}
+
+// 	b = crt.k == k;
+// 	if(b == 0){
+// 		std::cout << "k is not correct, it's " << crt.k << std::endl;
+// 		}
+
+// 	b = crt.P == P;
+// 	if(b == 0){
+// 		std::cout << "P is not correct, it's " << crt.P << std::endl;
+// 		}
+
+// 	b = crt.MP == NTL::ZZ(156491198);
+// 	if(b == 0){
+// 		std::cout << "MP is not correct, it's " << crt.MP << std::endl;
+// 		}
+
+// 	return 0;
+// }
