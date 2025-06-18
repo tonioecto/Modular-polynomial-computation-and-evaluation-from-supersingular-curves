@@ -2,8 +2,8 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////
 ////   Code implementing interpolation of univariate polynomials over finite fields
 ////   We follow §10 from:
-////            Joachim von zur Gathen and Jürgen Gerhard. Modern Computer Algebra. 
-////            Cambridge University Press, 1999.    
+////            Joachim von zur Gathen and Jürgen Gerhard. Modern Computer Algebra.
+////            Cambridge University Press, 1999.
 ////
 ////   Note: for polynomials of large-ish degree, this outperforms NTL in-built.
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -11,13 +11,13 @@
 
 #include <iostream>
 #include <vector>
-#include <cmath> 
+#include <cmath>
 #include "interpolation.hpp"
 
 
 std::vector<std::vector<FpEX_elem>> BuildTree(std::vector<FpEX_elem> const &m, unsigned k, size_t pow2k){
     // k is such that 2^(k-1) < m.size() <= 2^k
-    std::vector<std::vector<FpEX_elem>> tree(k+1); 
+    std::vector<std::vector<FpEX_elem>> tree(k+1);
     tree[0] = m;
 
     size_t level = pow2k;
@@ -33,7 +33,7 @@ std::vector<std::vector<FpEX_elem>> BuildTree(std::vector<FpEX_elem> const &m, u
 }
 
 
-std::vector<FpE_elem> GoingDownTree(FpEX_elem f, std::vector<FpE_elem> inputs, std::vector<std::vector<FpEX_elem>> tree, int k, size_t pow2k)
+std::vector<FpE_elem> GoingDownTree(FpEX_elem f, std::vector<std::vector<FpEX_elem>> tree, int k, size_t pow2k)
 {
 
     size_t level = pow2k;
@@ -41,7 +41,7 @@ std::vector<FpE_elem> GoingDownTree(FpEX_elem f, std::vector<FpE_elem> inputs, s
 
     // BASE CASE
     std::vector<FpEX_elem> r0(level), r1(level), tmp0(level), tmp1(level);
-    
+
     r0[0] = f%tree[k-1][0];
     r1[0] = f%tree[k-1][1];
 
@@ -100,7 +100,7 @@ FpEX_elem LinearCombo(std::vector<FpEX_elem> const c, std::vector<std::vector<Fp
 FpEX_elem FastInterpolate(std::vector<FpE_elem> const inputs, std::vector<FpE_elem> const outputs){
 
     size_t n = inputs.size();
-    int k = ceil(log2(n)); 
+    int k = ceil(log2(n));
 
     // Pad out inputs and outputs to be size a power of 2 once so we don't have to do it in the rest of the functions
     size_t pow2k = pow(2,k);
@@ -125,13 +125,13 @@ FpEX_elem FastInterpolate(std::vector<FpE_elem> const inputs, std::vector<FpE_el
 
     // Build tree
     std::vector<std::vector<FpEX_elem>> tree = BuildTree(m, k, pow2k);
-    
+
     // m' is the derivative of prod(m), cheaper than div
     FpEX_elem mp;
-    NTL::diff(mp, tree[k][0]); 
-    
-    std::vector<FpE_elem> mp_eval = GoingDownTree(mp, inputs2k, tree, k, pow2k);
-    
+    NTL::diff(mp, tree[k][0]);
+
+    std::vector<FpE_elem> mp_eval = GoingDownTree(mp, tree, k, pow2k);
+
     std::vector<FpEX_elem> c(pow2k);
     // TODO: batch inverting mp_eval may be faster
     for(unsigned i = 0; i < n; i++){
@@ -142,7 +142,7 @@ FpEX_elem FastInterpolate(std::vector<FpE_elem> const inputs, std::vector<FpE_el
     for(unsigned i = n; i < pow2k; i++){
         NTL::SetCoeff(c[i], 0, 0);
     }
-    
+
     return LinearCombo(c, tree, k, pow2k);
 
 }
@@ -151,7 +151,7 @@ FpEX_elem FastInterpolate(std::vector<FpE_elem> const inputs, std::vector<FpE_el
 FpEX_elem FastInterpolateFromRoots(std::vector<FpE_elem> const roots){
 
     size_t n = roots.size();
-    int k = ceil(log2(n)); 
+    int k = ceil(log2(n));
 
     // Pad out inputs and outputs to be size a power of 2 once so we dont have to do it in the rest of the functions
     size_t pow2k = pow(2,k);

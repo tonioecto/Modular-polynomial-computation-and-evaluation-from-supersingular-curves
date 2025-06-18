@@ -15,6 +15,8 @@
 #include <list>
 #include <ctime>
 
+typedef NTL::ZZ Integer;
+
 class quatlat;
 class quat;
 
@@ -57,7 +59,6 @@ struct quatalg
                     ret.second[1][1] = d_int;
                     NTL::mat_ZZ_p K = ret.first*ret.second;
                     if (NTL::IsIdent(ret.second*ret.second*NTL::inv(-pmod), 2) && K == -ret.second*ret.first) {
-                        
                         assert(NTL::IsIdent(ret.first*ret.first*NTL::inv(-qmod), 2));
                         assert(NTL::IsIdent(ret.second*ret.second*NTL::inv(-pmod), 2));
                         assert(ret.first*ret.second == -ret.second*ret.first);
@@ -87,8 +88,8 @@ struct quatalg
         assert(NTL::IsIdent(ret.second*ret.second*NTL::inv(-pmod), 2));
         assert(ret.first*ret.second == -ret.second*ret.first);
         return ret;
-    }    
-    
+    }
+
     quatlat maximal_order(bool const &surface=false) const; // return a standard choice of maximal order
     quatlat maximal_order_with_quat_for_check(quat *alpha, bool const &surface=false) const;
 };
@@ -262,7 +263,7 @@ public:
 private:
     mutable std::pair<NTL::ZZ,NTL::ZZ> the_norm {};
     mutable quat gen;
-    
+
 
 public:
     quatlat(NTL::mat_ZZ const &gens, NTL::ZZ const &denom_, quatalg const &alg_);
@@ -284,20 +285,20 @@ public:
 
     void _conjugate();
     quatlat conjugate() const;
- 
+    quatlat HNF_conjugate() const;
+
     quatlat inverse() const;
-    
+
     quatlat operator+(quatlat const &other) const;
-    
+
     quatlat operator*(quatlat const &other) const;
-    
+
     quatlat operator*(quat const &other) const;
-   
+
     quatlat operator*(NTL::ZZ const &other) const;
 
     friend quatlat operator*(quat const &left, quatlat const &right)
-
-    {return (right.conjugate()*left.conjugate()).conjugate(); }  //TODO write faster version
+    { return (right.conjugate()*left.conjugate()).conjugate(); }  //TODO write faster version
 
     friend quatlat operator*(NTL::ZZ const &left, quatlat const &right)
     { return right * left; }
@@ -322,7 +323,7 @@ public:
     bool operator==(quatlat const &other) const;
 
     std::pair<NTL::ZZ,NTL::ZZ> norm() const;  // returns numerator and denominator
-   
+
 
     std::pair<NTL::ZZ,NTL::ZZ> norm_no_comput() const  // returns numerator and denominator
     {
@@ -338,18 +339,17 @@ public:
 
     quatlat new_right_order() const;
     std::pair<quatlat,NTL::mat_ZZ>  fast_right_order_and_gram();
-    
+
     quatlat left_order() const { return _compute_order(false); }
-    quatlat right_order() const 
-    { return new_right_order(); } 
+    quatlat right_order() const { return new_right_order(); }
     // NB! ^definitely buggy some times
     //{ return _compute_order(true); }
 
     bool is_order() const;
 
-    // Using https://math.dartmouth.edu/~jvoight/articles/73446.pdf Lemma 7.2: 
+    // Using https://math.dartmouth.edu/~jvoight/articles/73446.pdf Lemma 7.2:
     void right_ideals_of_norm(NTL::ZZ const &ell, std::function<void(quatlat const &)> const &fun);
-    
+
 
     std::list<quatlat> left_ideals_of_prime_norm(NTL::ZZ const &ell, const quat &first_gen, const quat &iter);
 
@@ -380,28 +380,25 @@ public:
         return s.str();
     }
 
-    NTL::ZZ get_denom() const {
-        return denom;
-    }
+    NTL::ZZ get_denom() const { return denom; }
 
-    NTL::mat_ZZ get_basis() const {
-        return basis;
-    }
+    NTL::mat_ZZ get_basis() const { return basis; }
 
     NTL::mat_ZZ LLL_basis() const;
 
     void enumerate_shortish(unsigned long bnd, std::function<bool(quat const &)> const &fun) const;
     quat compute_gen_cyclic() const;
 
-    NTL::mat_ZZ HNF_basis() const; 
+    NTL::mat_ZZ HNF_basis() const;
 
     quatlat copy() const;
 
     void set_generator(quat const &gen);
-    
+
     quat get_generator() const;
 
     bool contains(quat const &alpha) const;
+    bool fast_contains(quat const &alpha, Integer const &modnorm) const;
 
     void reduce_norm_cyclic(const quatlat &left_order, const NTL::ZZ &norm);
 

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////
-/////// The code in this file develops the class ec, which represents an elliptic curve, 
+/////// The code in this file develops the class ec, which represents an elliptic curve,
 /////// and related functions
 ///////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -89,7 +89,7 @@ ecp ec::random_point_of_order(Fp2k const &Fext, NTL::ZZ cof, int ell, int e) con
 
 std::pair<ecp, ecp> const ec::torsionBasis(Fp2k const &Fext, int ell, int e) const
 {
-    // What if we are on the twist? 
+    // What if we are on the twist?
     NTL::ZZ cof = NTL::power(NTL::ZZ(Fp_elem::modulus()), long(Fext.k)) - NTL::power_long(long(-1), long(Fext.k % 2));
 
     NTL::ZZ ellcof = NTL::power(NTL::ZZ(ell), e-1);
@@ -115,7 +115,7 @@ std::vector<ecp> const ec::allTorsionPoints(Fp2k const &Fext, int ell, int e) co
     assert((NTL::power_ZZ(ell,e)*(Basis.second)).is_identity());
 
     std::vector<ecp> out = {};
-    
+
     int ell_e = std::pow(ell, e);
 
     for (int i = 0; i < ell_e; i++) {

@@ -31,8 +31,8 @@ FpX_big_elem ModEvalBigLevelWeber(NTL::ZZ p, NTL::ZZ_pE const w, long l);
 //// Big Char /////
 FpX SpecialSupersingularEvaluation(const Integer &p, const Integer &ell, const std::vector<Fp_elem> eval_points);
 FpX SpecialSupersingularEvaluationWeber(const Integer &p, const Integer &ell, const std::vector<Fp_elem> eval_points);
-
 Fp2 const_CRT_polynomials( const std::vector<Fp2> &values, const std::vector<Integer> &modulus, const long len);
+
 
 FpX SpecialSupersingularEvaluationCRT(const Integer &p1, const Integer &p2, const Integer ell, const std::vector<Fp_elem> eval_points);
 FpX_big_elem ModEvalBigCharacteristicWeber(NTL::ZZ p, Fp_big_elem const j, NTL::ZZ l);

@@ -25,7 +25,7 @@
 typedef Fp_elem Fp;
 typedef FpE_elem Fp2;
 typedef FpX_elem FpX;
-typedef FpEX_elem Fp2X; 
+typedef FpEX_elem Fp2X;
 
 static const int LenNumberBytes = 8;
 
@@ -36,16 +36,14 @@ struct Key
 
 struct KeyHash
 {
-    std::size_t operator()( const Key& k) const 
+    std::size_t operator()( const Key& k) const
     {
 
         std::string str1(reinterpret_cast<char*>(const_cast<unsigned char*>(k.IntList[0])));
         std::string str2(reinterpret_cast<char*>(const_cast<unsigned char*>(k.IntList[1])));
         std::string str3(reinterpret_cast<char*>(const_cast<unsigned char*>(k.IntList[2])));
 
-        return std::hash<std::string>()(str1) ^ 
-            (std::hash<std::string>()(str2)) ^
-            (std::hash<std::string>()(str3));
+        return std::hash<std::string>()(str1) ^ (std::hash<std::string>()(str2)) ^ (std::hash<std::string>()(str3));
     }
 };
 

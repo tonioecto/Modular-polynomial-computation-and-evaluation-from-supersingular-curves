@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////
-/////// The main function in this file is choose_torsion, which allows us to create a 
-/////// 'dictionary' of prime powers \ell^e and the field extension F_{p^{2k}} over which 
+/////// The main function in this file is choose_torsion, which allows us to create a
+/////// 'dictionary' of prime powers \ell^e and the field extension F_{p^{2k}} over which
 ///////  the ell^e-torsion is defined.
 ///////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -34,7 +34,7 @@ struct pair_hash {
 
 
 //store factors in following way:
-//<<ell, e>, k>, where ell is prime, e the exponent, k the field extension 
+//<<ell, e>, k>, where ell is prime, e the exponent, k the field extension
 using ell_tuple = std::tuple<int, int, int, NTL::RR>;
 //using factor_ext = std::pair<std::pair<int,int>, int>;
 using factor_list = std::vector<ell_tuple>;

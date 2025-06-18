@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////
 ////   Code implements the algorithm OrdersTojInvariantBigSet from
 ////      https://eprint.iacr.org/2023/064
-/////////////////////////////////////////////////////////////////////////////////////////////// 
+///////////////////////////////////////////////////////////////////////////////////////////////
 
 #pragma once
 #include <NTL/ZZ_pE.h>
@@ -22,7 +22,6 @@
 #include <list>
 #include "getweber.hpp"
 
-
 struct Jinv
 {
     unsigned char IntList[2][LenNumberBytes];
@@ -30,14 +29,13 @@ struct Jinv
 
 struct JinvHash
 {
-    std::size_t operator()( const Jinv& k) const 
+    std::size_t operator()( const Jinv& k) const
     {
 
         std::string str1(reinterpret_cast<char*>(const_cast<unsigned char*>(k.IntList[0])));
         std::string str2(reinterpret_cast<char*>(const_cast<unsigned char*>(k.IntList[1])));
 
-        return std::hash<std::string>()(str1) ^ 
-            (std::hash<std::string>()(str2));
+        return std::hash<std::string>()(str1) ^ (std::hash<std::string>()(str2));
     }
 };
 
@@ -66,4 +64,4 @@ quat find_quaternion_iterator(std::list<int>& prime_list, const quatlat& I, cons
 
 void order_to_jinv_full_list(std::unordered_map<Key, std::pair<FpE_elem, quatlat>, KeyHash, KeyEqual> &m, std::vector<std::pair<quatlat, std::pair<quatlat, Key>>> &ideal_list, const NTL::ZZ &p, const quatalg &Bp, const std::map<unsigned,Fp2k> &Fexts, const Integer &coprime = Integer(1));
 
-std::pair<weber_bas,std::vector<std::pair<mat_Fp,mat_Fp>>> order_to_weber_inv_full_list(std::unordered_map<Key, std::pair<FpE_elem, std::pair<std::pair<quatlat,quat>, weber_full_data>>, KeyHash, KeyEqual> &m, std::vector<std::pair<quatlat, std::pair<quatlat, Key>>> &ideal_list, const NTL::ZZ &p, const quatalg &Bp, const std::map<unsigned,Fp2k> &Fexts, const Integer &coprime = Integer(1));
+std::pair<weber_bas,std::vector<std::pair<SmallMatFp,SmallMatFp>>> order_to_weber_inv_full_list(std::unordered_map<Key, std::pair<FpE_elem, std::pair<std::pair<quatlat,quat>, weber_full_data>>, KeyHash, KeyEqual> &m, std::vector<std::pair<quatlat, std::pair<quatlat, Key>>> &ideal_list, const NTL::ZZ &p, const quatalg &Bp, const std::map<unsigned,Fp2k> &Fexts, const Integer &coprime = Integer(1));

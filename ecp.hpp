@@ -12,8 +12,8 @@
 #include <NTL/ZZ_pE.h>
 #include <NTL/mat_ZZ_p.h>
 #include "Fp2k.hpp"
-#include "ec.hpp"
 #include "utils.hpp"
+#include "smallint.hpp"
 
 class ecp {
     private:
@@ -67,10 +67,10 @@ class ecp {
 
     bool operator==(ecp const &other) const
     {
-        return (this->curve() == other.curve() 
-        && this->aff_x() == other.aff_x() 
+        return (this->curve() == other.curve()
+        && this->aff_x() == other.aff_x()
         && this->aff_y() == other.aff_y()
-        && this->is_identity() == other.is_identity()); 
+        && this->is_identity() == other.is_identity());
     }
 
     ecp &operator+=(ecp const &other) { return *this = *this + other; }
@@ -80,10 +80,6 @@ class ecp {
     operator bool() const { return !(this->is_identity());}
 };
 
-// Find the matrix M to such that bas2 = M * bas1 for points of order 48
-mat_Fp change_of_basis16(const std::pair<ecp, ecp> &bas1, const std::pair<ecp, ecp> &bas2);
-
-mat_Fp change_of_basis3(const std::pair<ecp, ecp> &bas1, const std::pair<ecp, ecp> &bas2);
 
 
 namespace std {

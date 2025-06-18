@@ -10,7 +10,6 @@
 #include <vector>
 #include <NTL/ZZ.h>
 
-
 struct crt_info{
     std::vector<NTL::ZZ> m; // n moduli m_1,..., m_n, with M=prod m_i
     std::vector<NTL::ZZ> a; // n values a_i = 1/M_i mod m_i where M_i = M/m_i = prod_{j!=i} m_j
@@ -19,7 +18,7 @@ struct crt_info{
     NTL::ZZ X,Y, Z;						// work variables
 	int n;							// number of moduli
 	int k;							// number of coefficients
-    std::vector<NTL::ZZ> Cdata; // Coefficients 
+    std::vector<NTL::ZZ> Cdata; // Coefficients
     std::vector<NTL::ZZ> sdata; // sj's in crt_update algo 
     int delta;  
 };

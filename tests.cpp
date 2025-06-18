@@ -70,7 +70,7 @@ void test_SpecialSupersingularEvaluation() {
     auto Phi = SpecialSupersingularEvaluation( p, ZZell, eval_points);
 
 
-  
+
     std::cout << " \n \nOutput of SpecialSupersingularEval for p = 3 mod 4 : \n";
     std::cout << Phi << "\n \n";
 
@@ -159,7 +159,7 @@ void test_SpecialSupersingularEvaluationWeber() {
     auto Phi = SpecialSupersingularEvaluationWeber( p, ZZell, eval_points);
 
 
-  
+
     std::cout << " \n \nOutput of SpecialSupersingularEval for p = 3 mod 4 : \n";
     std::cout << Phi << "\n \n";
 
@@ -178,7 +178,7 @@ void test_ModEvalBigCharWeber(){
         p = NTL::NextPrime(p + 1);
     }
     std::cout << "choice of big prime = " << p << "\n";
-    
+
     NTL::ZZ_p::init(p);
 
     std::cout << "Testing Modular Evaluation for Big Char with Webers for p = " << p << std::endl;
@@ -187,12 +187,12 @@ void test_ModEvalBigCharWeber(){
     NTL::ZZ l(101); // Level
     // Integer l(11);
     Fp_big_elem j = Fp_big_elem(2);
-    
+
     //bool weber = false;
     //auto F = ModEvalBigLevel(p, j, l, weber);
     auto t = clock();
     auto F = ModEvalBigCharacteristicWeber(p, j, l);
-    
+
     std::cout << "ModEvalBigCharWeber took " << (double) (clock()-t)/CLOCKS_PER_SEC << " seconds \n";
 
     std::cout << "Phi_ell = " << F << "\n\n";
@@ -249,7 +249,7 @@ void test_ModEvalBigLevel(){
     long l = 5;
     //NTL::ZZ l = NTL::ZZ(7); // Level
     NTL::ZZ_pE j = NTL::ZZ_pE(5);
-    
+
     //bool weber = false;
     //auto F = ModEvalBigLevel(p, j, l, weber);
 
@@ -310,7 +310,7 @@ void test_ModEvalBigLevelWeber(){
     while (p % 4 == 1) {
         p = NTL::NextPrime(p + 1);
     }
-    
+
     NTL::ZZ_p::init(p);
 
     NTL::ZZ_p::init(p);
@@ -325,9 +325,9 @@ void test_ModEvalBigLevelWeber(){
     FpE_big_elem w = FpE_big_elem(12);
 
     std::cout << "Testing Modular Evaluation for Big Level with Webers for p = " << p << ", ell = " << l << std::endl;
-    
+
     auto F = ModEvalBigLevelWeber(p, w, l);
-    
+
     for(int i = 0; i <= deg(F); i++){
         std::cout << "Coefficient of x^" << i << " is: " << NTL::coeff(F,i) << std::endl;
     }

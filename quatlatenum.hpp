@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////
 ////   Code to generate the shortest vectors in a quaternion lattice
-/////////////////////////////////////////////////////////////////////////////////////////////// 
+///////////////////////////////////////////////////////////////////////////////////////////////
 
 
 #pragma once
@@ -38,9 +38,14 @@ inline gso_t quatlat2fplll(mat_t &G, mat_t &U, quatlat const &lat)
 
     G.resize(4, 4);
     for (unsigned i = 0; i < 4; ++i)
-        for (unsigned j = 0; j < 4; ++j) {
-            auto pair = elts[i] * elts[j].conjugate();
-            ntl2gmp(G[i][j].get_data(), pair[0]+pair[0]);
+        for (unsigned j = i; j < 4; ++j) {
+            // auto val = elts[i] * elts[j].conjugate();
+            // auto pair = val[0];
+            auto pair = elts[i][0] * elts[j][0] + lat.alg.q * elts[i][1] * elts[j][1] + lat.alg.p * (elts[i][2] * elts[j][2] + lat.alg.q * elts[i][3] * elts[j][3]);
+            ntl2gmp(G[i][j].get_data(), pair+pair);
+            if (i != j) {
+                ntl2gmp(G[j][i].get_data(), pair+pair);
+            }
     }
 
     // the Gram matrix of an integral ideal is always integral
@@ -133,8 +138,8 @@ inline bool isPrincipal(quatlat const &J) {
     quatlatenum Enumerator(J);
     // std::cout << "isPrinc time = " << (double) (clock() -t )/CLOCKS_PER_SEC <<  " \n";
     auto &c = Enumerator.gram[0][0].get_data();
-    NTL::ZZ norm;  
+    NTL::ZZ norm;
     gmp2ntl(norm, c);
-    bool isPrincipal = (norm * J.norm().second == 2 * J.norm().first);  
+    bool isPrincipal = (norm * J.norm().second == 2 * J.norm().first);
     return isPrincipal;
 }

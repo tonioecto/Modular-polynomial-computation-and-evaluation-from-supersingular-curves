@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////
-////   Code implementing the necessary multivariate polynomial arithmetic for Weber variants 
+////   Code implementing the necessary multivariate polynomial arithmetic for Weber variants
 ////     of ModEvalBigLevel and ModEvalBigChar: see getweber.cpp
 ////    (Note that such arithmetic is not available in NTL)
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -23,17 +23,17 @@ ZZ_pEXY::ZZ_pEXY(NTL::Vec<FpEX_elem> cs){
     this->dY = l-1;
 
     unsigned dX = 0;
-    for (size_t i = 0; i < l; i++){ 
-        auto D = deg(cs[i]); 
-        if(D > dX){ 
-            dX = D; 
-        } 
+    for (size_t i = 0; i < l; i++){
+        auto D = deg(cs[i]);
+        if(D > dX){
+            dX = D;
+        }
     }
     this->dX = dX;
 }
 
 std::vector<FpE_elem> _powers(FpE_elem a, unsigned k){
-    
+
     std::vector<FpE_elem> powers(k+1);
 
     FpE_elem A = FpE_elem(1);

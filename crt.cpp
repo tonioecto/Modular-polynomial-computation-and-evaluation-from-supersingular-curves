@@ -1,15 +1,15 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////
-////   Code implementing the CRT method          
-////   Adapted from Sutherland's software package classpoly: 
-//// 							https://math.mit.edu/~drew/classpoly.html       
+////   Code implementing the CRT method
+////   Adapted from Sutherland's software package classpoly:
+//// 							https://math.mit.edu/~drew/classpoly.html
 ////   which implements the algorithms in the papers:
 ////
-////   Andrew V. Sutherland, Computing Hilbert class polynomials with the 
+////   Andrew V. Sutherland, Computing Hilbert class polynomials with the
 ////   Chinese Remainder Theorem, Mathematics of Computation 80 (2011), 501-538.
 ////
-////   Andreas Enge and Andrew V. Sutherland, Class invariants by the CRT method, 
-////   Ninth Algorithmic Number Theory Symposium (ANTS IX), Lecture Notes in 
+////   Andreas Enge and Andrew V. Sutherland, Class invariants by the CRT method,
+////   Ninth Algorithmic Number Theory Symposium (ANTS IX), Lecture Notes in
 ////   Computer Science 6197 (2010), 142-156.
 ///////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -30,19 +30,19 @@ void crt_coeff(std::vector<NTL::ZZ> &a, std::vector<NTL::ZZ> const m, int n){
 	//////////////////////////////////////////////////////////////////////////////////////
 
 	std::size_t nbits = NTL::NumBits(n);
-	std::vector<NTL::ZZ> e(n+nbits); 
-	NTL::ZZ w0,w1,w2; 
+	std::vector<NTL::ZZ> e(n+nbits);
+	NTL::ZZ w0,w1,w2;
 	std::vector<std::vector<NTL::ZZ>> lm(nbits);
-	std::vector<NTL::ZZ> lcnt(nbits); 
+	std::vector<NTL::ZZ> lcnt(nbits);
 	int j,k;
 
 	// Base cases
 	if (n == 1){
-		a[0] = NTL::ZZ(1); 
+		a[0] = NTL::ZZ(1);
 		return;
 	}
 	if (n == 2){
-		a[0] = m[1] % m[0]; 
+		a[0] = m[1] % m[0];
 		a[1] = m[0] % m[1];
 		return;
 	}
@@ -53,8 +53,8 @@ void crt_coeff(std::vector<NTL::ZZ> &a, std::vector<NTL::ZZ> const m, int n){
 		NTL::mul(lm[k][j>>1], m[j], m[j+1]);
 	}
 	if(j < lcnt[k-1]){
-		lm[k][j>>1] = m[j]; 
-		j+= 2; 
+		lm[k][j>>1] = m[j];
+		j+= 2;
 	}
 	
 	lcnt[k] = j>>1;
@@ -66,16 +66,16 @@ void crt_coeff(std::vector<NTL::ZZ> &a, std::vector<NTL::ZZ> const m, int n){
 		lm[k] = e;
 		for(j = 0; j+1 < lcnt[k-1]; j+= 2){
 			NTL::mul(lm[k][j>>1], lm[k-1][j], lm[k-1][j+1]);
-		} 
+		}
 		if(j < lcnt[k-1]){
-			lm[k][j>>1] = lm[k-1][j]; 
-			j+=2; 
+			lm[k][j>>1] = lm[k-1][j];
+			j+=2;
 		}
 		lcnt[k] = j>>1;
-		e.erase(e.begin(), e.begin() + NTL::conv<int>(lcnt[k])); 
+		e.erase(e.begin(), e.begin() + NTL::conv<int>(lcnt[k]));
 	}
 	
-	if ( lcnt[--k] != 2 ) { 
+	if ( lcnt[--k] != 2 ) {
 		std::cout << "Error, " << lcnt[k] << " nodes at top of product tree, expected exactly 2" << std::endl;
 		throw;
 	}
@@ -124,7 +124,7 @@ void crt_coeff(std::vector<NTL::ZZ> &a, std::vector<NTL::ZZ> const m, int n){
 		}
 		if(j < lcnt[k]){
 			a[j] = lm[k+1][j>>1];
-		} 
+		}
 		
 }
 
@@ -142,7 +142,7 @@ void crt_init(crt_info &crt, std::vector<NTL::ZZ> const m, int n, int k, NTL::ZZ
 	
 	// Compute M mod P iteratively, don't bother with a tree (unless P is huge, it wouldn't make much of a difference)
 	X = m[0];
-	for(i = 1; i < n; i++){ 
+	for(i = 1; i < n; i++){
 		NTL::MulMod(X, X, m[i], P);
 	}
 
@@ -179,7 +179,7 @@ void crt_update(crt_info &crt, int i, std::vector<NTL::ZZ> const c, int k){
 	NTL::ZZ m;
 
 	assert(k == crt.k);
-	assert(i <= crt.n); 
+	assert(i <= crt.n);
 	
 	a = crt.a[i];
 	m = crt.m[i];
@@ -188,13 +188,13 @@ void crt_update(crt_info &crt, int i, std::vector<NTL::ZZ> const c, int k){
 	// compute M_i mod P using division mod P
 	// TODO: add batched inversion
 	NTL::InvMod(crt.X, m%crt.P, crt.P);
-	NTL::MulMod(crt.X, crt.X, crt.MP, crt.P); 
+	NTL::MulMod(crt.X, crt.X, crt.MP, crt.P);
 	// Y = d[i] = a_iM_i mod P
 	NTL::MulMod(crt.Y, crt.X, a, crt.P);
 	
 	
 	for(int j = 0; j < k; j++){
-		NTL::mul(crt.X, crt.Y, c[j]); 
+		NTL::mul(crt.X, crt.Y, c[j]);
 		// Add to Cj
 		NTL::add(crt.Cdata[j], crt.Cdata[j], crt.X);
 		crt.Cdata[j] %= crt.P;
@@ -215,10 +215,10 @@ void crt_finalize_coeff(crt_info &crt, int j, NTL::ZZ tf){
 	// Subroutine of Algorithm 2.5 of Hilbert CRT paper
 	/////////////////////////////////////////////////////
 
-	NTL::add(crt.X, crt.sdata[j], tf); 
-	NTL::power2(crt.Y, crt.delta); 
-	NTL::div(crt.X, crt.X, crt.Y); 
-	NTL::MulMod(crt.X, crt.X, crt.MP, crt.P); 
+	NTL::add(crt.X, crt.sdata[j], tf);
+	NTL::power2(crt.Y, crt.delta);
+	NTL::div(crt.X, crt.X, crt.Y);
+	NTL::MulMod(crt.X, crt.X, crt.MP, crt.P);
 	NTL::sub(crt.Cdata[j], crt.Cdata[j], crt.X);
 	crt.Cdata[j] %= crt.P;
 }

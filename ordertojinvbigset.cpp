@@ -1,12 +1,12 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////
 ////   Code implements the algorithm OrdersTojInvariantBigSet from:
-////        
-////        Antonin Leroux. Computation of Hibert Class polynomials and modular 
-////        polynomials from supersingular elliptic curves. 
+////
+////        Antonin Leroux. Computation of Hibert Class polynomials and modular
+////        polynomials from supersingular elliptic curves.
 ////        https://eprint.iacr.org/2023/064
 ////
 ////   (c.f. Algorithm 1)
-/////////////////////////////////////////////////////////////////////////////////////////////// 
+///////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -14,7 +14,7 @@
 
 #include <algorithm>
 #include <unordered_set>
-#include <ctime> 
+#include <ctime>
 
 quat find_quaternion_iterator(std::list<int>& prime_list, const quatlat& I, const quatlat& O0, const quatalg &Bp) {
 
@@ -34,14 +34,14 @@ quat find_quaternion_iterator(std::list<int>& prime_list, const quatlat& I, cons
 
         assert(std::get<0>(I_ell.norm())/std::get<1>(I_ell.norm()) == ell);
         quatlat Eich_ell = I_ell._compute_order(true);
-        Eich_ell._intersect(I_ell.left_order()); 
+        Eich_ell._intersect(I_ell.left_order());
         bool found = false;
         for (int i1 = 0; i1 < ell && !found; i1++) {
             for (int i2 = 0; i2 < ell && !found; i2++) {
                 for (int i3 = 0; i3 < ell && !found; i3++) {
                     for (int i4 = 0; i4 < ell && !found; i4++) {
                         quat gen = { { NTL::ZZ(i1), NTL::ZZ(i2), NTL::ZZ(i3), NTL::ZZ(i4), NTL::ZZ(1)} , Bp};
-                        
+
                         if ((NTL::GCD(ell,O0.denom) == ell) || ell == Bp.q) {
                             gen[4] = ell;
                             NTL::vec_ZZ vec;
@@ -69,12 +69,12 @@ quat find_quaternion_iterator(std::list<int>& prime_list, const quatlat& I, cons
                             gen[2] = vec[2];
                             gen[3] = vec[3];
                         }
-      
+
 
 
                         auto pair_norm = gen.norm();
                         NTL::ZZ norm = std::get<0>(pair_norm)/std::get<1>(pair_norm);
-                        assert(O0.contains(gen)); 
+                        assert(O0.contains(gen));
                         if (NTL::GCD(norm,ell) == 1) {
                             // now we check the second condition
                             if (!Eich_ell.contains(gen)) {
@@ -86,7 +86,7 @@ quat find_quaternion_iterator(std::list<int>& prime_list, const quatlat& I, cons
                                 for (int i=0; i<4; i++) {
                                     NTL::ZZ acc = accumulated_multiple;
                                     if (is_first) {
-                                        result[i] = gen[i];       
+                                        result[i] = gen[i];
                                     }
                                     else {
                                         NTL::ZZ m1, m2;
@@ -102,7 +102,7 @@ quat find_quaternion_iterator(std::list<int>& prime_list, const quatlat& I, cons
                                     is_first = 0;
                                 }
                                 found = true;
-                                auto pn = result.norm(); 
+                                auto pn = result.norm();
                             }
 
                         }
@@ -116,7 +116,7 @@ quat find_quaternion_iterator(std::list<int>& prime_list, const quatlat& I, cons
         }
     }
 
-    
+
 
     return result;
 
@@ -179,13 +179,13 @@ std::map<NTL::ZZ,std::pair<ecp,ecp>> BasesPreProcessing(quat const &alpha, quat 
 
         sec_endo[4] = 1;
         Integer inv_elem = beta[4]/(extra2 ? (ell) : 1);
-        for (int i = 0; i < 4; i++) {            
-            sec_endo[i] = sec_endo[i] * NTL::InvMod(inv_elem % ell_e, ell_e); 
+        for (int i = 0; i < 4; i++) {
+            sec_endo[i] = sec_endo[i] * NTL::InvMod(inv_elem % ell_e, ell_e);
         }
         //  * (extra2 ? ((int) beta[4]) : 1);
         //  * (!extra2 ? (NTL::InvMod(beta[4], ell_e)));
         ecp K2 = evalEndo(sec_endo,K,ell_ext/(extra1 ? (ell) : 1));
-        
+
         K = (extra2 ? (ell) : 1) * K;
 
         assert(!(ell_e * K));
@@ -195,8 +195,8 @@ std::map<NTL::ZZ,std::pair<ecp,ecp>> BasesPreProcessing(quat const &alpha, quat 
 
         assert(!((K-K2).is_identity()));
         assert(!((ell_e_m_1 * K- ell_e_m_1 * K2).is_identity()));
-        result_map.emplace(std::make_pair(ell_e, std::make_pair(K,K2))); 
-             
+        result_map.emplace(std::make_pair(ell_e, std::make_pair(K,K2)));
+
 
         //std::cout << "Done!" << std::endl;
         // kerGens.push_back(std::pair<ecp,std::pair<int, int>>(K, {ell,e}));
@@ -208,7 +208,7 @@ std::map<NTL::ZZ,std::pair<ecp,ecp>> BasesPreProcessing(quat const &alpha, quat 
 
 Jinv JToJinv(const FpE_elem &j) {
         Jinv J;
-        NTL::ZZ IntList[2]; 
+        NTL::ZZ IntList[2];
         IntList[0] = rep( NTL::coeff(rep(j),0));
         IntList[1] = rep( NTL::coeff(rep(j),1));
         NTL::BytesFromZZ(J.IntList[0], IntList[0], LenNumberBytes);
@@ -225,7 +225,7 @@ Fp2 Frob(const Fp2 &j) {
     // std::cout << "\n p= " << NTL::coeff(rep(j),1).modulus() << "\n";
     Fp2 jp;
     FpX jpp;
-    // std::cout << jp[0]; 
+    // std::cout << jp[0];
     Fp temp;
     // std::cout << "a " << NTL::coeff(rep(j),1)<< " \n";
     NTL::negate(temp, NTL::coeff(rep(j),1));
@@ -241,7 +241,7 @@ void print_key(const Key& k) {
     NTL::ZZ IntList[3];
     for (int i=0; i<3 ; i++ ) {
             NTL::ZZFromBytes(IntList[i],k.IntList[i],LenNumberBytes);
-    }   
+    }
     std::cout << "(" << IntList[0] << "," << IntList[1] << "," << IntList[2] << ")";
 }
 
@@ -249,13 +249,13 @@ void order_to_jinv_full_list(std::unordered_map<Key, std::pair<FpE_elem, quatlat
 
     NTL::ZZ q = Bp.q;
 
-    // we start by creating the map and the quaternion algebra 
+    // we start by creating the map and the quaternion algebra
 
     auto start = starting_curve(Bp, false);
     quatlat O0 = start.second;
 
     FpE_elem j0 = start.first.j_invariant();
-    
+
     quat dum = {{Integer(0), Integer(0), Integer(0), Integer(0), Integer(1)}, O0.alg};
 
     Key K0 = order_invariant_computation(O0, &dum);
@@ -277,7 +277,7 @@ void order_to_jinv_full_list(std::unordered_map<Key, std::pair<FpE_elem, quatlat
         if (is_in == prime_list.end()){
             prime_list.push_back(fac);
             fac_list[fac] = 1;
-        } 
+        }
         else {
             fac_list[fac] = fac_list[fac]+1;
         }
@@ -294,11 +294,11 @@ void order_to_jinv_full_list(std::unordered_map<Key, std::pair<FpE_elem, quatlat
 
 
 
-    // now we generate one ideal of order S 
+    // now we generate one ideal of order S
     // This is a bit empirical
     bool found = false;
     quat gamma = {{NTL::ZZ(0), NTL::ZZ(0), NTL::ZZ(0), NTL::ZZ(0), NTL::ZZ(1)}, Bp};
-    while(!found) { 
+    while(!found) {
         NTL::ZZ cofac;
         if (p != 3067) {
             cofac = 3067;
@@ -327,14 +327,14 @@ void order_to_jinv_full_list(std::unordered_map<Key, std::pair<FpE_elem, quatlat
     // std::cout << S << "\n";
     // print_faclist(fac_list);
 
-    
+
 
     // generating the iterating quaternion
     quat beta = find_quaternion_iterator(prime_list, I , O0, Bp);
     quat betabar = beta.conjugate();
 
-    // now we generate the bases 
-    std::map<NTL::ZZ,std::pair<ecp,ecp>> TorsionBases = BasesPreProcessing(gamma, beta, fac_list, start.first, Fexts); 
+    // now we generate the bases
+    std::map<NTL::ZZ,std::pair<ecp,ecp>> TorsionBases = BasesPreProcessing(gamma, beta, fac_list, start.first, Fexts);
 
     std::list<std::pair<ecp,ecp>> torsion_list = {};
 
@@ -365,7 +365,7 @@ void order_to_jinv_full_list(std::unordered_map<Key, std::pair<FpE_elem, quatlat
 
     std::unordered_map<Jinv, std::pair<quatlat,Key> ,JinvHash, JinvEqual> j_inv_list = {};
 
-    // iterating through the set of S-ideals, we go factor by factor 
+    // iterating through the set of S-ideals, we go factor by factor
     int order_count = 1;
     int count_mistake = 0;
     // std::cout << "target = " << target_num <<"\n";
@@ -420,7 +420,7 @@ void order_to_jinv_full_list(std::unordered_map<Key, std::pair<FpE_elem, quatlat
                 // std::cout << K.norm().first << " " << K.norm().second << "\n";
                 quaternion_time += clock() - t;
                 t = clock();
-                quatlat rigo = J.right_order(); 
+                quatlat rigo = J.right_order();
                 rigo_time += clock() - t;
                 t = clock();
                 Key K = order_invariant_computation(rigo, &dum);
@@ -435,8 +435,8 @@ void order_to_jinv_full_list(std::unordered_map<Key, std::pair<FpE_elem, quatlat
                     assert(!(ell_e * ker));
                     // now to the isogeny computation
                     std::vector<std::pair<ecp,std::pair<int, int>>> kerGen = {{ker, {l,fac_list[l]}} };
-                    // computing the isogeny 
-                    isog_chain phi = isog_chain(kerGen);   
+                    // computing the isogeny
+                    isog_chain phi = isog_chain(kerGen);
                     // pushing the other bases
                     std::list<std::pair<ecp,ecp>> new_torsion_list = {};
                     for (auto bas : TorBas) {
@@ -461,11 +461,11 @@ void order_to_jinv_full_list(std::unordered_map<Key, std::pair<FpE_elem, quatlat
                             print_key(search->second.second);
                             print_key(order_invariant_computation(search->second.first.right_order(),&dum));
                             std::cout << "\n";
-         
+
 
 
                         }
-                    
+
                         order_count ++;
                         Jinv jnew = JToJinv(j);
                         j_inv_list.insert({jnew,{J,K}});
@@ -484,16 +484,16 @@ void order_to_jinv_full_list(std::unordered_map<Key, std::pair<FpE_elem, quatlat
                     goto endloop;
                 }
 
-                
+
             }
-            
+
         }
         // std::cout << "number of elements in the new list " << count << " temp count = " << order_count << " \n";
         global_list = new_list;
-        
+
     }
     std::cerr << "exhausted the list and did not find all the curves" << std::endl;
-    assert(0); 
+    assert(0);
 
 endloop:
     assert(count_mistake == 0);
@@ -513,11 +513,11 @@ endloop:
 }
 
 
-std::pair<weber_bas,std::vector<std::pair<mat_Fp,mat_Fp>>> order_to_weber_inv_full_list(std::unordered_map<Key, std::pair<FpE_elem, std::pair<std::pair<quatlat,quat>, weber_full_data>>, KeyHash, KeyEqual> &m, std::vector<std::pair<quatlat,std::pair<quatlat, Key>>> &id_list, const  NTL::ZZ &p, const quatalg &Bp, const std::map<unsigned,Fp2k> &Fexts, const Integer &coprime) {
+std::pair<weber_bas,std::vector<std::pair<SmallMatFp,SmallMatFp>>> order_to_weber_inv_full_list(std::unordered_map<Key, std::pair<FpE_elem, std::pair<std::pair<quatlat,quat>, weber_full_data>>, KeyHash, KeyEqual> &m, std::vector<std::pair<quatlat,std::pair<quatlat, Key>>> &id_list, const  NTL::ZZ &p, const quatalg &Bp, const std::map<unsigned,Fp2k> &Fexts, const Integer &coprime) {
 
     NTL::ZZ q = Bp.q;
 
-    // we start by creating the map and the quaternion algebra 
+    // we start by creating the map and the quaternion algebra
     // std::cout << Bp.p << " " << Bp.q << "\n";
     auto start = starting_curve(Bp, false);
     quatlat O0 = start.second;
@@ -543,7 +543,7 @@ std::pair<weber_bas,std::vector<std::pair<mat_Fp,mat_Fp>>> order_to_weber_inv_fu
         if (is_in == prime_list.end()){
             prime_list.push_back(fac);
             fac_list[fac] = 1;
-        } 
+        }
         else {
             fac_list[fac] = fac_list[fac]+1;
         }
@@ -555,7 +555,7 @@ std::pair<weber_bas,std::vector<std::pair<mat_Fp,mat_Fp>>> order_to_weber_inv_fu
     prime_list.reverse();
 
 
-    // now we generate one ideal of order S 
+    // now we generate one ideal of order S
     // This is a bit empirical
     bool found = false;
     quat gamma = {{NTL::ZZ(0), NTL::ZZ(0), NTL::ZZ(0), NTL::ZZ(0), NTL::ZZ(1)}, Bp};
@@ -571,7 +571,7 @@ std::pair<weber_bas,std::vector<std::pair<mat_Fp,mat_Fp>>> order_to_weber_inv_fu
     while (target < 10000 * p) {
         target = cofac * target;
     }
-    while(!found) { 
+    while(!found) {
         // std::cout << "target = " << target << "\n";
         quat gamma_tmp = RepresentInteger(Bp, target);
         quat testing = {{gamma_tmp[0], gamma_tmp[1], gamma_tmp[2], gamma_tmp[3], NTL::ZZ(2)*gamma_tmp[4]}, Bp};
@@ -588,14 +588,14 @@ std::pair<weber_bas,std::vector<std::pair<mat_Fp,mat_Fp>>> order_to_weber_inv_fu
 
     quatlat I = O0 * gamma + O0 * S;
     assert(std::get<0>(I.norm())/std::get<1>(I.norm()) == S);
-    
+
 
     // generating the iterating quaternion
     quat beta = find_quaternion_iterator(prime_list, I , O0, Bp);
     quat betabar = beta.conjugate();
 
-    // now we generate the bases 
-    std::map<NTL::ZZ,std::pair<ecp,ecp>> TorsionBases = BasesPreProcessing(gamma, beta, fac_list, start.first, Fexts); 
+    // now we generate the bases
+    std::map<NTL::ZZ,std::pair<ecp,ecp>> TorsionBases = BasesPreProcessing(gamma, beta, fac_list, start.first, Fexts);
 
     std::list<std::pair<ecp,ecp>> torsion_list = {};
 
@@ -608,31 +608,31 @@ std::pair<weber_bas,std::vector<std::pair<mat_Fp,mat_Fp>>> order_to_weber_inv_fu
         assert(!(elle*it->second.second));
         assert(!((it->second.second-it->second.first).is_identity()));
     }
-    // now we generate 3 and 16 torsion bases 
+    // now we generate 3 and 16 torsion bases
     std::pair<ecp,ecp> bas2 = torsion_list.front();
     std::pair<ecp,ecp> bas3 = torsion_list.front();
-    bool extra3 = Bp.q == 3;  
+    bool extra3 = Bp.q == 3;
     {
         unsigned k = torsionToFieldDegree(Integer(3) * (extra3 ? (Integer(3)): Integer(1)));
         auto jt = Fexts.find(k);
-        assert(jt != Fexts.end());  
+        assert(jt != Fexts.end());
         assert(jt->first == jt->second.k);
         bas3 = start.first.torsionBasis(jt->second, int(3), 1 + (extra3 ? (1): 0));
     }
     {
         unsigned k = torsionToFieldDegree(Integer(32));
         auto jt = Fexts.find(k);
-        assert(jt != Fexts.end());  
+        assert(jt != Fexts.end());
         assert(jt->first == jt->second.k);
         bas2 = start.first.torsionBasis(jt->second, int(2), 5);
     }
     // std::pair<ecp,ecp> bas = {bas2.first + bas3.first, bas2.second + bas3.second};
 
-    
+
     weber_bas bas0 = {bas2.first, bas2.second, bas3.first, bas3.second};
-    bas2.first = 2* bas2.first; 
+    bas2.first = 2* bas2.first;
     bas2.second = 2* bas2.second;
-    bas3.first =  (extra3 ? (Integer(3)) : Integer(1)) * bas3.first; 
+    bas3.first =  (extra3 ? (Integer(3)) : Integer(1)) * bas3.first;
     bas3.second =  (extra3 ? (Integer(3)) : Integer(1)) * bas3.second;
     torsion_list.push_back(bas3);
     torsion_list.push_back(bas2);
@@ -641,15 +641,15 @@ std::pair<weber_bas,std::vector<std::pair<mat_Fp,mat_Fp>>> order_to_weber_inv_fu
 
 
     // precomputing the action of the endo ring on the weber_basis
-    std::vector<std::pair<mat_Fp,mat_Fp>> mat0 = {};
+    std::vector<std::pair<SmallMatFp,SmallMatFp>> mat0 = {};
     bool extra2 = (O0.denom % 2 == 0);
 
     for (int j = 0; j<4; j++) {
         Integer inv_elem = O0.denom/(extra2 ? (Integer(2)): Integer(1));
         quat tmp = { { O0.basis[j][0], O0.basis[j][1], O0.basis[j][2],O0.basis[j][3], Integer(1) }, O0.alg };
         assert(inv_elem%2 != 0);
-        for (int i = 0; i < 4; i++) {            
-                tmp[i] = tmp[i] * NTL::InvMod(inv_elem % 16, 16); 
+        for (int i = 0; i < 4; i++) {
+                tmp[i] = tmp[i] * NTL::InvMod(inv_elem % 16, 16);
         }
         ecp gammaP016 = evalEndo( tmp, (!extra2 ? (Integer(2)): Integer(1)) * bas0.P16,  Integer(32) / (!extra2 ? (Integer(2)): Integer(1)));
         ecp gammaQ016 = evalEndo( tmp, (!extra2 ? (Integer(2)): Integer(1)) * bas0.Q16,  Integer(32) / (!extra2 ? (Integer(2)): Integer(1)));
@@ -659,11 +659,11 @@ std::pair<weber_bas,std::vector<std::pair<mat_Fp,mat_Fp>>> order_to_weber_inv_fu
         // assert(!(8*gammaQ016).is_identity());
         // assert(!(8*gammaQ016 - 8*gammaP016).is_identity());
 
-        // now we do the same for the order 3 part. 
+        // now we do the same for the order 3 part.
         inv_elem = O0.denom/(extra3 ? (Integer(3)): Integer(1));
         assert(inv_elem%3 != 0);
-        for (int i = 0; i < 4; i++) {            
-                tmp[i] = O0.basis[j][i] * NTL::InvMod(inv_elem % 3, 3); 
+        for (int i = 0; i < 4; i++) {
+                tmp[i] = O0.basis[j][i] * NTL::InvMod(inv_elem % 3, 3);
         }
         tmp[4] = Integer(1);
         ecp gammaP03 = evalEndo( tmp, bas0.P3,  Integer(9) / (!extra3 ? (Integer(3)): Integer(1)));
@@ -697,37 +697,38 @@ std::pair<weber_bas,std::vector<std::pair<mat_Fp,mat_Fp>>> order_to_weber_inv_fu
         target_num = p/12 + 2;
     }
     weber_bas w0 = { bas2.first, bas2.second, bas3.first, bas3.second};
-    
-    weber_enum wb0 = EnumerateAllWeberFast(w0, Fexts);
+
+    weber_enum_poly_precomp precomp = SetWeberPrecomp();
+
+    weber_enum wb0 = EnumerateAllWeberFast(w0, Fexts, &precomp);
     weber_full_data w0_data = {w0,wb0};
     quat ii = { {Integer(0),Integer(1),Integer(0),Integer(0), Integer(1)}, O0.alg};
     std::pair<std::pair<quatlat,quat>,weber_full_data> bos = { {O0, ii}, w0_data };
     m.insert({K0, {j0, bos }});
 
-        
+
+
+
 
     std::unordered_map<Jinv, std::pair<quatlat,Key> ,JinvHash, JinvEqual> j_inv_list = {};
 
-    // iterating through the set of S-ideals, we go factor by factor 
+    // iterating through the set of S-ideals, we go factor by factor
     int order_count = 1;
     int count_mistake = 0;
     // std::cout << "target = " << target_num <<"\n";
 
     clock_t quaternion_time = 0;
-    clock_t old_quaternion_time = 0;
-    clock_t rigo_time = 0;
     clock_t isogeny_time = 0;
-    clock_t reduc_time = 0;
     clock_t weber_time = 0;
     clock_t t;
 
     int isog_count = 0;
     int quat_count = 0;
 
-    for (auto l : prime_list) {
+        for (auto l : prime_list) {
         // std::cout << "round for" << l << " \n";
         std::list<std::tuple<quatlat,ec,std::list<std::pair<ecp,ecp>>>>  new_list = {};
-        std::list<std::tuple<NTL::ZZ,NTL::ZZ>> coeff_list = {};
+        std::list<IntegerPair> coeff_list = {};
         // first we create the list of coefficients
         NTL::ZZ ell(l);
         NTL::ZZ ell_e = power(ell,fac_list[l]);
@@ -758,31 +759,28 @@ std::pair<weber_bas,std::vector<std::pair<mat_Fp,mat_Fp>>> order_to_weber_inv_fu
                 count++;
                 t = clock();
                 quat gen = (gamma * (quat({{std::get<0>(coeff),NTL::ZZ(0),NTL::ZZ(0),NTL::ZZ(0),NTL::ZZ(1)},Bp}) + betabar * std::get<1>(coeff)  ));
-                
+
                 quatlat J = create_from_generator_O0( gen, ell_e);
                 assert(J.basis[2][0]>=0);
-                
-                // if the ideal is split, we know it is equivalent to O0 and so we have already  
+
+                // if the ideal is split, we know it is equivalent to O0 and so we have already
                 bool is_split = J.basis[1][0] != 0;
                 if (is_split) {
                     continue;
                 }
-                    
-                J._fast_intersect(K_id);                
-                
-                quaternion_time += clock() - t;
-#ifndef NDEBUG                
+
+                J._fast_intersect(K_id);
+
+#ifndef NDEBUG
                 // testing
-                t = clock();
                 quatlat J_test = create_from_generator( gen, ell_e, O0);
                 J_test._intersect(K_id);
-                old_quaternion_time += clock() - t;
                 for (int i =0; i<4; i++) {
                     quat bas_el = quat({{J.basis[i][0], J.basis[i][1], J.basis[i][2], J.basis[i][3], J.denom}, J.alg});
                     if (!J_test.contains(bas_el)) {
 
                         std::cout << create_from_generator_O0(gen, ell_e).basis << "\n";
-                        std::cout << K_id.basis << "\n"; 
+                        std::cout << K_id.basis << "\n";
                         std::cout << J.basis << "\n";
                         std::cout << J_test.HNF_basis() << "\n";
                         std::cout << i << "-th vector not in J_test \n";
@@ -798,25 +796,21 @@ std::pair<weber_bas,std::vector<std::pair<mat_Fp,mat_Fp>>> order_to_weber_inv_fu
                     }
                 }
 
-                
+
 #endif
-                t = clock();
                 auto [rigo,gram] = J.fast_right_order_and_gram();
                 gram[0][0] = 0;
                 if (gram[0][0] == 0) {
                     quatlat rigo_test = J.right_order();
                     rigo = rigo_test;
                     gram = compute_gram_order(rigo);
-                }        
-
-                rigo_time += clock() - t;
-                t = clock();
+                }
                 quat small_endo = {{Integer(0), Integer(0), Integer(0), Integer(0), Integer(1)}, O0.alg};
                 // Key Ktest = order_invariant_computation(rigo, &small_endo);
                 Key K = order_invariant_computation_from_gram(rigo, gram, &small_endo);
                 // quat small_endo = {{Integer(0), Integer(0), Integer(0), Integer(0), Integer(1)}, O0.alg};
-                
-                reduc_time += clock() - t;
+
+                quaternion_time += clock() - t;
                 quat_count++;
                 auto a_loc = local_map.insert({K,j0});
                 if (a_loc.second) {
@@ -827,8 +821,8 @@ std::pair<weber_bas,std::vector<std::pair<mat_Fp,mat_Fp>>> order_to_weber_inv_fu
                     assert(!(ell_e * ker));
                     // now to the isogeny computation
                     std::vector<std::pair<ecp,std::pair<int, int>>> kerGen = {{ker, {l,fac_list[l]}} };
-                    // computing the isogeny 
-                    isog_chain phi = isog_chain(kerGen);   
+                    // computing the isogeny
+                    isog_chain phi = isog_chain(kerGen);
                     // pushing the other bases
                     std::list<std::pair<ecp,ecp>> new_torsion_list = {};
                     for (auto bas : TorBas) {
@@ -836,15 +830,15 @@ std::pair<weber_bas,std::vector<std::pair<mat_Fp,mat_Fp>>> order_to_weber_inv_fu
                     }
                     FpE_elem j = phi.get_codomain().j_invariant();
                     isogeny_time += clock() - t;
-                    // auto bas = new_torsion_list.back(); 
+                    // auto bas = new_torsion_list.back();
                     new_list.push_back({J,phi.get_codomain(),new_torsion_list});
                     bas2 = new_torsion_list.back();
                     new_torsion_list.pop_back();
-                    bas3 = new_torsion_list.back(); 
+                    bas3 = new_torsion_list.back();
                     new_torsion_list.push_back(bas2);
-                    
+
                     weber_bas web = { bas2.first, bas2.second, bas3.first, bas3.second};
-                    
+
                     assert((16*web.P16).is_identity());
                     assert((16*web.Q16).is_identity());
                     assert((3*web.P3).is_identity());
@@ -859,22 +853,22 @@ std::pair<weber_bas,std::vector<std::pair<mat_Fp,mat_Fp>>> order_to_weber_inv_fu
                         auto it = m.find(K);
                         assert(it!=m.end());
                         // it->second = nK;
-                        it->second.second.second.enumerator = EnumerateAllWeberFast(web, Fexts);
+                        it->second.second.second.enumerator = EnumerateAllWeberFast(web, Fexts, &precomp);
                         assert(it->second.second.second.enumerator.size() == 72);
                         for (size_t i = 0; i < 72; i++) {
                             if (it->second.second.second.enumerator[i].second.size() != 3) {
                                 std::cout << i << " " << it->second.second.second.enumerator[i].second.size() << "\n";
                             }
                             assert(it->second.second.second.enumerator[i].second.size() == 3);
-                        } 
+                        }
                         weber_time += clock() - t;
                         auto nnn = get_smallest_element(&(it->second.second.first.second),J);
                         if (J.basis[3][0] < 0) {
                             J.basis[3][0] += 2 * J.norm().first/J.norm().second;
-                        } 
+                        }
                         if (J.basis[2][0] < 0) {
                             J.basis[2][0] += 2 * J.norm().first/J.norm().second;
-                        } 
+                        }
                         // check if the element is not already contained in the list
                         // TODO this is only used for debug purpose
                         Jinv jtemp = JToJinv(j);
@@ -890,7 +884,7 @@ std::pair<weber_bas,std::vector<std::pair<mat_Fp,mat_Fp>>> order_to_weber_inv_fu
                             print_key(search->second.second);
                             print_key(order_invariant_computation(search->second.first.right_order(),&dum));
                             std::cout << "\n";
-        
+
                         }
                         assert(J.basis[3][0] >= 0);
                         order_count ++;
@@ -912,35 +906,25 @@ std::pair<weber_bas,std::vector<std::pair<mat_Fp,mat_Fp>>> order_to_weber_inv_fu
                     goto endloop;
                 }
 
-                
+
             }
-            
+
         }
         // std::cout << "number of elements in the new list " << count << " temp count = " << order_count << " \n";
         global_list = new_list;
-        
+
     }
-    std::cerr << "exhausted the list and did not find all the curves" << std::endl;
-    assert(0); 
+    std::cerr << "exhausted the list and did not find all the curves for p =" << O0.alg.p <<std::endl;
+    assert(0);
 
 endloop:
-    
+
     id_list.push_back( {O0, {O0, K0}} );
 
     assert(count_mistake == 0);
     // std::cout << "number of curves :" << order_count;
-    // std::cout << " size of the list of curves : " << m.size() << "\n";
-    // std::cout << " #mistakes :" << count_mistake << "\n";
-    // std::cout << "time for the total enumeration  : " << (double) (clock() - enum_time)/CLOCKS_PER_SEC << "\n";
-    // std::cout << "time for quaternion operations (amortized per 100) : " << (double) (100 * quaternion_time)/(CLOCKS_PER_SEC * quat_count) << "\n";
-    // std::cout << "time for right-ordr operations (amortized per 100) : " << (double) (100 * rigo_time)/(CLOCKS_PER_SEC * quat_count) << "\n";
-    // std::cout << "time for reduction operations  (amortized per 100) : " << (double) (100 * reduc_time)/(CLOCKS_PER_SEC * quat_count) << "\n";
-    // std::cout << "time for isogeny operations    (amortized per 100) : " << (double) (100 * isogeny_time)/(CLOCKS_PER_SEC * isog_count) << "\n";
-    // std::cout << "total time for quaternion operations : " << (double) (quaternion_time)/(CLOCKS_PER_SEC) << "\n";
-    (void) old_quaternion_time; // std::cout << "total time for old quaternion operations : " << (double) (old_quaternion_time)/(CLOCKS_PER_SEC) << "\n";
-    // std::cout << "total time for right-ordr operations : " << (double) (rigo_time)/(CLOCKS_PER_SEC) << "\n";
-    // std::cout << "total time for reduction operations  : " << (double) (reduc_time)/(CLOCKS_PER_SEC) << "\n";
-    // std::cout << "total time for isogeny operations    : " << (double) (isogeny_time)/(CLOCKS_PER_SEC) << "\n";
+    std::cout << "total time for quaternion operations : " << (double) (quaternion_time)/(CLOCKS_PER_SEC) << "\n";
+    std::cout << "total time for isogeny operations    : " << (double) (isogeny_time)/(CLOCKS_PER_SEC) << "\n";
     std::cout << "total time for weber operations in the enumeration  : " << (double) (weber_time)/(CLOCKS_PER_SEC) << "\n";
 
     return {bas0, mat0};

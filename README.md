@@ -54,18 +54,18 @@ To reproduce the experiments detailed in the accompanying paper run the followin
 $ ./experiments.sh
 ```
 
-WARNING: The experiments should only be run on a machine with sufficient computing power. In total, the runtime exceeds 1000 core days.
+WARNING: The experiments should only be run on a machine with sufficient computing power. In total, the runtime exceeds 50 core days.
 
 ## Additional Comments
 
 Various parts of our codebase may find utility outside of their application in this paper. As a few suggestions:
-- `interpolation.cpp`: an optimised implementation of polynomial interpolation, which outperforms NTL’s built-in function for polynomials of large degree
+- `interpolation.cpp`: an optimised implementation of polynomial interpolation, which outperforms NTL's built-in function for polynomials of large degree
 - `id2iso.cpp`, `klpt.cpp`, and others: a low-level optimised implementation of the Deuring correspondence for generic primes.
 - `endring.hpp`: an optimised implementation of the computation of the endomorphism ring of a supersingular elliptic curve defined over $\mathbb{F}_p$
 
 ## Citations
 
-- The file `crt.cpp` is heavily inspired by the file `crt.c` in Sutherland’s software [classpoly](https://math.mit.edu/~drew/classpoly.html), which implements the algorithms described in the following research papers:
+- The file `crt.cpp` is heavily inspired by the file `crt.c` in Sutherland's software [classpoly](https://math.mit.edu/~drew/classpoly.html), which implements the algorithms described in the following research papers:
     - Andrew V. Sutherland, [*Computing Hilbert class polynomials with the Chinese Remainder Theorem*](https://arxiv.org/abs/0903.2785), [Mathematics of Computation](https://www.ams.org/journals/mcom/2011-80-273/S0025-5718-2010-02373-7/home.html) **80** (2011), 501–538.
     - Andreas Enge and Andrew V. Sutherland, [*Class invariants by the CRT method*](https://arxiv.org/abs/1001.3394), [Ninth Algorithmic Number Theory Symposium (ANTS IX)](https://link.springer.com/chapter/10.1007/978-3-642-14518-6_14), Lecture Notes in Computer Science **6197** (2010), 142–156.
 - The algorithms in `interpolation.cpp` follow §10 in [Modern Computer Algebra](https://www.cambridge.org/core/books/modern-computer-algebra/DB3563D4013401734851CF683D2F03F0) by Joachim von zur Gathen and Jürgen Gerhard.

@@ -4,7 +4,7 @@
 ////      - Sutherland's algorithm for supersingularity testing
 ////      - DLP algorithm
 ////      - Sieving for primes
-/////////////////////////////////////////////////////////////////////////////////////////////// 
+///////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -123,18 +123,18 @@ bool sutherland(long int const &jj, Fp_integer const &p)
                     j_ext_new = roots[ii];
                     found_j_ext = true;
                 }
-            }    
+            }
         }
     }
 
-    //must have found a j-inv over F_p^2 in the supersingular case at this point 
+    //must have found a j-inv over F_p^2 in the supersingular case at this point
     if (!found_j_ext){
         return false;
     }
 
     // Then keep going along this path, either down the 2-isog vulcano, or just around the supersingular graph
     size_t bound = log2floor(Fp_elem::modulus())/2;
-    for (size_t s = 0; s < bound + 1; s++) {  
+    for (size_t s = 0; s < bound + 1; s++) {
 
         Phi_2 = modPoly2(j_ext_new);
 
@@ -339,7 +339,7 @@ std::vector<long int> sieve_interval(long int &L, long int len_sieve_interval, s
     int i = 0;
     long int ell = sieve_primes[i];
     while (ell <= sqrtR) {
-        
+
         //get sieving offset
         long int k = -(L % ell);
         if (k < 0) {
@@ -361,7 +361,7 @@ std::vector<long int> sieve_interval(long int &L, long int len_sieve_interval, s
     for (long int i = 0; i < len_sieve_interval; i++) {
         if (numbers[i] == true) {
             new_primes.push_back(i + L);
-        } 
+        }
     }
 
     return new_primes;

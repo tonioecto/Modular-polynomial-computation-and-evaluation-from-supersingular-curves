@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////
-////   This code implements algorithms to for isogeny computations between ellipitc curves 
+////   This code implements algorithms to for isogeny computations between ellipitc curves
 ////     over finite fields
 ///////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -68,7 +68,7 @@ isog isogeny(ecp const &K, int degree) {
     } else {
         FpE_elem a = K.curve().a(), b = K.curve().b();
 
-    
+
         FpE_elem x0 = -coeff(h_K, 0);
         FpE_elem t = 3*x0*x0 + a;
         FpE_elem w = x0*t;
@@ -112,7 +112,7 @@ ecp isog::operator()(ecp const &P) const
     size_t n = NTL::deg(psi);
     FpE_elem xi(1);
 
-    
+
     for (size_t i = 1; i <= n; i++) { //NTL::coeff returns zero when i > degree
         xi *= x;
         psi_x += xi*NTL::coeff(psi, i);
@@ -143,7 +143,7 @@ ecp isog::operator()(ecp const &P) const
     auto summand_2 = _prod_derivative_pair(psi_x_psi_der_x_pair, aux_2_pair);
 
     auto summand_3 = _prod_derivative_pair(psi_x_sq_pair, aux_3_pair);
-    
+
     std::pair<FpE_elem, FpE_elem> N_x_pair(summand_1.first - summand_2.first + summand_3.first, summand_1.second - summand_2.second + summand_3.second);
 
     FpE_elem one(1);
@@ -166,14 +166,14 @@ ecp isog::_even_evaluation(ecp const &P) const
     FpE_elem xmx0 = x-x0;
     FpE_elem new_x = x + tlift/xmx0;
     FpE_elem new_y = y*(1 - tlift/(xmx0*xmx0));
- 
+
     ecp phi_P(this->get_codomain_ptr(), P.field(), new_x, new_y);
     return phi_P;
 }
 
 int _least_primitive(unsigned l) {
     NTL::zz_pPush push(l);
-    
+
     int a0 = 2;
     NTL::zz_p a;
 
@@ -204,7 +204,7 @@ int _least_primitive(unsigned l) {
 
 FpEX_elem kernel_polynomial(ecp const&K, int degree) {
     ///////////////////////////////////////
-    /////// K point of order degree, 
+    /////// K point of order degree,
     /////// Returns the kernel poly of <K>
     ///////////////////////////////////////
 
@@ -213,8 +213,8 @@ FpEX_elem kernel_polynomial(ecp const&K, int degree) {
     FpE_elem x = K.aff_x();
     if (degree == 3) {
         NTL::SetCoeff(Psi, 1);
-        Psi[0] = -coerce(x, K.field());  
-        return Psi; 
+        Psi[0] = -coerce(x, K.field());
+        return Psi;
     }
 
     FpEX_elem f0 = MinPoly(x, K.field());
@@ -224,7 +224,7 @@ FpEX_elem kernel_polynomial(ecp const&K, int degree) {
 
     std::vector<FpEX_elem> fs;
     fs.reserve(m);
-    
+
     fs.push_back(f0);
 
     int a = _least_primitive(degree);
@@ -245,7 +245,7 @@ isog_chain::isog_chain(std::vector<std::pair<ecp,std::pair<int, int>>> kerGens) 
     auto start_id2ker = std::chrono::steady_clock::now();
     std::chrono::duration<long, std::milli> duration_compisog = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-std::chrono::steady_clock::now());
     std::chrono::duration<long, std::milli> duration_pushpoints = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-std::chrono::steady_clock::now());
-    
+
     while (kerGens.size() > 0) {
 
         std::pair<ecp, std::pair<int, int>> Ker = kerGens.back();
@@ -253,7 +253,7 @@ isog_chain::isog_chain(std::vector<std::pair<ecp,std::pair<int, int>>> kerGens) 
 
         ecp K = Ker.first; std::pair<int, int> deg = Ker.second;
         int ell = deg.first; int e = deg.second;
-                
+
         //std::cout << "ISOG CHAIN: Computing isogeny over Fp2k, k = " << K.field().k << "of degree ell = " << ell << std::endl;
         auto start_isog = std::chrono::steady_clock::now();
         isog_parts.push_back(isogeny(NTL::power(NTL::ZZ(ell), e-1)*K, ell));

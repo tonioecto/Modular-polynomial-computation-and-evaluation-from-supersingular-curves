@@ -1,9 +1,9 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////
-/////// The main function in this file is choose_torsion, which allows us to create a 
-/////// 'dictionary' of prime powers \ell^e and the field extension F_{p^{2k}} over which 
+/////// The main function in this file is choose_torsion, which allows us to create a
+/////// 'dictionary' of prime powers \ell^e and the field extension F_{p^{2k}} over which
 /////// the ell^e-torsion is defined.
-/////// To build this 'dictionary' we want to choose the prime powers that we work with 
+/////// To build this 'dictionary' we want to choose the prime powers that we work with
 /////// somewhat optimally so that the cost of EC arithmetic is minimized.
 ///////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -101,7 +101,7 @@ factor_list choose_torsion_naive(NTL::ZZ const &p, NTL::ZZ const &tors_bound, NT
 {
     factor_list factors;
     model_function model = cost_model(p);
-    NTL::ZZ le = NTL::ZZ(1); 
+    NTL::ZZ le = NTL::ZZ(1);
     NTL::ZZ prod = NTL::ZZ(1);
     NTL::ZZ ell;
     int exp;
@@ -134,7 +134,6 @@ factor_list choose_torsion_naive(NTL::ZZ const &p, NTL::ZZ const &tors_bound, NT
             k += 1;
         }
 
-        
         if (k % 2 == 0 && NTL::PowerMod(p%le, k/2, le) - le == -1) {
             k /= 2;
         }
@@ -166,10 +165,10 @@ factor_list choose_torsion_naive(NTL::ZZ const &p, NTL::ZZ const &tors_bound, NT
 
 factor_list choose_torsion(NTL::ZZ const &p, NTL::ZZ const &tors_bound, NTL::ZZ const &coprime)
     /////////////////////////////////////////////////////////////////////////////////////////
-    //////// Given a prime p, a bound tors_bound = B, it creates a dictionary 
+    //////// Given a prime p, a bound tors_bound = B, it creates a dictionary
     ////////    ell^e -> k, which means that E[ell^e] is defined over Fp2k
-    ////////    We choose the ell^e in this dictionary so that their product is bigger than B 
-    ////////    but the cost is as small as possible. 
+    ////////    We choose the ell^e in this dictionary so that their product is bigger than B
+    ////////    but the cost is as small as possible.
     ////////
     ////////    The input 'coprime' allows us to specify that we only want torsion
     ////////    that is coprime to a certain number.
@@ -181,7 +180,7 @@ factor_list choose_torsion(NTL::ZZ const &p, NTL::ZZ const &tors_bound, NTL::ZZ 
     NTL::ZZ T;
     NTL::RR max_cost;
     int k = 0;
-    
+
     // Might need to ensure q is part of torsion...
     factors = choose_torsion_naive(p, tors_bound, coprime);
 
@@ -215,7 +214,7 @@ factor_list choose_torsion(NTL::ZZ const &p, NTL::ZZ const &tors_bound, NTL::ZZ 
             if (adj_cost(model(NTL::NextPrime(maxell | (1 << i)), 1, k), NTL::NextPrime(maxell | (1 << i))) < max_cost) {
                 maxell |= 1 << i;
             }
-        } 
+        }
         if (maxell < 1 || k > 80) {
             break;
         }
@@ -223,7 +222,7 @@ factor_list choose_torsion(NTL::ZZ const &p, NTL::ZZ const &tors_bound, NTL::ZZ 
         //find small factors
         std::vector<std::tuple<int, int>> on_curve = smooth_part(NTL::power(p, k) - NTL::power(NTL::ZZ(-1), k), NTL::ZZ(maxell));
         //std::vector<std::tuple<int, int>> on_twist = smooth_part(NTL::power(p, k) + NTL::power(NTL::ZZ(-1), k), NTL::ZZ(maxell));
-        
+
         for (const auto& tup : on_curve) {
             for (int i = 1; i <= std::get<1>(tup); ++i) {
                 int j = in_vector(factors, std::get<0>(tup), i);
@@ -243,7 +242,7 @@ factor_list choose_torsion(NTL::ZZ const &p, NTL::ZZ const &tors_bound, NTL::ZZ 
                 }
             }
         }
-        
+
         /* Skip on twist for now (twists not yet implemented):
         for (const auto& tup : on_twist) {
             for (int i = 1; i <= std::get<1>(tup); ++i) {
@@ -261,9 +260,9 @@ factor_list choose_torsion(NTL::ZZ const &p, NTL::ZZ const &tors_bound, NTL::ZZ 
                 }
             }
         }*/
-        
-    }   
-    
+
+    }
+
     //remove unnecessary factors if T is too large
     for (int i = factors.size() - 1; i >= 0; --i) {
         if (T/std::get<0>(factors[i]) > tors_bound) {

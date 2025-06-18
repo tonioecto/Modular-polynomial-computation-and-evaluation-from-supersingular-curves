@@ -46,8 +46,8 @@ size_t myroots_ZZ(NTL::ZZ_pE *roots, NTL::ZZ_pEX const &f)
     return idx;
 }
 
-std::optional<FpE_elem> sqrt(FpE_elem const &alpha) 
-    // Take EXTREME caution to only call this when ZZ_pE agrees with alpha 
+std::optional<FpE_elem> sqrt(FpE_elem const &alpha)
+    // Take EXTREME caution to only call this when ZZ_pE agrees with alpha
     // This is the same as with all arithmetic in field extensions...
 {
     FpEX_elem f;
@@ -60,7 +60,7 @@ std::optional<FpE_elem> sqrt(FpE_elem const &alpha)
     return roots[0];
 }
 
-std::optional<FpE_elem> sqrt(Fp2k Fext, FpE_elem const &alpha) 
+std::optional<FpE_elem> sqrt(Fp2k Fext, FpE_elem const &alpha)
 {
     FpE_push Push(Fext.F);
     return sqrt(alpha);
@@ -141,7 +141,7 @@ Fp2k::Fp2k(unsigned degree)
         for (size_t i = 0 ; i < 1000 ; i++) {
             NTL::BuildIrred(f_2, degree);
             f = _construct_f_from_f2(f_2);
-            
+
             if (NTL::SquareFreeDecomp(f)[0].b == 1) { //<- check if irreducible
                 this->mod_Fp2 = f_2;
                 found = true;
@@ -204,7 +204,7 @@ Fp2k::Fp2k(unsigned degree)
         FpE_elem w = this->Fp2_gen;
         FpE_elem q = -(w*w);
         if (q == 1) {
-            this->iota_degree = 1;    
+            this->iota_degree = 1;
             this->starting_a = 1;
             this->starting_b = 0;
             assert (w*w == -1);
@@ -236,14 +236,14 @@ Fp2k::Fp2k(unsigned degree)
             this->iota_degree = 2;
             this->starting_a = -35;
             this->starting_b = 98;
-            
+
             assert (w*w == -7);
             NTL::SetCoeff(xmap_up, 2);
             NTL::SetCoeff(xmap_down, 1);
             NTL::SetCoeff(ymap_up, 2);
             NTL::SetCoeff(ymap_down, 2);
             this->maximal = false;
-            
+
             xmap_up[0] = 35*w - 63;
             xmap_up[0] /= 8;
             xmap_up[1] = w + 7;
@@ -304,7 +304,7 @@ Fp2k::Fp2k(unsigned degree)
             this->iota_degree = 6; //For some reason degree 6 in bottom y map
             this->starting_a = -152;
             this->starting_b = 722;
-            
+
             assert (w*w == -19);
             NTL::SetCoeff(xmap_up, 5);
             NTL::SetCoeff(xmap_down, 4);
@@ -384,7 +384,7 @@ FpE_elem lift(FpE_elem const &alpha, Fp2k const &Fext)
     if (alpha == 0 || Fext.k == 1 || NTL::deg(NTL::rep(alpha)) != 1) { //last case is if alpha is over Fp
         return alpha;
     }
-    
+
     FpE_elem alpha_bar;
 
     Fp_elem a = NTL::rep(alpha)[0], b = NTL::rep(alpha)[1];
@@ -446,7 +446,7 @@ FpEX_elem lift(FpEX_elem const &f, Fp2k const &Fext)
     size_t d = NTL::deg(f);
 
     NTL::SetCoeff(f_high, d);
-    
+
     f_high[0] = lift(coeff(f, 0), Fext);
     for (size_t i = 1; i <= d; ++i){
         f_high[i] = lift(coeff(f, i), Fext);
@@ -471,7 +471,7 @@ FpEX_elem coerce(FpEX_elem const &f, Fp2k const &Fext)
     size_t d = NTL::deg(f);
 
     NTL::SetCoeff(f_low, d);
-    
+
     f_low[0] = coerce(coeff(f, 0), Fext);
     for (size_t i = 1; i <= d; ++i){
         f_low[i] = coerce(coeff(f, i), Fext);
@@ -481,7 +481,7 @@ FpEX_elem coerce(FpEX_elem const &f, Fp2k const &Fext)
 }
 
 FpE_elem Fp2k::frob(FpE_elem alpha) const
-{ 
+{
     vec_Fp alpha_vec;
     NTL::conv(alpha_vec, NTL::rep(alpha));
     alpha_vec.SetLength(this->k*2);

@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-/////// The code in this file develops the class ecp, which represents an elliptic curve point, 
+/////// The code in this file develops the class ecp, which represents an elliptic curve point,
 /////// and related functions for elliptic curve arithmetic
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -102,8 +102,8 @@ ecp ecp::operator+(ecp other) const
 
 
     if (&this->field() != &other.field())
-        throw std::logic_error("points not over the same field"); 
-    
+        throw std::logic_error("points not over the same field");
+
     FpE_push push(this->field().F);
 
     FpE_elem const &x1 = this->x, &y1 = this->y, &z1 = this->z;
@@ -132,102 +132,3 @@ ecp ecp::operator+(ecp other) const
 }
 
 
-std::pair<Integer,Integer> bi_dlp_3(const ecp &P, const std::pair<ecp,ecp> &bas) {
-    ecp P3 = P;
-    ecp R3 = bas.first;
-    ecp S3 = bas.second;
-    Integer a1,a2;
-
-    if (P3 == R3) {
-        a1 = 1; a2 = 0;
-    }
-    else if (P3 == -R3) {
-        a1 = 2; a2 = 0;
-    }
-    else if (P3 == S3) {
-        a1 = 0; a2 = 1;
-    }
-    else if (P3 == -S3) {
-        a1 = 0; a2 = 2;
-    }
-    else if (P3 == S3+R3) {
-        a1 = 1; a2 = 1;
-    }else if (P3 == S3-R3) {
-        a1 = 2; a2 = 1;
-    }
-    else if (P3 == -S3+R3) {
-        a1 = 1; a2 = 2;
-    }else if (P3 == -S3-R3) {
-        a1 = 2; a2 = 2;
-    }
-
-    assert( P3 == a1* R3 + a2*S3 );
-    return {a1,a2};
-
-}
-
-std::pair<Integer,Integer> bi_dlp_16(const ecp &P, const std::pair<ecp,ecp> &bas) {
-    Integer b1(0);
-    Integer b2(0);
-    ecp Ptemp = P;
-    ecp R16 = bas.first;
-    ecp S16 = bas.second;
-    ecp R2 = 8*R16;
-    ecp S2 = 8*S16;
-    for (int i =0; i< 4; i++) {
-        auto powni = NTL::power_ZZ(2,3-i);
-        auto powi = NTL::power_ZZ(2,i);
-        ecp Qtemp = powni*Ptemp;
-        if (Qtemp == R2) {
-            b1 += powi;
-            Ptemp -= powi * R16; 
-        }
-        else if (Qtemp == S2) {
-            b2 += powi;
-            Ptemp -= powi * S16;
-        }
-        else if (Qtemp == R2+S2) {
-            b1 += powi;
-            b2 += powi;
-            Ptemp -= powi *(R16 + S16);
-        }
-        else {
-            assert(Qtemp.is_identity());
-        }
-        // if ()
-    }
-    
-
-    assert( P == b1* bas.first + b2* bas.second);
-    return {b1,b2};
-}
-
-mat_Fp change_of_basis3(const std::pair<ecp, ecp> &bas1, const std::pair<ecp, ecp> &bas2) {
-    
-    auto [a,b] = bi_dlp_3(bas2.first, bas1);
-    auto [c,d] = bi_dlp_3(bas2.second, bas1);
-    Fp_push push((Fp_integer(3)));
-    mat_Fp mat;
-    mat.SetDims(2,2);
-    mat[0][0] = NTL::conv<Fp_elem>(a);
-    mat[0][1] = NTL::conv<Fp_elem>(b);
-    mat[1][0] = NTL::conv<Fp_elem>(c);
-    mat[1][1] = NTL::conv<Fp_elem>(d);
-
-    return mat;
-}
-
-mat_Fp change_of_basis16(const std::pair<ecp, ecp> &bas1, const std::pair<ecp, ecp> &bas2) {
-    
-    auto [a,b] = bi_dlp_16(bas2.first, bas1);
-    auto [c,d] = bi_dlp_16(bas2.second, bas1);
-    Fp_push push((Fp_integer(16)));
-    mat_Fp mat;
-    mat.SetDims(2,2);
-    mat[0][0] = NTL::conv<Fp_elem>(a);
-    mat[0][1] = NTL::conv<Fp_elem>(b);
-    mat[1][0] = NTL::conv<Fp_elem>(c);
-    mat[1][1] = NTL::conv<Fp_elem>(d);
-
-    return mat;
-}

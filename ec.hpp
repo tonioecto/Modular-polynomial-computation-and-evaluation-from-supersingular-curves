@@ -23,7 +23,7 @@ class ec
         FpE_elem const &a() const { return this->_a; }
         FpE_elem const &b() const { return this->_b; }
         // Kohel: b2 = 0, b4 = 2*a, b6 = 4*b
-    
+
     std::optional<ecp> lift_x(Fp2k const &Fext, FpE_elem const &x) const;
 
     ecp random_point(Fp2k const &Fext) const;

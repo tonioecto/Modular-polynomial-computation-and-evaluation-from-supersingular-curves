@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////
-/////// The code in this file builds the cost model with which we choose the 'optimal' 
+/////// The code in this file builds the cost model with which we choose the 'optimal'
 ///////  torsion we work with in choosetorsion.cpp
 ///////
 /////// The code is heavily inspired by:
@@ -17,7 +17,7 @@
 
 
 NTL::RR karatsuba(int const &k, NTL::RR const &logp, NTL::RR const &loglogp)
-{    
+{
     NTL::RR log3 = NTL::log(NTL::RR(3))/NTL::log(NTL::RR(2));
     NTL::RR kpowlog3;
     NTL::conv(kpowlog3, k);
@@ -29,7 +29,7 @@ NTL::RR karatsuba(int const &k, NTL::RR const &logp, NTL::RR const &loglogp)
             if (logp >= 31) {
                 temp += NTL::RR(1)/30;
             }
-        } 
+        }
         return kpowlog3 * temp;
     } else if (logp <= 64) {
         return kpowlog3 * (NTL::RR(1)/30 + logp/190);
@@ -45,7 +45,7 @@ model_function cost_model(NTL::ZZ const &p)
     NTL::RR loglogp = NTL::log(logp)/NTL::log(NTL::RR(2));
     NTL::RR log3 = NTL::log(NTL::RR(3))/NTL::log(NTL::RR(2));
     int cutoff;
-    
+
     //TODO: update constants
     NTL::RR c1 = NTL::RR(0.01);
     //NTL::RR c2 = NTL::RR(2.65);

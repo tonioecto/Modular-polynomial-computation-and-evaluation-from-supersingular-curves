@@ -151,7 +151,7 @@ quat RepresentInteger(quatalg const &B, NTL::ZZ const &M) {// Don't need the ful
     std::uniform_int_distribution<> distribution(0, firstbound); // This shouldn't really be hardcoded
 
     NTL::ZZ z, w, tar;
-    for (size_t i = 1 ; i < 10000 ; i++) { 
+    for (size_t i = 1 ; i < 10000 ; i++) {
         NTL::conv(z, distribution(gen));
         NTL::conv(w, distribution(gen));
 
@@ -186,11 +186,11 @@ quat RepresentInteger(quatalg const &B, NTL::ZZ const &M) {// Don't need the ful
 }
 
 std::pair<NTL::ZZ, NTL::ZZ> IdealModConstraint(quatlat const &I, quat const &gamma) {
-    
+
 
     quat i({{NTL::ZZ(0), NTL::ZZ(1), NTL::ZZ(0), NTL::ZZ(0), NTL::ZZ(1)}, gamma.alg});
     quat j({{NTL::ZZ(0), NTL::ZZ(0), NTL::ZZ(1), NTL::ZZ(0), NTL::ZZ(1)}, gamma.alg});
-    
+
     //NTL::mat_ZZ M = NTL::transpose(I.get_basis());
     NTL::mat_ZZ M = I.get_basis();
 
@@ -225,7 +225,7 @@ std::pair<NTL::ZZ, NTL::ZZ> IdealModConstraint(quatlat const &I, quat const &gam
 
     NTL::mat_ZZ_p X;
     NTL::kernel(X, system_reduced);
-    
+
     std::pair<NTL::ZZ, NTL::ZZ> CD(NTL::rep(X[0][0]), NTL::rep(X[0][1]));
 
     return CD;
@@ -259,9 +259,9 @@ std::optional<quat> StrongApproximation(NTL::ZZ const &lam, NTL::ZZ const &C, NT
                 sol.emplace(coeffs, B);
                 return true;
             }
-        } 
+        }
         return false;
-    }, 99*NTL::to_double(N_I)); 
+    }, 99*NTL::to_double(N_I));
 
     return sol;
 }
@@ -271,7 +271,7 @@ quatlat equivPrime(quatlat const &J, NTL::ZZ const &T) {
     quatlat I = O0;
 
     bool found = false;
-    
+
     J.enumerate_shortish(100, //TODO <- good value here?
         [&](quat const &el) -> bool {
         //std::cout << "el norm: " << el.norm().first << "/" << el.norm().second << std::endl;
@@ -301,7 +301,7 @@ quatlat equivPrime_conj(quat *conj, quatlat const &J, NTL::ZZ const &T) {
     quatlat I = O0;
 
     bool found = false;
-    
+
 
     J.enumerate_shortish(100, //TODO <- good value here?
         [&](quat const &el) -> bool {
@@ -320,7 +320,7 @@ quatlat equivPrime_conj(quat *conj, quatlat const &J, NTL::ZZ const &T) {
             (*conj)[1] = el_conj[1];
             (*conj)[2] = el_conj[2];
             (*conj)[3] = el_conj[3];
-            (*conj)[4] = J.norm().first; 
+            (*conj)[4] = J.norm().first;
             found = true;
             return true;
         }
@@ -394,15 +394,15 @@ NTL::ZZ _choose_gamma_norm(factor_list const &fac_list, NTL::ZZ const &coprime_i
         //if (true) {
             // Okay to divide freely
         if (q != 3) {
-            while ((N_gamma % d == 0) && ((N_gamma*N_I)/d > min_size)) { 
+            while ((N_gamma % d == 0) && ((N_gamma*N_I)/d > min_size)) {
                 //std::cout << "loop 1" << std::endl;
-                N_gamma /= d; 
+                N_gamma /= d;
             }
         } else {
             // Only divide squares
-            while ((N_gamma % (d*d) == 0) && ((N_gamma*N_I)/(d*d) > min_size)) { 
+            while ((N_gamma % (d*d) == 0) && ((N_gamma*N_I)/(d*d) > min_size)) {
                 //std::cout << "loop 2" << std::endl;
-                N_gamma /= (d*d); 
+                N_gamma /= (d*d);
             }
         }
         d--;
@@ -452,7 +452,7 @@ std::pair<quat, NTL::ZZ> _makePrimitive(quat const &alpha, quatlat const &O, NTL
     return output;
 }
 
-std::pair<quat, NTL::ZZ> KLPT(quatlat const &J, factor_list const &fac_list, NTL::ZZ const &coprime) { 
+std::pair<quat, NTL::ZZ> KLPT(quatlat const &J, factor_list const &fac_list, NTL::ZZ const &coprime) {
     //Look for equivalent ideal to J of norm dividing T
     //std::cout << "Starting KLPT..." << std::endl;
     //std::cout << "norm of ideal: " << J.norm().first/J.norm().second << std::endl;
@@ -605,7 +605,7 @@ std::pair<quat, NTL::ZZ> KLPT(quatlat const &J, factor_list const &fac_list, NTL
 }
 
 
-std::pair<quat, NTL::ZZ> KLPT_conj(quat *conj, quatlat const &J, factor_list const &fac_list, NTL::ZZ const &coprime) { 
+std::pair<quat, NTL::ZZ> KLPT_conj(quat *conj, quatlat const &J, factor_list const &fac_list, NTL::ZZ const &coprime) {
     //Look for equivalent ideal to J of norm dividing T
     //std::cout << "Starting KLPT..." << std::endl;
     //std::cout << "norm of ideal: " << J.norm().first/J.norm().second << std::endl;
@@ -620,7 +620,7 @@ std::pair<quat, NTL::ZZ> KLPT_conj(quat *conj, quatlat const &J, factor_list con
     quat j({{NTL::ZZ(0), NTL::ZZ(0), NTL::ZZ(1), NTL::ZZ(0), NTL::ZZ(1)}, J.alg});
 
     NTL::ZZ T_full(1);
-    
+
     NTL::ZZ Smallest_2_mod_3(1000000);
     NTL::ZZ Second_smallest_2_mod_3(1000000);
 
@@ -645,7 +645,7 @@ std::pair<quat, NTL::ZZ> KLPT_conj(quat *conj, quatlat const &J, factor_list con
     }
     T_full *= q;
     T_full *= q;
-    
+
 
     for (size_t tries_outer = 0; tries_outer < 10000; tries_outer++) {
         //std::cout << "before equivPrime..." << std::endl;
@@ -720,7 +720,7 @@ std::pair<quat, NTL::ZZ> KLPT_conj(quat *conj, quatlat const &J, factor_list con
             }
             auto CD = IdealModConstraint(I, gamma);
 
-            if ((CD.first == 0) || (CD.second == 0)) { 
+            if ((CD.first == 0) || (CD.second == 0)) {
                 continue;
             }
 

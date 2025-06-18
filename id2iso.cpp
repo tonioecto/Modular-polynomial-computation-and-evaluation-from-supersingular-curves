@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////
-////   This code implements algorithms to perform ideal-to-isogeny translation 
+////   This code implements algorithms to perform ideal-to-isogeny translation
 ////     (via the effective Deuring correspondence)
 ///////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -122,7 +122,7 @@ std::vector<std::pair<ecp,std::pair<int, int>>> idealToKernel(quat const &alpha,
             unsigned k = torsionToFieldDegree(ell_ext);
             //std::cout << "Constructing torsion basis of E[" << ell << "^" << e + extra << "] over Fp2k, k = " << k << std::endl;
             auto jt = FieldExtensions.find(k);
-            assert(jt != FieldExtensions.end());  
+            assert(jt != FieldExtensions.end());
             // if (jt == FieldExtensions.end())
             // jt = FieldExtensions.emplace(std::make_pair(k, Fp2k {k})).first;
             assert(jt->first == jt->second.k);
@@ -132,7 +132,7 @@ std::vector<std::pair<ecp,std::pair<int, int>>> idealToKernel(quat const &alpha,
         auto const &Basis = it->second;
         assert(!(ell_ext * Basis.first) && ell_ext/ell * Basis.first);
         assert(!(ell_ext * Basis.second) && ell_ext/ell * Basis.second);
-        
+
         auto const project = [&](ecp const &pt) {
             return evalEndo(endo, pt, ell_ext);
         };
@@ -157,11 +157,11 @@ isog_chain idealToIsogeny(quat const &alpha, NTL::ZZ const &N, ec const &E0, std
     std::unordered_map<int, int> facN = factor(N);
     auto kerGens = idealToKernel(alpha, facN, E0, FieldExtensions, TorsionBases);
     std::chrono::duration<long, std::milli> duration_id2ker = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-start_id2ker);
-    //std::cout << "idealToKernel done!" << std::endl;    
-    //std::cout << "ideal to kernel took: " << duration_id2ker.count() << " milliseconds" << std::endl;    
+    //std::cout << "idealToKernel done!" << std::endl;
+    //std::cout << "ideal to kernel took: " << duration_id2ker.count() << " milliseconds" << std::endl;
     std::sort(kerGens.begin(), kerGens.end(), [](auto &left, auto &right) { //It helps a lot to sort the kernel generators like this to avoid evaluating expensive isogenies as much as possible
         return left.second.first > right.second.first;
-    }); 
+    });
     //std::cout << "Computing isogeny chain from kernel generators" << std::endl;
 //    clock_t t = clock();
     auto phi = isog_chain(kerGens);

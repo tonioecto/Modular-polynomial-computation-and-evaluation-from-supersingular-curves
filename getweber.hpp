@@ -10,13 +10,18 @@
 #include <NTL/ZZ_pEX.h>
 #include <iostream>
 #include <vector>
-#include <cmath> 
+#include <cmath>
 #include "choosetorsion.hpp"
 #include "hashmap.hpp"
+#include "smallint.hpp"
+#include "getresultants.hpp"
 
-typedef std::vector<std::pair< Fp2, std::vector<std::vector<std::pair<Integer,Integer>>>>> weber_enum;
+typedef std::pair<Integer,Integer> IntegerPair;
 
-struct weber_bas 
+typedef std::vector<std::pair< Fp2, std::vector<std::vector<SmallIntegerPair>>>> weber_enum;
+
+
+struct weber_bas
 {
     ecp P16;
     ecp Q16;
@@ -24,17 +29,35 @@ struct weber_bas
     ecp Q3;
 };
 
-struct weber_full_data 
+struct weber_full_data
 {
     weber_bas basis;
     weber_enum enumerator;
 };
 
-inline std::pair<Integer,Integer> Zp_mat_application(const mat_Fp &mat, const std::pair<Integer,Integer> &x) {
-    return { NTL::conv<Integer>( mat[0][0] * NTL::conv<Fp>(x.first) + mat[1][0] * NTL::conv<Fp>(x.second) ), NTL::conv<Integer>(mat[0][1] * NTL::conv<Fp>(x.first) + mat[1][1] * NTL::conv<Fp>(x.second)) };
-}
 
-Fp2 WeberGetFromEnum(const std::vector<std::vector<std::pair<Integer,Integer>>> &coeffs, const weber_enum &webdat, const std::pair<mat_Fp, mat_Fp> change_mats);
+struct weber_enum_poly_precomp {
+
+    ZZ_pEXY R1;
+    ZZ_pEXYZ R2;
+    FpEX_elem G0;
+    FpEX_elem H0;
+    FpEX_elem I0;
+    FpEX_elem J0;
+    ZZ_pEXY Xs16;
+    ZZ_pEXY D1;
+    ZZ_pEXY D2;
+    ZZ_pEXY N1;
+    ZZ_pEXY N2;
+
+};
+
+weber_enum_poly_precomp SetWeberPrecomp();
+
+
+
+
+Fp2 WeberGetFromEnum(const std::vector<std::vector<SmallIntegerPair>> &coeffs, const weber_enum &webdat, const std::pair<SmallMatFp, SmallMatFp> change_mats);
 std::vector<Fp2> get_powers(Fp2 a, unsigned k);
 
 FpE_elem CommonRootTwoResultants(std::vector<FpEX_elem> rs);
@@ -53,14 +76,12 @@ NTL::ZZ_pE GetWeberDomainBig(NTL::ZZ_pE j);
 FpE_elem GetWeberDomainFp(FpE_elem j);
 NTL::ZZ_pE GetWeberDomainFpBig(NTL::ZZ_pE j);
 std::vector<FpE_elem> GetWeberDomainAll(FpE_elem const &j);
-std::vector<std::vector<ecp>> BasCoeffToLevelStructure(const weber_bas &web, const std::vector<std::vector<std::pair<Integer,Integer>>> coeff);
-bool BasCoeffToWeber(Fp2 *w, const weber_bas &web, const std::vector<std::vector<std::pair<Integer,Integer>>> coeff, const std::map<unsigned,Fp2k> &Fexts);
+std::vector<std::vector<ecp>> BasCoeffToLevelStructure(const weber_bas &web, const std::vector<std::vector<SmallIntegerPair>> coeff);
+bool BasCoeffToWeber(Fp2 *w, const weber_bas &web, const std::vector<std::vector<SmallIntegerPair>> coeff, const std::map<unsigned,Fp2k> &Fexts);
 
-weber_enum EnumerateAllWeberFast(const weber_bas &web, const std::map<unsigned,Fp2k> &Fexts);
-Fp2 WeberGetFromEnum(const std::vector<std::vector<std::pair<Integer,Integer>>> &coeffs, const weber_enum &webdat, const std::pair<NTL::mat_ZZ_p, NTL::mat_ZZ_p> change_mats);
+weber_enum EnumerateAllWeberFast(const weber_bas &web, const std::map<unsigned,Fp2k> &Fexts, const weber_enum_poly_precomp *precomp);
+Fp2 WeberGetFromEnum(const std::vector<std::vector<SmallIntegerPair>> &coeffs, const weber_enum &webdat, const std::pair<NTL::mat_ZZ_p, NTL::mat_ZZ_p> change_mats);
 
-std::vector<std::vector<std::vector<std::pair<Integer,Integer>>>> EnumerateAllWeberCoeff();
-weber_enum EnumerateAllWeber(const weber_bas &web, const std::vector<std::vector<std::vector<std::pair<Integer,Integer>>>> &coeff_list, const std::map<unsigned,Fp2k> &Fexts);
 
 Fp2X eval_phi11_weber( Fp2 w );
 

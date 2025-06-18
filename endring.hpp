@@ -88,7 +88,7 @@ bool inline is_isomorphic(ec const &E1, ec const &E2)
 }
 
 std::pair<ec, quatlat> inline starting_curve(quatalg const &alg, bool surface=false)
-{   
+{
     if ((alg.q > 3)) {
         std::cout << "!!!!!! CAREFUL! YOU PROBABLY NEED TO CALL THE OTHER FUNCTION WITH FIELD EXTS !!!!!!!" << std::endl;
     }
@@ -130,7 +130,7 @@ std::pair<ec, quatlat> inline starting_curve(quatalg const &alg, bool surface=fa
 }
 
 std::pair<ec, quatlat> inline starting_curve(quatalg const &alg, std::map<unsigned,Fp2k> &Fexts, bool surface=false)
-{   
+{
     ec E0;
     if (!(NTL::IsOne(alg.q))) {
         assert (alg.p % 4 != 3);
@@ -206,7 +206,7 @@ quatlat inline transport_endring(ec const &E0, quatlat const &O0, ec const &E1, 
 
     if (E0 == E1)
         return O0;
-    
+
     ////////////////////////////////////////////////
 
     std::vector<std::pair<NTL::ZZ,NTL::ZZ>> evs;
@@ -219,7 +219,7 @@ quatlat inline transport_endring(ec const &E0, quatlat const &O0, ec const &E1, 
             continue;
         ssize_t deg = torsionToFieldDegree(l);
         assert(deg == -1 || deg >= 1);
-        if (deg == -1) continue; 
+        if (deg == -1) continue;
         if (deg > max_k) continue;
         if (NTL::Jacobi(-O0.alg.p % l, l) != 1)
             continue;
@@ -247,7 +247,7 @@ quatlat inline transport_endring(ec const &E0, quatlat const &O0, ec const &E1, 
             auto [l,ev] = evs[idx];
             unsigned deg = torsionToFieldDegree(l);
             auto jt = Fexts.find(deg);
-            assert(jt != Fexts.end());  
+            assert(jt != Fexts.end());
             auto const &ext = jt->second;
             assert(ext.k == deg);
 
@@ -362,7 +362,7 @@ quatlat inline transport_endring(ec const &E0, quatlat const &O0, ec const &E1, 
 
 
 quatlat inline compute_endring(ec const &E, quatalg const &alg, std::map<unsigned,Fp2k> &Fexts, uint64_t avoid_prime=0)
-{   
+{
     assert(NTL::power(E.a(), alg.p) == E.a());
     assert(NTL::power(E.b(), alg.p) == E.b());
     bool surf = is_surface(E);
