@@ -111,20 +111,11 @@ public:
         normalize();
     }
 
-    void normalize()
-    {
-        assert(!NTL::IsZero(coeffs[4]));
-        if (coeffs[4] < 0)
-            for (auto &c: coeffs)
-                c = -c;
-        NTL::ZZ g = coeffs[4];
-        for (unsigned i = 0; i < 4 && !NTL::IsOne(g); ++i)
-            g = NTL::GCD(g, coeffs[i]);
-        assert(g > 0);
-        if (!NTL::IsOne(g))
-            for (auto &c: coeffs)
-                c /= g;
-    }
+    void normalize();
+    
+    Integer scalar_remove();
+
+    void scalar_mul(Integer N);
 
     quat const conjugate() const
     {
@@ -201,11 +192,7 @@ public:
         return *this;
     }
 
-    std::pair<NTL::ZZ,NTL::ZZ> norm() const  // returns numerator and denominator
-    {
-        auto const &[a,b,c,d,e] = this->coeffs;
-        return { a*a + alg.q * b*b + alg.p * ( c*c + alg.q * d * d), e*e };
-    }
+    std::pair<NTL::ZZ,NTL::ZZ> norm() const;  // returns numerator and denominator
 
     std::pair<NTL::ZZ,NTL::ZZ> trace() const  // returns numerator and denominator
     {
@@ -217,6 +204,8 @@ public:
         }
         return {num, denom};
     }
+
+    Integer integral_trace() const;
 
     std::pair<NTL::ZZ,NTL::ZZ> trace_pairing(quat const &other) const
     {
@@ -234,6 +223,8 @@ public:
             << alpha[3] << "/" << alpha[4] << "*k";
     }
 
+
+
     bool is_one() const
     {
         auto const &[a,b,c,d,e] = coeffs;
@@ -247,6 +238,9 @@ public:
         assert(e != 0);
         return a == 0 && b == 0 && c == 0 && d == 0;
     }
+    
+    Integer integral_norm() const;
+
 };
 
 
@@ -338,7 +332,7 @@ public:
     quatlat _compute_order(bool right_order) const;
 
     quatlat new_right_order() const;
-    std::pair<quatlat,NTL::mat_ZZ>  fast_right_order_and_gram();
+    std::pair<quatlat, NTL::mat_ZZ>  fast_right_order_and_gram();
 
     quatlat left_order() const { return _compute_order(false); }
     quatlat right_order() const { return new_right_order(); }
@@ -408,11 +402,16 @@ public:
 };
 
 quatlat create_from_generator(const quat &gen, const NTL::ZZ &norm, const quatlat &left_order);
-std::list<quatlat> left_ideals_of_prime_norm_O0(NTL::ZZ const &ell, const quat &first_gen, const quat &iter);
+std::vector<quatlat> left_ideals_of_prime_norm_O0(NTL::ZZ const &ell, const quatalg &Bp);
 quatlat create_from_generator_O0(const quat &gen, const NTL::ZZ &norm);
 
 quatlat connecting_ideal(const quatlat &left_order, const quatlat &right_order);
+quat find_quaternion_iterator(std::list<int>& prime_list, const quatlat& I, const quatlat& O0, const quatalg &Bp);
 
+
+bool commutatorfind(const std::pair<quat,quat> &beta1, const std::pair<quat,quat> &beta2, const std::pair<Integer,Integer> n, const quat prod_quat, const Integer prod_quat_norm, bool is_FP, quat &quat_sol);
+
+NTL::mat_ZZ compute_HNF_gram_order(quatlat *order);
 
 namespace std {
     template<>

@@ -9,34 +9,631 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "hashmap.hpp"
+#include <bit>
+#include <algorithm>
+#include <cstdint>
+#include <stdexcept>
 
-NTL::mat_ZZ compute_gram_order(quatlat const &order) {
-    NTL::mat_ZZ gram;
-    gram.SetDims(3,3);
-    NTL::mat_ZZ HNF;
-    if (order.basis[0][0] == order.denom && order.basis[0][1]==0 && order.basis[0][2]==0 && order.basis[0][3]==0){
-        HNF = order.basis;
-    }
-    else {
-        HNF = order.HNF_basis();
-    }
-    std::array<quat, 3> elts {{
-        {{NTL::ZZ(0), 2*(HNF[1][1]), 2*(HNF[1][2]), 2*(HNF[1][3]), order.denom}, order.alg},
-        {{NTL::ZZ(0), 2*(HNF[2][1]), 2*(HNF[2][2]), 2*(HNF[2][3]), order.denom}, order.alg},
-        {{NTL::ZZ(0), 2*(HNF[3][1]), 2*(HNF[3][2]), 2*(HNF[3][3]), order.denom}, order.alg},
-    }};
+// SLOW LLL for low dimension (from Low-Dimensional Lattice Basis Reduction Revisited paper by Stehlé and Nguyen)
 
+Integer DivRound(Integer a, Integer b) {
+    Integer x;
+    NTL::div(x,a + b/2,b);
+    
+    return x;     
+}
 
-    for (unsigned i = 0; i < 3; ++i) {
-        for (unsigned j = 0; j < 3; ++j) {
-            auto pair = elts[i] * elts[j].conjugate();
-            assert(pair[0] %(pair[4]) ==0);
-            gram[i][j] = pair[0]/(pair[4]);
-        }
-    }
-    return gram;
+void CVP2(NTL::mat_ZZ &gram, const int i, const int j, int k) { 
+    Integer x = DivRound(gram[i][j],gram[i][i]);
+
+    Integer y = gram[i][j] - x * gram[i][i];
+
+    gram[j][j] = gram[j][j] - x * (y + gram[i][j]);
+
+    gram[i][j] = y;
+    gram[j][i] = y;
+    gram[j][k] = gram[j][k] - x * gram[i][k];
+    gram[k][j] = gram[j][k];
 
 }
+
+Integer NormSubGram(Integer x1, Integer x2, NTL::mat_ZZ gram, int i, int j, int k) {
+    return gram[k][k] + x1 * x1 * gram[i][i] + x2 * x2 * gram[j][j] + 2 * x1 * x2 * gram[i][j] - 2 * ( x1 * gram[i][k] + x2 * gram[j][k] ); 
+}
+
+
+void CVP3(NTL::mat_ZZ &gram, const int i, const int j, const int k) {
+
+    // std::cout << "i " << i << " j " << j << " k " << k << "\n";
+
+    Integer t1 = gram[i][i] * gram[j][j] - gram[i][j] * gram[i][j];
+    assert(t1 >= 0);
+    // std::cout << "     t1 = " << t1 << "\n"; 
+    // std::cout << "x1 * t1 = " << gram[j][j] * gram[i][k] - gram[i][j] * gram[j][k] << "\n";
+    Integer x1 = DivRound( (gram[j][j] * gram[i][k] - gram[i][j] * gram[j][k]), t1);
+    Integer x2 = DivRound( (gram[i][i] * gram[k][j] - gram[i][k] * gram[i][j]), t1);
+
+
+    // std::cout << "x12 = " << x1 << " " << x2 << " \n";
+
+    Integer smallest = NormSubGram(x1, x2, gram, i, j ,k);
+    Integer temp = smallest;
+    // std::cout << "first guess = " << smallest << "\n";
+    Integer new_x1 = x1;
+    Integer new_x2 = x2;
+    
+    // std::vector< std::pair<Integer, Integer>> candidates = { {Integer(-1), Integer(-1)}, {Integer(-1), Integer(0)}, {Integer(-1), Integer(1)}, {Integer(0), Integer(-1)}, {Integer(0), Integer(1)}, {Integer(1), Integer(-1)}, {Integer(1), Integer(0)}, {Integer(1), Integer(1)} };
+
+    // Integer new_x1 = x1;
+    // Integer new_x2 = x2;
+
+    // for (auto [eps1, eps2] : candidates) {
+    //     Integer new_norm = NormSubGram(x1 + eps1, x2 + eps2, gram, i, j, k);
+    //     assert(new_norm > 0);
+    //     if (new_norm < smallest) {
+    //         std::cout<< eps1 << " " << eps2 << "\n";
+    //         smallest = new_norm;
+    //         new_x1 = x1 + eps1;
+    //         new_x2 = x2 + eps2;
+    //     }
+    // } 
+
+    // apparently the only admissible corrections are only (0,1), (0,-1), (1,0) and (-1,0) 
+    // we can determine the sign by the cross product and so we have only two values to test
+    Integer s1 = x1 * gram[i][i] + x2 * gram[i][j] - gram[i][k];
+    Integer s2 = x2 * gram[j][j] + x1 * gram[i][j] - gram[j][k];
+    if (s1 >=0) {
+        s1 = temp + gram[i][i] - 2 * s1;
+        if (s1 < smallest) {
+            smallest = s1;
+            new_x1 = x1 + Integer(-1);
+        }
+    }
+    else {
+        s1 = temp + gram[i][i] + 2 * s1;
+        if (s1 < smallest) {
+            smallest = s1;
+            new_x1 = x1 + Integer(1);
+        }
+    }
+    if (s2 >=0) {
+        s2 = temp + gram[j][j] - 2 * s2;
+        if (s2 < smallest) {
+            smallest = s2;
+            new_x2 = x2 + Integer(-1);
+            new_x1 = x1;
+        }
+    }
+    else {
+        s2 = temp + gram[j][j] + 2 * s2;
+        if (s2 < smallest) {
+            smallest = s2;
+            new_x2 = x2 + Integer(1);
+            new_x1 = x1;
+        }
+    }
+
+    // std::cout << "2nd guess " << smallest << "\n";
+
+    gram[k][k] = smallest;
+    gram[i][k] = gram[i][k] - new_x1 * gram[i][i] - new_x2 * gram[i][j];
+    gram[k][i] = gram[i][k];
+    gram[k][j] = gram[k][j] - new_x1 * gram[i][j] - new_x2 * gram[j][j];
+    gram[j][k] = gram[k][j];    
+}
+
+void SortGram(NTL::mat_ZZ &gram) {
+    if (gram[0][0] > gram[1][1]) {
+            std::swap(gram[0][0], gram[1][1]);
+            std::swap(gram[2][1], gram[2][0]);
+            std::swap(gram[0][2], gram[1][2]);
+        }
+        if (gram[1][1] > gram[2][2]) {
+            std::swap(gram[2][2], gram[1][1]);
+            std::swap(gram[0][1], gram[0][2]);
+            std::swap(gram[1][0], gram[2][0]);
+        }
+        if (gram[0][0] > gram[1][1]) {
+            std::swap(gram[0][0], gram[1][1]);
+            std::swap(gram[2][1], gram[2][0]);
+            std::swap(gram[0][2], gram[1][2]);
+        }
+}
+
+void GreedyReduction3(NTL::mat_ZZ &gram) {
+
+    // std::cout << "Greedy \n";
+    // std::cout << "gram= " << gram << "\n";
+
+    
+
+    // first we sort by increasing order
+    SortGram(gram);
+
+    int k = 1;
+    int count = 0;
+    while (k < 3 && count <= 100) {
+        
+        count++;
+        // if (count  < 5) {
+            // std::cout << count << " k = " << k << " " << gram << "\n";
+        // }
+        // std::cout << "k = " << k << "\n";
+        // std::cout << gram << "\n";
+
+        assert(gram[0][0] * gram[1][1] - gram[0][1] * gram[0][1] >= 0);
+        assert(gram[0][0] * gram[2][2] - gram[0][2] * gram[0][2] >= 0);
+        assert(gram[2][2] * gram[1][1] - gram[2][1] * gram[2][1] >= 0);
+        
+        if (k == 1) {
+            Integer old = gram[1][1];
+            // std::cout << "before CVP2" << gram << "\n";
+            CVP2(gram, 0, 1, 2);
+            // std::cout << "after CVP2" << gram << "\n";
+// #ifndef NDEBUG 
+            // if (old >= gram[1][])
+// #endif 
+            assert(old >= gram[1][1]);
+
+            if (gram[1][1] >= gram[0][0]) {
+                k = k + 1;      
+            }
+            else {
+                // we swap the first and second vector
+                std::swap(gram[0][0], gram[1][1]);
+                std::swap(gram[2][1], gram[2][0]);
+                std::swap(gram[0][2], gram[1][2]);
+            }
+        }
+        else if (k == 2) {
+            Integer old = gram[2][2];
+            CVP3(gram, 0, 1, 2);
+            assert(gram[2][2] <= old);
+
+            if (gram[2][2] >= gram[1][1]) {
+                k = k + 1;
+            }
+            else {
+                // maybe this is a bit unefficient as we know the first and second vectors are already sorted
+                SortGram(gram);
+                k = 1;
+            }
+
+        } 
+
+
+    }
+
+} 
+
+FastInteger div_round(FastInteger a, FastInteger b) { return (a^b)<0 ? (a - (b >> 1) )/b : (a + (b >> 1))/b; }
+
+
+void FastCVP2(FastMat3 &gram, const size_t i, const size_t j, const size_t k, FastMat3 &Coords) { 
+    
+    FastInteger x = div_round(gram[i][j], gram[i][i]);
+    gram[i][j] -= x * gram[i][i];
+
+    // the j-th vector b[j] <- b[j] - x * b[i]
+    gram[j][j] = gram[j][j] - x * (gram[i][j] + gram[j][i]);
+
+    gram[j][i] = gram[i][j];
+    gram[j][k] = gram[j][k] - x * gram[i][k];
+    gram[k][j] = gram[j][k];
+
+    Coords[j][0] -= x * Coords[i][0];
+    Coords[j][1] -= x * Coords[i][1];
+    Coords[j][2] -= x * Coords[i][2];
+}
+
+
+// this is the number of zeros, so the real bit number is #sizeof(FastInteger) - bit_length(x) 
+// assumes the input is positive
+size_t bit_length(FastInteger x) {
+    // if (x >= 0) {
+        return std::countl_zero((unsigned long long) x);
+    // }
+    // else {
+        // return bit_length(-x - 1);
+    // }
+}
+
+FastInteger absolute_value(FastInteger x) {
+    uint64_t temp = x >> 63;     // make a mask of the sign bit
+    x ^= temp;                   // toggle the bits if value is negative
+    x += temp & 1;  
+    return x;
+}
+
+
+void binLagrange(FastMat3 &gram, size_t &i, size_t &j, size_t &k, FastMat3 &Coords) {
+    int bitlen = bit_length(gram[i][i]);
+
+    while (true) {
+
+        if (gram[j][j] < gram[i][i]) {
+            gram[j][i] = gram[i][j];
+            std::swap(i,j); 
+            bitlen = bit_length(gram[i][i]);
+        }
+
+        if (gram[i][j] >= 0) {
+
+            if ((gram[i][j] << 1) <= gram[i][i]) {
+                gram[j][i]  = gram[i][j];
+                gram[k][j] = gram[j][k];
+                gram[k][i] = gram[i][k];
+                return ;
+            }
+            size_t s = std::max(0, bitlen - (int) bit_length(gram[i][j]) );
+
+            // b[j] <- b[j] - 2^s b[i]
+            Coords[j][0] -= Coords[i][0] << s;
+            Coords[j][1] -= Coords[i][1] << s;
+            Coords[j][2] -= Coords[i][2] << s;
+            // TODO there may be better to do, in particular, some part of this computation is already done to check the return condition
+            gram[j][j] += (gram[i][i] << (s << 1)) - (gram[i][j] << (s + 1));
+            gram[i][j] -= (gram[i][i] << s);
+            gram[j][k] -= gram[i][k] << s;
+        }
+        else {
+
+
+            if ((-gram[i][j] << 1) <= gram[i][i]) {
+                gram[j][i]  = gram[i][j];
+                gram[k][j] = gram[j][k];
+                gram[k][i] = gram[i][k];
+                return ;
+            }
+            size_t s = std::max(0, bitlen - (int) bit_length(- gram[i][j] - 1) );
+
+
+           // b[j] <- b[j] + 2^s b[i]
+            Coords[j][0] += Coords[i][0] << s;
+            Coords[j][1] += Coords[i][1] << s;
+            Coords[j][2] += Coords[i][2] << s;
+
+            gram[j][j] += (gram[i][i] << (s << 1)) + (gram[i][j] << (s + 1));
+            gram[i][j] += (gram[i][i] << s);
+            gram[j][k] += gram[i][k] << s;
+            
+        }
+
+    }
+    
+}
+
+void FastLagrange2(FastMat3 &gram, size_t &i, size_t &j, size_t &k, FastMat3 &Coords) {
+
+    FastCVP2(gram, i, j, k, Coords);
+
+    while (gram[j][j] < gram[i][i]) {
+        std::swap(i, j);
+        // if ((gram[i][j] << 1) > gram[i][i]) {
+            FastCVP2(gram, i, j, k, Coords);
+        // }
+        // else {return;}
+        
+    }
+
+}
+
+void FastCVP3(FastMat3 &gram, const size_t i, const size_t j, const size_t k, FastMat3 &Coords) {
+
+    // FastInteger t1 = gram[i][i] * gram[j][j] - gram[i][j] * gram[i][j];
+    // FastInteger x1 = FastDivRound( (gram[j][j] * gram[i][k] - gram[i][j] * gram[j][k]), t1);
+    // FastInteger x2 = FastDivRound( (gram[i][i] * gram[k][j] - gram[i][k] * gram[i][j]), t1);
+
+    FastInteger x1,x2;
+    // std::cout << gram << "\n";
+
+    if (gram[i][j] == 0 ) {
+        assert(gram[i][i] != 0);
+        x1 = div_round(gram[i][k], gram[i][i]);
+        x2 = div_round(gram[k][j], gram[j][j]);
+    }
+    else {
+        FastFloat t1 = ((FastFloat) gram[i][i]) * IntToFloat(gram[j][j], gram[i][j]) - (FastFloat) gram[i][j];
+        x1 = Rounding( (((FastFloat) gram[j][j]) * IntToFloat(gram[i][k], gram[i][j]) - (FastFloat) gram[k][j]) / t1 );
+
+        // the idea below doesn't seem to work
+        // auto tx1 = round_div_branchless( round_div_branchless(gram[i][k]<< 32,gram[i][j]) - round_div_branchless(gram[k][j] << 32,gram[j][j]) ,  round_div_branchless(gram[i][i] << 32,gram[i][j]) - round_div_branchless(gram[i][j] << 32,gram[j][j]) );
+
+        x2 = Rounding( (((FastFloat) gram[i][i]) * IntToFloat(gram[j][k], gram[i][j]) - (FastFloat) gram[i][k]) / t1 );  
+    }
+
+    // some common computations
+    gram[k][i] = x1 * gram[i][i];
+    gram[k][j] = x2 * gram[j][j];
+    gram[j][i] = x2 * gram[i][j];
+    gram[k][k] += x1 * gram[k][i] + x2 * gram[k][j] + ((x1 * gram[j][i]) << 1) - (( x1 * gram[i][k] + x2 * gram[j][k] ) << 1); 
+
+    // apparently the only admissible corrections are only (0,1), (0,-1), (1,0) and (-1,0) 
+    // we can determine the sign by the cross product and so we have only two values to test
+
+    // we can already precompute those values
+    gram[i][k] -= gram[k][i] + gram[j][i];
+    gram[j][k] -= gram[k][j] + x1 * gram[i][j];
+    gram[j][i] = gram[i][j];
+
+    if (gram[i][k] < 0) {
+        gram[k][i] = gram[i][i] + (gram[i][k] << 1);
+        if (gram[k][i] < 0) {
+            if (gram[j][k] < 0) {
+                gram[k][j] = gram[j][j] + (gram[j][k] << 1);
+                if (gram[k][j] < gram[k][i]) {
+                    gram[k][k] += gram[k][j];
+                    x2--;
+                    gram[i][k] += gram[i][j];
+                    gram[j][k] += gram[j][j];
+                }
+                else {
+                    gram[k][k] += gram[k][i];
+                    x1--;
+                    gram[i][k] += gram[i][i];
+                    gram[j][k] += gram[i][j];
+                }
+            }
+            else {
+                gram[k][j] = gram[j][j] - (gram[j][k] << 1);
+                if (gram[k][j] < gram[k][i]) {
+                    gram[k][k] += gram[k][j];
+                    x2++;
+                    gram[i][k] -= gram[i][j];
+                    gram[j][k] -= gram[j][j];
+                }
+                else {
+                    gram[k][k] += gram[k][i];
+                    x1--;
+                    gram[i][k] += gram[i][i];
+                    gram[j][k] += gram[i][j];
+                }
+            }
+        }
+        else {
+            if (gram[j][k] < 0) {
+                gram[k][j] = gram[j][j] + (gram[j][k] << 1);
+                if (gram[k][j] < 0) {
+                    gram[k][k] += gram[k][j];
+                    x2--;
+                    gram[i][k] += gram[i][j];
+                    gram[j][k] += gram[j][j];
+                }
+            }
+            else {
+                gram[k][j] = gram[j][j] - (gram[j][k] << 1);
+                if (gram[k][j] < 0) {
+                    gram[k][k] += gram[k][j];
+                    x2++;
+                    gram[i][k] -= gram[i][j];
+                    gram[j][k] -= gram[j][j];
+                }
+            }
+        }
+        
+    }
+    else {
+        gram[k][i] = gram[i][i] - (gram[i][k] << 1);
+        if (gram[k][i] < 0) {
+            if (gram[j][k] < 0) {
+                gram[k][j] = gram[j][j] + (gram[j][k] << 1);
+                if (gram[k][j] < gram[k][i]) {
+                    gram[k][k] += gram[k][j];
+                    x2--;
+                    gram[i][k] += gram[i][j];
+                    gram[j][k] += gram[j][j];
+                }
+                else {
+                    gram[k][k] += gram[k][i]; 
+                    x1++;
+                    gram[i][k] -= gram[i][i];
+                    gram[j][k] -= gram[i][j];
+                }
+            }
+            else {
+                gram[k][j] = gram[j][j] - (gram[j][k] << 1);
+                if (gram[k][j] < gram[k][i]) {
+                    gram[k][k] += gram[k][j];
+                    x2++;
+                    gram[i][k] -= gram[i][j];
+                    gram[j][k] -= gram[j][j];
+                }
+                else {
+                    gram[k][k] += gram[k][i];
+                    x1++;
+                    gram[i][k] -= gram[i][i];
+                    gram[j][k] -= gram[i][j];
+                }
+            }
+        }
+        else {
+            if (gram[j][k] < 0) {
+                gram[k][j] = gram[j][j] + (gram[j][k] << 1);
+                if (gram[k][j] < 0) {
+                    gram[k][k] += gram[k][j];
+                    x2--;
+                    gram[i][k] += gram[i][j];
+                    gram[j][k] += gram[j][j];
+                }
+            }
+            else {
+                gram[k][j] = gram[j][j] - (gram[j][k] << 1);
+                if (gram[k][j] < 0) {
+                    gram[k][k] += gram[k][j];
+                    x2++;
+                    gram[i][k] -= gram[i][j];
+                    gram[j][k] -= gram[j][j];
+                }
+            }
+        }
+        
+    }
+    
+    gram[k][i] = gram[i][k];
+    gram[k][j] = gram[j][k];    
+
+    // b[k] <- b[k] - new_x1 * b[i] - new_x2 * b[j];
+    Coords[k][0] -= x1 * Coords[i][0] + x2 * Coords[j][0];
+    Coords[k][1] -= x1 * Coords[i][1] + x2 * Coords[j][1];
+    Coords[k][2] -= x1 * Coords[i][2] + x2 * Coords[j][2];
+}
+
+void FastSortGram(FastMat3 &gram, FastMat3 &Coords) {
+    if (gram[0][0] > gram[1][1]) {
+            std::swap(gram[0][0], gram[1][1]);
+            std::swap(gram[2][1], gram[2][0]);
+            std::swap(gram[0][2], gram[1][2]);
+            std::swap(Coords[0][0], Coords[1][0]);
+            std::swap(Coords[0][1], Coords[1][1]);
+            std::swap(Coords[0][2], Coords[1][2]);
+
+        }
+        if (gram[1][1] > gram[2][2]) {
+            std::swap(gram[2][2], gram[1][1]);
+            std::swap(gram[0][1], gram[0][2]);
+            std::swap(gram[1][0], gram[2][0]);
+            std::swap(Coords[2][0], Coords[1][0]);
+            std::swap(Coords[2][1], Coords[1][1]);
+            std::swap(Coords[2][2], Coords[1][2]);
+        }
+        if (gram[0][0] > gram[1][1]) {
+            std::swap(gram[0][0], gram[1][1]);
+            std::swap(gram[2][1], gram[2][0]);
+            std::swap(gram[0][2], gram[1][2]);
+            std::swap(Coords[0][0], Coords[1][0]);
+            std::swap(Coords[0][1], Coords[1][1]);
+            std::swap(Coords[0][2], Coords[1][2]);
+        }
+}
+
+void FastSortIndex(FastMat3 &gram, size_t &i, size_t &j, size_t &k) {
+    if (gram[i][i] > gram[j][j]) {
+        std::swap(i,j);
+    }
+    if (gram[j][j] > gram[k][k]) {
+        std::swap(j,k);
+    }
+    if (gram[i][i] > gram[j][j]) {
+        std::swap(i,j);
+    }
+}
+
+
+// this is also known as Semaev algorithm
+void FastGreedyReduction3(FastMat3 &gram, FastMat3 &Coords) {
+
+    // std::cout << "\n\n new_greedy \n";
+    // FastSortGram(gram, Coords);
+
+    int current_dim = 1;
+    int count = 0;
+
+    size_t i,j,k;
+    i = 0;
+    j = 1; 
+    k = 2;
+
+    FastSortIndex(gram, i, j, k);
+
+    while (current_dim < 3 && count <= 1000) {
+        count++;
+
+        if (current_dim == 1) {
+            // auto gg = gram;
+            // auto cc = Coords;
+            // clock_t t = tic();
+            FastLagrange2(gram, i, j, k, Coords);
+            // t = tic() - t;
+            // std::cout << "FL2 " << t << "\n"; 
+            // // it maybe slightly faster (not 100% clear)
+            // t = tic();
+            // binLagrange(gg, i, j, k, cc);
+            // t = tic() - t; 
+            // std::cout << "BL2 " << t << "\n"; 
+            current_dim++;
+        }
+        else if (current_dim == 2) {
+#ifndef NDEBUG 
+            FastInteger old = gram[k][k];
+#endif
+            FastCVP3(gram, i, j, k, Coords);
+            
+            assert(gram[k][k] <= old);
+
+            if (gram[k][k] >= gram[j][j]) {
+                current_dim++;
+            }
+            else {
+                // maybe this is a bit unefficient as we know the first and second vectors are already sorted
+                FastSortIndex(gram, i, j, k);
+                // FastSortGram(gram, Coords);
+                current_dim = 1;
+            }
+
+        } 
+
+    }
+
+    FastSortGram(gram, Coords);
+} 
+
+// we apply BinaryLagrange Reduction on all pairs 
+// and then finish off with Semaev
+void FastLagrange3(FastMat3 &gram, FastMat3 &Coords) {
+    size_t i,j,k;
+    i = 0;
+    j = 1; 
+    k = 2;
+
+    FastSortIndex(gram, i, j, k);
+
+    // std::cout << "input =" << gram << "\n";
+
+    bool not_reduced = true;
+    FastInteger old;
+    int count = 0;
+    while (not_reduced && count < 1000) {
+        // std::cout << "loop !" << "\n";
+        count++;
+        not_reduced = false;
+        
+        // (i,j)
+        old = gram[i][i];
+        FastLagrange2(gram, i, j, k, Coords);
+        not_reduced = gram[i][i] < old;
+
+        // (i,k)
+        old = gram[i][i];
+        FastLagrange2(gram, i, k, j, Coords);
+        not_reduced = not_reduced || (gram[i][i] < old);
+
+        // (j,k)
+        old = gram[j][j];
+        FastLagrange2(gram, j, k, i, Coords);
+        not_reduced = not_reduced || (gram[j][j] < old);
+
+        if (!not_reduced) {
+            FastCVP3(gram, i, j, k, Coords);
+            not_reduced = gram[k][k] < gram[j][j];
+            if (not_reduced) {
+                FastSortIndex(gram, i, j, k);
+            }
+            
+        }
+
+    }
+
+    // std::cout << "input = " << gram << "\n";
+
+    // FastGreedyReduction3(gram, Coords);
+    // std::cout << "output = " << gram << "\n\n\n";
+    // FastCVP3(gram, i, j, k, Coords);
+    FastSortGram(gram, Coords);
+
+    
+
+}
+
 
 void inner_order_invariant_computation(NTL::ZZ *IntList
 ,quatlat const &order, quat *small
@@ -198,7 +795,7 @@ void inner_order_invariant_computation(NTL::ZZ *IntList
 }
 
 void inner_order_invariant_computation_from_gram(NTL::ZZ *IntList, NTL::mat_ZZ gram_input
-// , quatlat order, quat *small
+, quatlat order, std::pair<quat,quat> *small
 ) {
     // (void) small;
     // (void) order;
@@ -227,12 +824,14 @@ void inner_order_invariant_computation_from_gram(NTL::ZZ *IntList, NTL::mat_ZZ g
 
     lllobj.lll();
 
-    std::array<std::array<FastInteger,3>,3> Red_Mat{{{0,0,0},{0,0,0},{0,0,0}}};
+    // std::array<std::array<FastInteger,3>,3> Red_Mat{{{0,0,0},{0,0,0},{0,0,0}}};
+    NTL::mat_ZZ Red_Mat;
+    Red_Mat.SetDims(3,3);
     for (int i = 0; i<3; i++) {
         for (int j=0; j<3; j++) {
             // NTL::ZZ c;
-            // gmp2ntl(Red_Mat[i][j], Red[i][j].get_data());
-            Red_Mat[i][j] = mpz_get_si(Red[i][j].get_data());
+            gmp2ntl(Red_Mat[i][j], Red[i][j].get_data());
+            // Red_Mat[i][j] = mpz_get_si(Red[i][j].get_data());
         }
     }
 
@@ -260,27 +859,27 @@ void inner_order_invariant_computation_from_gram(NTL::ZZ *IntList, NTL::mat_ZZ g
             std::swap(gram_test[0][0], gram_test[1][1]);
             std::swap(gram_test[2][1], gram_test[2][0]);
             std::swap(gram_test[0][2], gram_test[1][2]);
-            // std::swap(Red_Mat[0][0], Red_Mat[1][0]);
-            // std::swap(Red_Mat[0][1], Red_Mat[1][1]);
-            // std::swap(Red_Mat[0][2], Red_Mat[1][2]);
+            std::swap(Red_Mat[0][0], Red_Mat[1][0]);
+            std::swap(Red_Mat[0][1], Red_Mat[1][1]);
+            std::swap(Red_Mat[0][2], Red_Mat[1][2]);
         }
         if (IntList[1] > IntList[2]) {
             std::swap(IntList[1], IntList[2]);
             std::swap(gram_test[2][2], gram_test[1][1]);
             std::swap(gram_test[0][1], gram_test[0][2]);
             std::swap(gram_test[1][0], gram_test[2][0]);
-            // std::swap(Red_Mat[1][0], Red_Mat[2][0]);
-            // std::swap(Red_Mat[1][1], Red_Mat[2][1]);
-            // std::swap(Red_Mat[1][2], Red_Mat[2][2]);
+            std::swap(Red_Mat[1][0], Red_Mat[2][0]);
+            std::swap(Red_Mat[1][1], Red_Mat[2][1]);
+            std::swap(Red_Mat[1][2], Red_Mat[2][2]);
         }
         if (IntList[0] > IntList[1]) {
             std::swap(IntList[0], IntList[1]);
             std::swap(gram_test[0][0], gram_test[1][1]);
             std::swap(gram_test[2][1], gram_test[2][0]);
             std::swap(gram_test[0][2], gram_test[1][2]);
-            // std::swap(Red_Mat[0][0], Red_Mat[1][0]);
-            // std::swap(Red_Mat[0][1], Red_Mat[1][1]);
-            // std::swap(Red_Mat[0][2], Red_Mat[1][2]);
+            std::swap(Red_Mat[0][0], Red_Mat[1][0]);
+            std::swap(Red_Mat[0][1], Red_Mat[1][1]);
+            std::swap(Red_Mat[0][2], Red_Mat[1][2]);
         }
         // std::cout << "read and swap = " << (tic() - t) << "\n";
         int bound = 1;
@@ -323,7 +922,7 @@ void inner_order_invariant_computation_from_gram(NTL::ZZ *IntList, NTL::mat_ZZ g
                         gram_test[1][0] = new01;
                         gram_test[2][1] = new12;
                         gram_test[1][2] = new12;
-                        // Red_Mat[1][0] = i1 * Red_Mat[0][0] + i2 * Red_Mat[1] + i3 * Red_Mat[2];
+                        Red_Mat[1] = i1 * Red_Mat[0] + i2 * Red_Mat[1] + i3 * Red_Mat[2];
                     }
                     if (i3!=0 && norm < IntList[2]) {
                         // v1[0][0] = Integer(1);
@@ -341,7 +940,7 @@ void inner_order_invariant_computation_from_gram(NTL::ZZ *IntList, NTL::mat_ZZ g
                         gram_test[2][1] = new12;
                         gram_test[1][2] = new12;
                         IntList[2] = Integer(norm);
-                        // Red_Mat[2] = i1 * Red_Mat[0] + i2 * Red_Mat[1] + i3 * Red_Mat[2];
+                        Red_Mat[2] = i1 * Red_Mat[0] + i2 * Red_Mat[1] + i3 * Red_Mat[2];
                     }
                 }
             }
@@ -353,27 +952,27 @@ void inner_order_invariant_computation_from_gram(NTL::ZZ *IntList, NTL::mat_ZZ g
             std::swap(gram_test[0][0], gram_test[1][1]);
             std::swap(gram_test[2][1], gram_test[2][0]);
             std::swap(gram_test[0][2], gram_test[1][2]);
-            // std::swap(Red_Mat[0][0], Red_Mat[1][0]);
-            // std::swap(Red_Mat[0][1], Red_Mat[1][1]);
-            // std::swap(Red_Mat[0][2], Red_Mat[1][2]);
+            std::swap(Red_Mat[0][0], Red_Mat[1][0]);
+            std::swap(Red_Mat[0][1], Red_Mat[1][1]);
+            std::swap(Red_Mat[0][2], Red_Mat[1][2]);
         }
         if (IntList[1] > IntList[2]) {
             std::swap(IntList[1], IntList[2]);
             std::swap(gram_test[2][2], gram_test[1][1]);
             std::swap(gram_test[0][1], gram_test[0][2]);
             std::swap(gram_test[1][0], gram_test[2][0]);
-            // std::swap(Red_Mat[2][0], Red_Mat[1][0]);
-            // std::swap(Red_Mat[2][1], Red_Mat[1][1]);
-            // std::swap(Red_Mat[2][2], Red_Mat[1][2]);
+            std::swap(Red_Mat[2][0], Red_Mat[1][0]);
+            std::swap(Red_Mat[2][1], Red_Mat[1][1]);
+            std::swap(Red_Mat[2][2], Red_Mat[1][2]);
         }
         if (IntList[0] > IntList[1]) {
             std::swap(IntList[0], IntList[1]);
             std::swap(gram_test[0][0], gram_test[1][1]);
             std::swap(gram_test[2][1], gram_test[2][0]);
             std::swap(gram_test[0][2], gram_test[1][2]);
-            // std::swap(Red_Mat[0][0], Red_Mat[1][0]);
-            // std::swap(Red_Mat[0][1], Red_Mat[1][1]);
-            // std::swap(Red_Mat[0][2], Red_Mat[1][2]);
+            std::swap(Red_Mat[0][0], Red_Mat[1][0]);
+            std::swap(Red_Mat[0][1], Red_Mat[1][1]);
+            std::swap(Red_Mat[0][2], Red_Mat[1][2]);
         }
         for (int i1 = -bound; i1 < bound + 1; i1++) {
             for (int i2 = -bound; i2 < bound + 1; i2++) {
@@ -410,7 +1009,7 @@ void inner_order_invariant_computation_from_gram(NTL::ZZ *IntList, NTL::mat_ZZ g
                         gram_test[1][0] = new01;
                         gram_test[2][1] = new12;
                         gram_test[1][2] = new12;
-                        // Red_Mat[1][0] = i1 * Red_Mat[0][0] + i2 * Red_Mat[1] + i3 * Red_Mat[2];
+                        Red_Mat[1] = i1 * Red_Mat[0] + i2 * Red_Mat[1] + i3 * Red_Mat[2];
                     }
                     if (i3!=0 && norm < IntList[2]) {
                         // v1[0][0] = Integer(1);
@@ -428,7 +1027,7 @@ void inner_order_invariant_computation_from_gram(NTL::ZZ *IntList, NTL::mat_ZZ g
                         gram_test[2][1] = new12;
                         gram_test[1][2] = new12;
                         IntList[2] = Integer(norm);
-                        // Red_Mat[2] = i1 * Red_Mat[0] + i2 * Red_Mat[1] + i3 * Red_Mat[2];
+                        Red_Mat[2] = i1 * Red_Mat[0] + i2 * Red_Mat[1] + i3 * Red_Mat[2];
                     }
                 }
             }
@@ -438,52 +1037,81 @@ void inner_order_invariant_computation_from_gram(NTL::ZZ *IntList, NTL::mat_ZZ g
             std::swap(gram_test[0][0], gram_test[1][1]);
             std::swap(gram_test[2][1], gram_test[2][0]);
             std::swap(gram_test[0][2], gram_test[1][2]);
-            // std::swap(Red_Mat[0][0], Red_Mat[1][0]);
-            // std::swap(Red_Mat[0][1], Red_Mat[1][1]);
-            // std::swap(Red_Mat[0][2], Red_Mat[1][2]);
+            std::swap(Red_Mat[0][0], Red_Mat[1][0]);
+            std::swap(Red_Mat[0][1], Red_Mat[1][1]);
+            std::swap(Red_Mat[0][2], Red_Mat[1][2]);
         }
         if (IntList[1] > IntList[2]) {
             std::swap(IntList[1], IntList[2]);
             std::swap(gram_test[2][2], gram_test[1][1]);
             std::swap(gram_test[0][1], gram_test[0][2]);
             std::swap(gram_test[1][0], gram_test[2][0]);
-            // std::swap(Red_Mat[2][0], Red_Mat[1][0]);
-            // std::swap(Red_Mat[2][1], Red_Mat[1][1]);
-            // std::swap(Red_Mat[2][2], Red_Mat[1][2]);
+            std::swap(Red_Mat[2][0], Red_Mat[1][0]);
+            std::swap(Red_Mat[2][1], Red_Mat[1][1]);
+            std::swap(Red_Mat[2][2], Red_Mat[1][2]);
         }
         if (IntList[0] > IntList[1]) {
             std::swap(IntList[0], IntList[1]);
             std::swap(gram_test[0][0], gram_test[1][1]);
             std::swap(gram_test[2][1], gram_test[2][0]);
             std::swap(gram_test[0][2], gram_test[1][2]);
-            // std::swap(Red_Mat[0][0], Red_Mat[1][0]);
-            // std::swap(Red_Mat[0][1], Red_Mat[1][1]);
-            // std::swap(Red_Mat[0][2], Red_Mat[1][2]);
+            std::swap(Red_Mat[0][0], Red_Mat[1][0]);
+            std::swap(Red_Mat[0][1], Red_Mat[1][1]);
+            std::swap(Red_Mat[0][2], Red_Mat[1][2]);
         }
 
-    // NTL::Vec<NTL::ZZ> row;
-    // row.SetLength(4);
-    // for (unsigned j = 0; j < 3; ++j) {
-    //     auto c = Red_Mat[2][j];
-    //     row += 2 * c * order.basis[j+1];
-    //     row[0] -= 2 * c* order.basis[j+1][0];
-    // }
+    // otherwise what follows doesn't work
 
-    // (*small)[0] = row[0];
-    // (*small)[1] = row[1];
-    // (*small)[2] = row[2];
-    // (*small)[3] = row[3];
-    // (*small)[4] = order.denom;
-    // assert(order.contains(*small));
-    // if (!(small->norm().first/small->norm().second == gram_test[0][0]))
-    // {
-    //     std::cout << small->norm().first/small->norm().second << " " << gram_test[0][0] << "\n";
-    // }
-    // assert(small->norm().first/small->norm().second == IntList[0] );
+    NTL::Vec<NTL::ZZ> row;
+    row.SetLength(4);
+    for (unsigned j = 0; j < 3; ++j) {
+        for (unsigned i = 1; i <= 3; i++) {
+            row[i] += Red_Mat[0][j]*order.basis[j+1][i]; 
+        }
     }
 
+    (small->first)[0] = row[0];
+    (small->first)[1] = row[1];
+    (small->first)[2] = row[2];
+    (small->first)[3] = row[3];
+    (small->first)[4] = order.denom;
 
+    row[0] = Integer(0);
+    row[1] = Integer(0);
+    row[2] = Integer(0);
+    row[3] = Integer(0);
+    for (unsigned j = 0; j < 3; ++j) {
+        for (unsigned i = 1; i <= 3; i++) {
+            row[i] += Red_Mat[1][j]*order.basis[j+1][i]; 
+        }
+    }
 
+    if (gram_test[0][1] <0) {
+        row = -row;
+    }
+
+    (small->second)[0] = row[0];
+    (small->second)[1] = row[1];
+    (small->second)[2] = row[2];
+    (small->second)[3] = row[3];
+    (small->second)[4] = order.denom;
+
+    small->first[4] >>= 1;
+    small->second[4] >>= 1;
+
+    // assert(order.contains(small->first));
+    // assert(order.contains(small->second));
+    if (!(small->first.norm().first/small->first.norm().second == gram_test[0][0]))
+    {
+        std::cout << small->first.norm().first/small->first.norm().second << " " << gram_test[0][0] << " " << gram_test[1][1] << "\n";
+    }
+    assert(small->first.norm().first/small->first.norm().second == IntList[0] );
+    assert(small->second.norm().first/small->second.norm().second == IntList[1] );
+    // small->first.normalize();
+    // small->second.normalize();
+    
+
+    }
 }
 
 Key order_invariant_computation(quatlat const &order, quat *small) {
@@ -508,18 +1136,18 @@ Key order_invariant_computation(quatlat const &order, quat *small) {
         return K;
 }
 
-Key order_invariant_computation_from_gram(quatlat order, NTL::mat_ZZ Gram, quat *small) {
+Key order_invariant_computation_from_gram(quatlat order, NTL::mat_ZZ Gram, std::pair<quat,quat> *small) {
         Key K;
         NTL::ZZ IntList[3];
-        (void) order;
-        (void) small;
+        // (void) order;
+        // (void) small;
 
         // std::cout << clock() << "\n";
         // clock_t t = clock();
         // std::cout << "t =" << t << "\n";
         // auto t = tic();
         inner_order_invariant_computation_from_gram(IntList, Gram
-        // , order, small
+        , order, small
         );
         // clock_t t2 = clock();
         // std::cout << "t2 = " << t2 << "\n";
@@ -640,10 +1268,54 @@ Integer get_smallest_element(quat* gamma, quatlat &I) {
     small_norm = small_norm/2;
 
    if ((gamma->norm().first/gamma->norm().second) != small_norm * (I.norm().first/I.norm().second)) {
-    std::cout << gamma->norm().first/gamma->norm().second << " " << small_norm * (I.norm().first/I.norm().second) << "\n";
-}
+        std::cout << gamma->norm().first/gamma->norm().second << " " << small_norm * (I.norm().first/I.norm().second) << "\n";
+    }
 
     assert((gamma->norm().first/gamma->norm().second) == small_norm * (I.norm().first/I.norm().second));
 
     return small_norm;
+}
+
+
+
+Key fast_order_invariant_computation_from_gram(const FastQuatLat &FastO, FastMat3 &FastGram, std::pair<FastQuat,FastQuat> &fast_gamma_pair) {
+
+
+        
+        FastMat3 Coords;
+        Coords[0][0] = 1;
+        Coords[1][1] = 1;
+        Coords[2][2] = 1;
+        Coords[0][1] = 0;
+        Coords[0][2] = 0;
+        Coords[1][0] = 0;
+        Coords[1][2] = 0;
+        Coords[2][1] = 0;
+        Coords[2][0] = 0;
+
+        FastLagrange3(FastGram, Coords);
+
+        fast_gamma_pair.first[4] = FastO.denom;
+        fast_gamma_pair.second[4] = FastO.denom;
+
+        for (unsigned i = 1; i <= 3; i++) {
+            for (unsigned j = 0; j < 3; ++j) {
+                fast_gamma_pair.first[i]  += Coords[0][j] * FastO.basis[j+1][i];
+                fast_gamma_pair.second[i] += Coords[1][j] * FastO.basis[j+1][i]; 
+    
+            }
+            if (FastGram[0][1] < 0) {
+                fast_gamma_pair.second[i] = - fast_gamma_pair.second[i]; 
+            }
+        }
+        fast_gamma_pair.first[4] >>= 1;
+        fast_gamma_pair.second[4] >>= 1;
+
+        Key K;
+
+        FastIntToBytes(FastGram[0][0],K.IntList[0],LenNumberBytes);
+        FastIntToBytes(FastGram[1][1],K.IntList[1],LenNumberBytes);
+        FastIntToBytes(FastGram[2][2],K.IntList[2],LenNumberBytes);
+
+        return K;
 }

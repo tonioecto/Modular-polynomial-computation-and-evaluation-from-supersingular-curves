@@ -12,14 +12,18 @@
 
 
 #include <NTL/ZZ.h>
+#include <NTL/vec_lzz_pE.h>
 #include "modpoly.hpp"
 #include "interpolation.hpp"
 #include <unordered_set>
+#include "fast_quaternions.hpp"
+// #include "fast_ff.hpp"
+
 
 
 #ifdef NDEBUG
-size_t const num_threads = 1 + std::thread::hardware_concurrency();
-// size_t const num_threads = 1;
+// size_t const num_threads = 1 + std::thread::hardware_concurrency();
+size_t const num_threads = 1;
 #else
 size_t const num_threads = 1; // For debugging
 #endif
@@ -417,7 +421,7 @@ NTL::ZZ GetBoundWeberBigChar( NTL::ZZ const p, NTL::ZZ const l){
 
 void GetPrimesBigCharWeber(std::vector<Integer> &vec, const Integer B, const Integer ell, const Integer p) {
 
-    Integer prime = NTL::NextPrime(ell/6 + 250);
+    Integer prime = NTL::NextPrime(ell/6 + 600);
     Integer prod = Integer(1);
 
     while (prod < B ) {
@@ -731,7 +735,8 @@ FpX_big_elem ModEvalBigLevel(NTL::ZZ p, NTL::ZZ_pE const j, long l)
 
             std::cerr << "Entering interpolation..." << std::endl;
 
-            FpEX_elem Fq = FastInterpolateFromRoots(j_invariants);
+            FpEX_elem Fq;
+            FastInterpolateFromRoots(Fq, j_invariants);
             //for (auto j : j_invariants) {
             //    std::cout << j << "\n";
             //}
@@ -979,13 +984,13 @@ std::vector<FpE_elem> SupersingularEvaluationWeber(Fp_integer p, FpE_elem const 
     auto phi_0 = idealToIsogeny(gens.first, gens.second, E0, Fexts, bases);
     //std::cout << "Id2Iso finished" << std::endl;
     assert (phi_0.get_codomain().j_invariant() == j_E1);
-    auto webdata = EnumerateAllWeberFast(web, Fexts, &precomp);
-
+    // auto webdata = EnumerateAllWeberFast(web, Fexts, &precomp);
+    auto webdata = EnumerateAllWeberCoeff();
     //std::cout << "Getting compatible level structure on E0..." << std::endl;
     bool found_weber = 0;
 
     for (auto const &webdata_i : webdata){
-        auto coeff = webdata_i.second;
+        auto coeff = webdata_i;
         auto c2 = coeff[0][0];
         auto c31 = coeff[1][0];
         auto c32 = coeff[1][1];
@@ -1286,7 +1291,8 @@ FpX_big_elem ModEvalBigLevelWeber(NTL::ZZ p, NTL::ZZ_pE const w, long l) {
 
             std::cerr << "Entering interpolation..." << std::endl;
 
-            FpEX_elem Fq = FastInterpolateFromRoots(invariants);
+            FpEX_elem Fq;
+            FastInterpolateFromRoots(Fq, invariants);
             //for (auto x : invariants) {
             //    std::cout << x << "\n";
             //}
@@ -1384,406 +1390,310 @@ std::vector<Fp2> SSEvalJinv(const quatlat &id, const std::unordered_map<Key, std
 }
 
 
-std::pair<SmallMatFp,SmallMatFp> WeberBasApplicationRemoteEndo(const std::vector<std::pair<SmallMatFp,SmallMatFp>> &mat0, const quat &gamma) {
-    ///////////////////////////////////////////////////////////////////////////////
-    ////// Function applies the matrix of gamma (wrt bas0) to bas
-    //////  It assumes that the P16 and Q16 points of bas0 are
-    //////  actually of order 32 so that we can perform the division by two.
-    //////  If q = 3, we also assume that P3, Q3 are of order 9
-    ///////////////////////////////////////////////////////////////////////////////
+void FastSSEvalWeber(std::array<std::vector<ffp2>, 3> &ell_isog_j_list, FastQuatLat &id, const std::unordered_map<Key, std::pair<FpE_elem, std::pair<std::pair<FastInteger, std::pair<std::pair<FastQuat,FastQuat>,std::pair<FastInteger,FastQuat>>>, weber_full_data>>, KeyHash, KeyEqual> &order_jinv_map, const FastInteger &p, const std::vector<std::pair<VerySmallMat,VerySmallMat>> &mat0, const std::vector<FastQuatLat> &ell_id_list, const FastInteger &ell, const weber_enum &enumerator)
+{
+
+    Fp_integer some_mod = Fp_integer(p);
+    Fp_push push(some_mod);
+
+    assert(GCD(ell, id.norm().first/id.norm().second) == 1);
+
+    assert(ell_id_list.size() == (size_t) ell + 1);
+
+    FastInteger count = 0;
+
+    // init 
+    std::pair<VerySmallMat,VerySmallMat> new_web = {{{{0,0},{0,0}}}, {{{0,0},{0,0}}}};
+    Key K;
+    FastInteger id_norm = id.norm().first/id.norm().second;
+
+    // precomputing some data for fast modular computations throughout the loop 
+    SignedBarrettReducer red(ell * id_norm);
+    SignedBarrettReducer redid(id_norm);
+    SignedBarrettReducer redp (id.alg.p);
+    FastInteger inv = InvMod2(ell, redid);
+    // FastInteger invsqr = InvModSqr(ell * ell, redid);
+    FastInteger inv2sqr = InvMod2Sqr(ell * ell, redid);
+    FastQuat fast_commut = {{0, 0, 0, 0, 1}, id.alg};
+
+    for (auto & ellid : ell_id_list) {
+        
+
+        FastQuatLat FastI = ellid.copy();
+        FastI._fast_intersect(id, red, redid, inv, inv2sqr);
+        
+        // TODO all coefficients of the gram matrix are divisible by p except the first one (gram[0][0]), and its actually quite close to a multiple of p (it is of the form (1 + p (c^2 + d^2))/n^2 ) where n is the norm of the ideal, and c and d are values mod n^2
+        // it would probably be worth considering dividing everything by p and using floats. But it needs to be checked... it may also help the precision requirement....
+        auto [FastO, FastGram] = FastI.fast_right_order_and_gram(red);
+
+        fast_commut[0] = 0; fast_commut[1] = 0; fast_commut[2] = 0; fast_commut[3] = 0; fast_commut[4] = 1;
+        std::pair<FastQuat,FastQuat> fast_gamma_pair = {fast_commut, fast_commut};
+
+        K = fast_order_invariant_computation_from_gram(FastO, FastGram, fast_gamma_pair);
 
 
-    SmallMatFp alt_M16 = SmallMatFp(16);
-    SmallMatFp alt_M3 = SmallMatFp(3);
+        // finding the precomputed data corresponding to K 
+        auto j_ell_it = order_jinv_map.find(K);
+
+        // somehow the previous computation failed
+        // and we go back to the slow but more stable method
+        // this should only happen in VERY VERY rare weird cases that were hard to debug
+        // and so for now we deal with them that way, it has a negligible impact on concrete performances anyway
+        if (j_ell_it == order_jinv_map.end()) {
+
+            // std::cout << "using slow method !\n";
+
+            quatalg Bp = {Integer(p), Integer(1)};
+            quatlat testI = ellid.copy().FastQuatLat_to_quatlat(Bp);
+            testI.basis[0][2] = Integer(0);
+            testI.basis[0][3] = Integer(0);
+            testI.basis[1][2] = Integer(0);
+            testI.basis[1][3] = Integer(0);
+            quatlat testid = id.FastQuatLat_to_quatlat(Bp);
+            testid.basis[0][2] = Integer(0);
+            testid.basis[0][3] = Integer(0);
+            testid.basis[1][2] = Integer(0);
+            testid.basis[1][3] = Integer(0);
+            testI._fast_intersect(testid);
+            
+            auto [O, Gram] = testI.fast_right_order_and_gram();
+            quat gamma = {{Integer(0), Integer(0), Integer(0), Integer(0), Integer(1)}, Bp};
+            std::pair<quat,quat> gamma_pair = {gamma, gamma};
+
+            // std::cout << "computing the key....\n";
+            K = order_invariant_computation_from_gram(O, Gram, &gamma_pair);
+            j_ell_it = order_jinv_map.find(K);
+            // std::cout << "done ! \n";
+
+            FastQuatAlg Fast_Bp = FastQuatAlg(Bp); 
+            fast_gamma_pair.first = FastQuat(gamma_pair.first, Fast_Bp);
+            fast_gamma_pair.second = FastQuat(gamma_pair.second, Fast_Bp);
 
 
-    // Other way to compute the matrices
-    {
-        // NTL::mat_ZZ M = O0.basis;
-        // NTL::ZZ du = O0.denom;
-        // NTL::ZZ remain,det;
-        // NTL::vec_ZZ alpha_vec,solve_check;
-        // alpha_vec.SetLength(4);
-        // bool res = true;
-
-        // for (int i=0; i<4; i++) {
-        //     alpha_vec[i] = du * gamma[i];
-        //     NTL::DivRem(alpha_vec[i],  remain, alpha_vec[i], gamma[4]);
-        //     res = res && (remain==0);
-        // }
-        // if (res) {
-        //     solve1(det, solve_check, M, alpha_vec);
-        //     res = res && det == 1;
-        //     assert(!res || solve_check * M == alpha_vec);
-        // }
-        // // auto correc = Integer(2)/gamma[4];
+        } 
 
 
-        SmallInteger correc = 2/NTL::conv<SmallInteger>(gamma[4]);
-        SmallInteger c0 = NTL::conv<SmallInteger>(gamma[0] - gamma[3])/(NTL::conv<SmallInteger>(gamma[4]));
-        SmallInteger c1 = NTL::conv<SmallInteger>(gamma[1] - gamma[2])/(NTL::conv<SmallInteger>(gamma[4]));
-        SmallInteger c2 = correc * NTL::conv<SmallInteger>(gamma[2]);
-        SmallInteger c3 = correc * NTL::conv<SmallInteger>(gamma[3]);
+        assert(j_ell_it != order_jinv_map.end());
+        auto j_ell = j_ell_it->second.first;
+
+        auto normJ = j_ell_it->second.second.first.first;
+        auto normI = FastI.norm().first/FastI.norm().second;
+        
+        auto is_equiv = commutatorfind(fast_gamma_pair, j_ell_it->second.second.first.second.first, {normI, normJ}, j_ell_it->second.second.first.second.second.second, j_ell_it->second.second.first.second.second.first, is_Fp(j_ell), fast_commut, redp);
 
 
-        alt_M16 = alt_M16
-        + mat0[0].first * c0
-        + mat0[1].first * c1
-        + mat0[2].first * c2
-        + mat0[3].first * c3;
-        alt_M3 = alt_M3
-        + mat0[0].second * c0
-        + mat0[1].second * c1
-        + mat0[2].second * c2
-        + mat0[3].second * c3;
+        new_web = WeberBasApplicationRemoteEndo(mat0, fast_commut);
+        
+
+        // now we compute the three weber elements and write them in the result
+        for (unsigned char i = 0; i < 3; i++) {
+            unsigned char ind_ell = WeberGetFromEnum(enumerator[i].second, new_web);
+            ffp2 w_ell = j_ell_it->second.second.second.inv_list[ind_ell];
+            if (is_equiv) {
+                ell_isog_j_list[i][count] = w_ell;
+            }
+            else {
+                assert(rep(j_ell)[0].modulus() == p);
+                ell_isog_j_list[i][count] = fast_Frob(w_ell);
+            }
+        }
+
+        
+
+        
+        count++;   
     }
-    alt_M16.normalize();
-    alt_M3.normalize();
 
-    return { alt_M16, alt_M3};
 }
 
-
-
-// quat commutatorfind(const quat &beta1, const quat &beta2) {
-//     //////////////////////////////////////////////////////////
-//     //// Finds alpha such that alpha * beta1 = beta2 * alpha
-//     //// Assumes that beta1, beta2 have denominator 2
-//     //////////////////////////////////////////////////////////
-
-//     // std::cout << beta1.norm().first/beta1.norm().second << " " << beta2.norm().first/beta2.norm().second << "\n";
-//     assert( beta1.norm().first * beta2.norm().second == beta2.norm().first * beta1.norm().second );
-
-//     NTL::mat_ZZ M;
-//     M.SetDims(4,4);
-//     NTL::vec_ZZ v, solve_check;
-//     v.SetLength(4);
-//     Integer det;
-
-//     auto dx = beta1[0] - beta2[0];
-//     auto dy = beta1[1] - beta2[1];
-//     auto dz = beta1[2] - beta2[2];
-//     auto dt = beta1[3] - beta2[3];
-
-//     auto sy = beta1[1] + beta2[1];
-//     auto sz = beta1[2] + beta2[2];
-//     auto st = beta1[3] + beta2[3];
-//     //
-//     M[0][0] = dx;
-//     M[0][1] = -dy;
-//     M[0][2] = -beta1.alg.p * dz;
-//     M[0][3] = -beta1.alg.p * dt;
-
-//     M[1][0] = dy;
-//     M[1][1] = dx;
-//     M[1][2] = beta1.alg.p * st;
-//     M[1][3] = - beta1.alg.p * sz;
-
-//     M[2][0] = dz;
-//     M[2][2] = dx;
-//     M[2][1] = - st;
-//     M[2][3] = sy;
-
-//     M[3][0] = dt;
-//     M[3][3] = dx;
-//     M[3][1] = sz;
-//     M[3][2] = -sy;
-
-//     NTL::mat_ZZ newM = NTL::transpose(M);
-
-//     // solve1(det, solve_check, M, v);
-
-//     NTL::mat_ZZ U;
-//     U.SetDims(4,4);
-//     // std::cout << M ;
-//     auto rank = NTL::image(det, newM, U);
-//     (void) rank;
-//     // std::cout << M ;
-//     // std::cout << U << "\n";
-//     // std::cout << U[0]*M << "\n";
-//     assert(rank < 4);
-//     // std::cout << M << "\n";
-
-//     quat result = {{U[1][0], U[1][1], U[1][2], U[1][3], Integer(1)}, beta1.alg };
-//     // std::cout << U[0][0] * dt + U[1][0] * sz - U[2][0] * sy + dx * U[3][0] << "\n";
-//     // std::cout << M*U[0] << "\n";
-//     std::cout << result * beta1 + beta2 * result * Integer(-1) << "\n";
-//     // assert(result * beta1 == beta2 * result);
-//     return result;
-
-// }
-
-
-
-std::vector<std::pair<FpE_elem,std::tuple<bool, Key, std::pair<SmallMatFp, SmallMatFp>>>> SSEvalWeber(const quatlat &id, const std::unordered_map<Key, std::pair<FpE_elem,std::pair<std::pair<quatlat,quat>, weber_full_data>>, KeyHash, KeyEqual> &order_jinv_map, const quatlat &O0, const weber_bas &bas0, const std::vector<std::pair<SmallMatFp,SmallMatFp>> &mat0, const std::list<quatlat> &ell_id_list, const Integer &ell)
+// old algorithm based on NTL integers, it also contains the new fixed sized implementation for debugging purpose
+// the api of this function probably needs to be updated to match the most recent developpement of FastSSEvalWeber 
+std::vector<std::pair<FpE_elem,std::tuple<bool, Key, std::pair<VerySmallMat, VerySmallMat>>>> SSEvalWeber(const quatlat &id, const std::unordered_map<Key, std::pair<FpE_elem, std::pair<std::pair<Integer, std::pair<std::pair<quat,quat>,std::pair<Integer,quat>>>, weber_full_data>>, KeyHash, KeyEqual> &order_jinv_map, const quatlat &O0, const weber_bas &bas0, const std::vector<std::pair<VerySmallMat,VerySmallMat>> &mat0, const std::list<quatlat> &ell_id_list, const Integer &ell)
 {
 
 
     (void) bas0; (void) ell; //FIXME parameters bas0 and ell are unused
 
-    std::vector <std::pair<FpE_elem,std::tuple<bool, Key, std::pair<SmallMatFp, SmallMatFp>>>> ell_isog_j_list = {};
+    std::vector <std::pair<FpE_elem,std::tuple<bool, Key, std::pair<VerySmallMat, VerySmallMat>>>> ell_isog_j_list = {};
     auto norm = id.norm().first/id.norm().second;
     assert(NTL::GCD(ell,norm)==1);
 
-    int no_work_count = 0;
     int total_count = 0;
-    int scalar_stuff = 0;
-    int rectif_num = 0;
-    bool worked;
+
+    clock_t tot_new = 0;
+    clock_t tot_old = 0;
+
+    FastInteger id_norm = convert(id.norm().first/id.norm().second);
+    SignedBarrettReducer red(convert(ell) * id_norm);
+    SignedBarrettReducer redid(id_norm);
+    FastInteger inv = InvMod2(convert(ell), redid);
+    FastInteger inv2sqr = InvMod2Sqr(convert(ell), redid);
+    SignedBarrettReducer redp (convert(id.alg.p));
+
     for (auto ellI : ell_id_list) {
         total_count++;
         quatlat I = ellI.copy();
+
+    
+        FastQuatAlg fast_a = FastQuatAlg(I.alg);
+        FastQuatLat FastI = FastQuatLat(I, fast_a);
+        FastQuatLat Fastid = FastQuatLat(id, fast_a);
+
+        
         I._fast_intersect(id);
+        
         quat gamma = {{Integer(0), Integer(0), Integer(0), Integer(0), Integer(1)}, O0.alg};
+        std::pair<quat,quat> gamma_pair = {gamma, gamma};
 
         auto [O,gram] = I.fast_right_order_and_gram();
-        if (gram[0][0] == 0) {
-            gram = compute_gram_order(O);
-        }
-        Key K = order_invariant_computation_from_gram(O, gram, &gamma);
-        Integer smallest;
-        NTL::ZZFromBytes(smallest,K.IntList[0],LenNumberBytes);
-        worked = (smallest != 3);
+        assert(gram[0][0] != 0);
 
-        auto j_ell_it = order_jinv_map.find(K);
-        assert(j_ell_it != order_jinv_map.end());
-        auto j_ell = j_ell_it->second.first;
+        Key K = order_invariant_computation_from_gram(O, gram, &gamma_pair);
 
-        quat test = {{Integer(0), Integer(0), Integer(0), Integer(0), Integer(1)}, O0.alg};
-        bool tt1 = true;
-        bool tt2 = true;
-        bool tt3 = true;
-        bool tt4 = true;
-        bool a;
-        quat iii = {{Integer(0), Integer(1), Integer(0), Integer(0), Integer(1)}, O0.alg};
-        quat jjj = {{Integer(0), Integer(0), Integer(1), Integer(0), Integer(1)}, O0.alg};
-        quat gamma_I = {{Integer(0), Integer(0), Integer(0), Integer(0), Integer(1)}, O0.alg};
-        assert(I.contains(gamma_I));
-
-        quat gamma_J = order_jinv_map.find(K)->second.second.first.second;
-        quatlat Jc = order_jinv_map.find(K)->second.second.first.first.HNF_conjugate();
-        assert(order_jinv_map.find(K)->second.second.first.first.contains(gamma_J));
-        auto small_ngI = get_smallest_element(&gamma_I, I);
-
-        auto normJ = Jc.norm().first/Jc.norm().second;
-        auto normI = I.norm().first/I.norm().second;
-        auto modI = normI;
-        auto modJ = normJ;
-
-        // checking that some weird case is not happening
-        Integer g = NTL::GCD(normJ, gamma_I[3]);
-        bool CRT_worked = (g == 1);
-        if (worked && !CRT_worked) {
-            g = NTL::GCD(g, gamma_I[2]);
-            worked = (g == 1);
-            if (!worked) {
-                g = NTL::GCD(g, gamma_I[1]);
-                worked = (g == 1);
-                if (!worked) {
-                    g = NTL::GCD(g, gamma_I[0]);
-                    worked = (g == 1);
-                }
-            }
-        }
-
-        if (!worked)
-        {
-            scalar_stuff++;
-        }
-
-        std::vector<std::vector<Integer>> tests(4);
-        auto mod = gamma_I[4] * gamma_J[4] * small_ngI;
-        assert(gamma_I.alg.q == 1);
-        auto aA = gamma_J[0] * gamma_I[0];
-        auto aB = gamma_J[0] * gamma_I[1];
-        auto aC = gamma_J[0] * gamma_I[2];
-        auto aD = gamma_J[0] * gamma_I[3];
-        auto bA = - gamma_J[1] * gamma_I[0];
-        auto bB = - gamma_J[1] * gamma_I[1];
-        auto bC = - gamma_J[1] * gamma_I[2];
-        auto bD = - gamma_J[1] * gamma_I[3];
-        auto cA = - gamma_J[2] * gamma_I[0];
-        auto cB = - gamma_J[2] * gamma_I[1];
-        auto cC = - gamma_J[2] * gamma_I[2];
-        auto cD = - gamma_J[2] * gamma_I[3];
-        auto dA = - gamma_J[3] * gamma_I[0];
-        auto dB = - gamma_J[3] * gamma_I[1];
-        auto dC = - gamma_J[3] * gamma_I[2];
-        auto dD = - gamma_J[3] * gamma_I[3];
-        auto aBpbA = aB + bA;
-        auto cDmdC = cD - dC;
-        auto aCpcA = aC + cA;
-        auto dBmbD = - bD  + dB;
-        auto aDpdA = aD + dA;
-        auto bCmcB = bC - cB;
-
-        if (worked)
-        {
-            tests[0] = {aA - bB - O0.alg.p* (cC + dD)};
-            tests[1] = {- aBpbA + O0.alg.p* (cDmdC) };
-            tests[2] =  { O0.alg.p * (- aCpcA + dBmbD ) };
-            tests[3] = { O0.alg.p * ( aDpdA - bCmcB ) };
-            tt1 = (2 * tests[0][0]) % mod == 0;
-            tt2 = (2 * tests[1][0]) % mod == 0;
-            tt3 = (2 * tests[2][0]) % mod == 0;
-            tt4 = (2 * tests[3][0]) % mod == 0;
-            bool is_only_one = ((int) tt1 + (int) tt2 + (int) tt3 + (int) tt4) == 1;
-
-            if (is_only_one) {
-                if (tt1) {
-                    test = {{ tests[0][0], tests[1][0] + 2 *( aBpbA ), aCpcA + dBmbD, aDpdA + bCmcB, mod}, O0.alg};
-                    test.normalize();
-                }
-                else if (tt2) {
-                    test = {{ tests[1][0], tests[0][0] + 2 * O0.alg.p * (cC + dD) , -aD - cB - bC + dA, aC - dB - bD - cA, mod }, O0.alg};
-                    test.normalize();
-                }
-                else if (tt3) {
-                    test = {{ tests[2][0], O0.alg.p *(aD - bC - cB - dA), tests[0][0] + 2 * ( bB + O0.alg.p * dD) ,  -aB + bA + O0.alg.p * (-dC - cD), mod }, O0.alg};
-                    test.normalize();
-                }
-                else {
-                    test = {{ tests[3][0], O0.alg.p * ( aC + bD - cA + dB),  - aB + bA + O0.alg.p * (cD + dC),  - (tests[0][0] + 2 * (bB + O0.alg.p * cC)), mod }, O0.alg};
-                    test.normalize();
-                    assert(tt4);
-                }
-                worked = I.fast_contains(test, modI) && Jc.fast_contains(test, modJ);
-            }
-            else {
-                test = {{ tests[0][0], tests[1][0] + 2 *( aBpbA ), aCpcA + dBmbD, aDpdA + bCmcB, mod}, O0.alg};
-                test.normalize();
-                // std::cout << test << "\n";
-                tt1 = tt1 && I.fast_contains(test, modI) && Jc.fast_contains(test, modJ);
-                // if (true) {
-                if (!tt1 && tt2) {
-                    test = {{ tests[1][0], tests[0][0] + 2 * O0.alg.p * (cC + dD) , -aD - cB - bC + dA, aC - dB - bD - cA, mod }, O0.alg};
-                    test.normalize();
-                }
-                tt2 = !tt1 && tt2 && I.fast_contains(test, modI) && Jc.fast_contains(test, modJ);
-                // if (true) {
-                if (! (tt1 || tt2) && tt3 ) {
-
-                    test = {{ tests[2][0], O0.alg.p *(aD - bC - cB - dA), tests[0][0] + 2 * ( bB + O0.alg.p * dD) ,  -aB + bA + O0.alg.p * (-dC - cD), mod }, O0.alg};
-                    test.normalize();
-                }
-                tt3 = !tt1 && !tt2 && tt3 && I.fast_contains(test, modI) && Jc.fast_contains(test, modJ);
-                if (! (tt1 || tt2 || tt3) && tt4 ) {
-                    test = {{ tests[3][0], O0.alg.p * ( aC + bD - cA + dB),  - aB + bA + O0.alg.p * (cD + dC),  - (tests[0][0] + 2 * (bB + O0.alg.p * cC)), mod }, O0.alg};
-                    test.normalize();
-                }
-                tt4 = !tt1 && !tt2 && !tt3 && tt4 && I.fast_contains(test, modI) && Jc.fast_contains(test, modJ);
-                worked = (tt1 || tt2 || tt3 || tt4);
-            }
-        }
-
-        // the curve is defined over Fp and there are some weird behaviours
-        if (worked && is_Fp(j_ell))
-        {
-
-            if (!tt1 && !tt2) {
-                worked = false;
-                rectif_num++;
-                // std::cout << tt1 << " " << tt2 << " " << tt3 << " " << tt4 << "\n";
-            }
-
-        }
-
-
+        clock_t tt = tic();
+        auto j_ell_it = order_jinv_map.find(K)->second;
+        tot_old += (tic() - tt);
         assert(order_jinv_map.find(K) != order_jinv_map.end());
+        auto j_ell = j_ell_it.first;
+
+        auto normJ = j_ell_it.second.first.first;
+        auto normI = I.norm().first/I.norm().second;
+        
+
+        // finding the isomorphism between the two
+        
+        quat commut = {{Integer(0), Integer(0), Integer(0), Integer(0), Integer(1)}, O0.alg};
+        auto is_equiv = commutatorfind(gamma_pair, j_ell_it.second.first.second.first, {normI, normJ}, j_ell_it.second.first.second.second.second, j_ell_it.second.first.second.second.first, is_Fp(j_ell), commut);
+        
 
 
-        std::pair<SmallMatFp,SmallMatFp> new_web = {SmallMatFp(16), SmallMatFp(3)};
+        std::pair<VerySmallMat,VerySmallMat> new_web;
 
-        if (worked) {
-            a = tt1 || tt2;
+        
+        FastI._fast_intersect(Fastid, red, redid, inv, inv2sqr);
+        auto [FastO, FastGram] = FastI.fast_right_order_and_gram(red);
+        FastMat3 Coords;
+        Coords[0][0] = 1;
+        Coords[1][1] = 1;
+        Coords[2][2] = 1;
+        Coords[0][1] = 0;
+        Coords[0][2] = 0;
+        Coords[1][0] = 0;
+        Coords[1][2] = 0;
+        Coords[2][1] = 0;
+        Coords[2][0] = 0;
+
+#ifndef NDEBUG
+
+        if (!(FastGram == gram)) {
+            std::cout << "Gram and FastGram are not equal !\n";
+            std::cout << O.basis << "\n";
+            std::cout << FastO.basis << "\n";
+            
+            std::cout << gram << "\n";
+            std::cout << FastGram << "\n";   
+        }
+        assert(FastGram == gram);
+        auto test_gram = gram;
+        GreedyReduction3(test_gram);
+#endif
+
+        FastGreedyReduction3(FastGram, Coords);
+        FastQuat fast_gamma = {{0, 0, 0, 0, 1}, fast_a};
+        std::pair<FastQuat,FastQuat> fast_gamma_pair = {fast_gamma, fast_gamma};
+        fast_gamma_pair.first[4] = FastO.denom;
+        fast_gamma_pair.second[4] = FastO.denom;
+
+        for (unsigned i = 1; i <= 3; i++) {
+            for (unsigned j = 0; j < 3; ++j) {
+                fast_gamma_pair.first[i]  += 2 * Coords[0][j] * FastO.basis[j+1][i];
+                fast_gamma_pair.second[i] += 2 * Coords[1][j] * FastO.basis[j+1][i]; 
+    
+            }
+            if (FastGram[0][1] < 0) {
+                fast_gamma_pair.second[i] = - fast_gamma_pair.second[i]; 
+            }
+        }
+        fast_gamma_pair.first.normalize();
+        fast_gamma_pair.second.normalize();
+
+        std::pair<FastQuat, FastQuat> fast_pair_2 = {FastQuat(j_ell_it.second.first.second.first.first, fast_a), FastQuat(j_ell_it.second.first.second.first.second, fast_a)};
+        std::pair<FastInteger, FastInteger> norm_pair = {convert(normI), convert(normJ)};
+        FastQuat fast_prod = FastQuat(j_ell_it.second.first.second.second.second, fast_a);
+        FastInteger fast_prod_norm = convert(j_ell_it.second.first.second.second.first);
+
+        tt = tic();
+        FastQuat fast_commut = {{0, 0, 0, 0, 1}, fast_a};
+        auto fast_is_equiv = commutatorfind(fast_gamma_pair, fast_pair_2, norm_pair, fast_prod, fast_prod_norm, is_Fp(j_ell), fast_commut, redp);
+
+        tot_new += (tic() - tt);
+        // std::cout << "time up to key new " << (tic()-tt) << "\n\n";
+        
+#ifndef NDEBUG 
+
+        
+        Key K_test;
+        NTL::BytesFromZZ(K_test.IntList[0], test_gram[0][0], LenNumberBytes);
+        NTL::BytesFromZZ(K_test.IntList[1], test_gram[1][1], LenNumberBytes);
+        NTL::BytesFromZZ(K_test.IntList[2], test_gram[2][2], LenNumberBytes);
+        assert(is_key_equal(K_test, K));
+
+
+        Key K_fast;
+        FastIntToBytes(FastGram[0][0],K_fast.IntList[0],LenNumberBytes);
+        FastIntToBytes(FastGram[1][1],K_fast.IntList[1],LenNumberBytes);
+        FastIntToBytes(FastGram[2][2],K_fast.IntList[2],LenNumberBytes);
+        assert(is_key_equal(K, K_fast));
+
+        quat quat_test = {{Integer(0), Integer(0), Integer(0), Integer(0), Integer(1)}, O0.alg};
+        quat_test[0] = Integer(fast_gamma_pair.first[0]);
+        quat_test[1] = Integer(fast_gamma_pair.first[1]);
+        quat_test[2] = Integer(fast_gamma_pair.first[2]);
+        quat_test[3] = Integer(fast_gamma_pair.first[3]);
+        quat_test[4] = Integer(fast_gamma_pair.first[4]);
+        assert((quat_test + gamma_pair.first).is_zero() || (quat_test + gamma_pair.first * Integer(-1)).is_zero());
+        quat_test[0] = Integer(fast_gamma_pair.second[0]);
+        quat_test[1] = Integer(fast_gamma_pair.second[1]);
+        quat_test[2] = Integer(fast_gamma_pair.second[2]);
+        quat_test[3] = Integer(fast_gamma_pair.second[3]);
+        quat_test[4] = Integer(fast_gamma_pair.second[4]);
+        assert(j_ell == 0 || (quat_test + gamma_pair.second).is_zero() || (quat_test + gamma_pair.second * Integer(-1)).is_zero());
+        quat_test[0] = Integer(fast_commut[0]);
+        quat_test[1] = Integer(fast_commut[1]);
+        quat_test[2] = Integer(fast_commut[2]);
+        quat_test[3] = Integer(fast_commut[3]);
+        quat_test[4] = Integer(fast_commut[4]);
+        if (!(j_ell == 1728 || j_ell == 0 || (quat_test + commut).is_zero() || (quat_test + commut * Integer(-1)).is_zero())) {
+            std::cout << "good = " << commut << "\nbad = " << fast_commut << "\n";
+        }
+        assert(j_ell == 1728 || j_ell == 0 || (quat_test + commut).is_zero() || (quat_test + commut * Integer(-1)).is_zero());
+        assert(is_equiv == fast_is_equiv);
+        
+#endif
+
+        (void) fast_is_equiv;
+
+        new_web = WeberBasApplicationRemoteEndo(mat0, fast_commut);
+
+        if (is_equiv) {
+            ell_isog_j_list.push_back({j_ell, {false, K, new_web}});
         }
         else {
-            // std::cout << "alt method " << tic() - t << "\n";
-            // t = tic();
-            I._conjugate();
-            Jc = I * (order_jinv_map.find(K)->second.second.first.first);
-            a = isPrincipal_Compute(&gamma, Jc);
-            // std::cout << "basic method " << tic() - t << "\n";
-
-        }
-
-        if (a) {
-
-            if (worked) {
-                new_web = WeberBasApplicationRemoteEndo(mat0, test);
-            }
-            else {
-               new_web = WeberBasApplicationRemoteEndo(mat0, gamma.conjugate());
-            }
-            ell_isog_j_list.push_back({j_ell, { false, K, new_web}});
-        }
-        else {
-            if (worked) {
-                new_web = WeberBasApplicationRemoteEndo(mat0, test);
-            }
-            else {
-                quat jj = {{NTL::ZZ(0), NTL::ZZ(0), NTL::ZZ(1), NTL::ZZ(0), NTL::ZZ(1)}, O0.alg};
-                assert(O0.contains(jj));
-                Jc._intersect(O0*jj);
-                bool ap = isPrincipal_Compute(&gamma, Jc);
-                assert(ap); (void) ap;
-                // std::cout << "gamma := " << gamma.conjugate() << ";\n";
-                new_web = WeberBasApplicationRemoteEndo(mat0, gamma.conjugate());
-            }
-
-
             Fp_integer some_mod;
             NTL::conv(some_mod, O0.alg.p);
             Fp_push push(some_mod);
             {
                 assert(rep(j_ell)[0].modulus() == O0.alg.p);
                 ell_isog_j_list.push_back(
-                    {Frob(j_ell),{true, K, new_web}}
+                    {Frob(j_ell), {true, K, new_web}}
                     );
             }
-
-        }
-        if (worked) {
-            //
-
-            // if (!(gamma.conjugate() +test).is_zero() && !(gamma.conjugate() + test * Integer(-1)).is_zero() && !(gamma.conjugate() + iii * test ).is_zero() && !(gamma.conjugate() + iii * test * Integer(-1)).is_zero()) {
-            //     std::cout << "is Fp?" << is_Fp(j_ell) << "\n";
-            //     std::cout << "gamma_I := " << gamma_I << ";\n";
-            //     std::cout << "gamma_J := " << gamma_J << ";\n";
-            //     std::cout << "gamma := " << gamma.conjugate() << ";\n";
-            //     std::cout << "test := " << test << ";\n";
-            //     std::cout << I.basis << "\n";
-            //     std::cout << order_jinv_map.find(K)->second.second.first.first.basis << "\n";
-            // }
-            // assert( (gamma.conjugate() +test).is_zero() || (gamma.conjugate() + test * Integer(-1)).is_zero() || (gamma.conjugate() + iii * test ).is_zero() || (gamma.conjugate() + iii * test * Integer(-1)).is_zero());
-        }
-        else {
-            no_work_count ++;
-            // if (a != (tt1 || tt2)) {
-            //     std::cout << "is Fp?" << is_Fp(j_ell) << "\n";
-            //     std::cout << "gamma_I := " << gamma_I << ";\n";
-            //     std::cout << "gamma_J := " << gamma_J << ";\n";
-            //     std::cout << "gamma := " << gamma.conjugate() << ";\n";
-            //     std::cout << "test := " << test << ";\n";
-            //     std::cout << I.basis << "\n";
-            //     std::cout << order_jinv_map.find(K)->second.second.first.first.basis << "\n";
-            // }
-            // assert(a == (tt1 || tt2));
-            // if (should_work && !(gamma.conjugate() +test).is_zero() && !(gamma.conjugate() + test * Integer(-1)).is_zero() && !(gamma.conjugate() + iii * test ).is_zero() && !(gamma.conjugate() + iii * test * Integer(-1)).is_zero()) {
-            //     std::cout << "is Fp?" << is_Fp(j_ell) << "\n";
-            //     std::cout << "gamma_I := " << gamma_I << ";\n";
-            //     std::cout << "gamma_J := " << gamma_J << ";\n";
-            //     std::cout << "gamma := " << gamma.conjugate() << ";\n";
-            //     std::cout << "test := " << test << ";\n";
-            //     std::cout << I.basis << "\n";
-            //     std::cout << order_jinv_map.find(K)->second.second.first.first.basis << "\n";
-            // }
-            // assert(!should_work || (gamma.conjugate() +test).is_zero() || (gamma.conjugate() + test * Integer(-1)).is_zero() || (gamma.conjugate() + iii * test ).is_zero() || (gamma.conjugate() + iii * test * Integer(-1)).is_zero());
-
-        }
+        }   
     }
 
-    // std::cout << "not worked " << no_work_count << " times out of " << total_count << " among which " << scalar_stuff << " times for scalar_stuff and " << rectif_num << " after rectifications " << "\n";
+    std::cout << "mean old time " << (double) tot_old / total_count << "\n";
+    // std::cout << "mean time " << (double) tot_new / total_count << "\n";
+    
 
     return ell_isog_j_list;
 
@@ -1886,8 +1796,6 @@ FpX SpecialSupersingularEvaluation(const Integer &p, const Integer &ell, const s
 
     clock_t tot_time = 0;
 
-    // std::cout << "before the loop \n";
-
     for (auto [id, order_pair] : id_list) {
         if (input_list.size() < ell + 2) {
             FpX sumX;
@@ -1901,7 +1809,8 @@ FpX SpecialSupersingularEvaluation(const Integer &p, const Integer &ell, const s
             ell_isog_j_list = SSEvalJinv(id, order_jinv_map, O0, ell_id_list, ell);
 
             clock_t t = clock();
-            Fp2X phi_ell_new_j = FastInterpolateFromRoots(ell_isog_j_list);
+            Fp2X phi_ell_new_j;
+            FastInterpolateFromRoots(phi_ell_new_j, ell_isog_j_list);
             // std::cout << " sum= " << sum << " after fast interpolate \n";
             assert(NTL::deg(phi_ell_new_j) == ell + 1);
             for (int i = 0; i <= ell + 1; i++) {
@@ -1957,7 +1866,7 @@ FpX SpecialSupersingularEvaluationWeber(const Integer &p, const Integer &ell, co
     //////////////////////////////////////////////////////////////////////////////
 
 
-    // init
+    // init of the required finite fields
     Fp_integer p_mod;
     NTL::conv(p_mod, p);
     Fp::init(p_mod);
@@ -1972,206 +1881,195 @@ FpX SpecialSupersingularEvaluationWeber(const Integer &p, const Integer &ell, co
         NTL::conv(qq, qqs.at(0));
         f[0] = Fp(qq);
     }
-
-
     Fp2::init(f);
-
     auto qs = _avail_qs(p, ell);
     assert(qs.size() >= 1);
     auto q = qs.at(0);
+
+    // quaternion algebra
     quatalg Bp {p, q};
-    // std::cout << "q = " << q << "\n";
     auto start = starting_curve(Bp, false);
     quatlat O0 = start.second;
 
-
-
-    // finding the first generator and the iterator
-    bool found = false;
-    quat gamma = {{NTL::ZZ(0), NTL::ZZ(0), NTL::ZZ(0), NTL::ZZ(0), NTL::ZZ(1)}, Bp};
-    while(!found) {
-        NTL::ZZ cofac;
-        if (p != 3067) {
-            cofac = 3067;
-        }
-        else {
-            cofac = 3319;
-        }
-        NTL::ZZ target = cofac * ell;
-        while (target < 1000 * p) {
-            target = cofac * target;
-        }
-        quat gamma_tmp = RepresentInteger(Bp, target);
-        quat testing = {{gamma_tmp[0], gamma_tmp[1], gamma_tmp[2], gamma_tmp[3], NTL::ZZ(2)*gamma_tmp[4]}, Bp};
-        found = !O0.contains(testing);
-        gamma[0] = gamma_tmp[0];
-        gamma[1] = gamma_tmp[1];
-        gamma[2] = gamma_tmp[2];
-        gamma[3] = gamma_tmp[3];
-        gamma[4] = gamma_tmp[4];
-    }
-    assert(O0.contains(gamma));
-    quatlat I = O0 * gamma + O0 * ell;
-    assert(std::get<0>(I.norm())/std::get<1>(I.norm()) == ell);
-
-
-    std::list<int> ell_list = {NTL::conv<int>(ell)};
-    // generating the iterating quaternion
-    quat beta = find_quaternion_iterator(ell_list, I , O0, Bp);
-
-    // std::list<quatlat> ell_id_list = O0.left_ideals_of_prime_norm(ell, gamma, beta);
-    std::list<quatlat> ell_id_list = left_ideals_of_prime_norm_O0(ell, gamma, beta);
-
-    // for (auto idl : ell_id_list) {
-    //     std::cout << idl.HNF_basis() << "\n" << idl.denom << "\n";
-    //     quatlat O = idl.right_order() ;
-    //     std::cout << O.HNF_basis() << "\n" << O.denom << "\n\n";
-    // }
-
-
-    std::unordered_map<Key, std::pair<FpE_elem,std::pair<std::pair<quatlat,quat>, weber_full_data>>, KeyHash, KeyEqual> order_jinv_map;
-    std::vector <std::pair<quatlat, std::pair<quatlat, Key>>> id_list;
-
+    // generating of the finite fields
     unsigned k_bound = 20; //Some minimum
-    std::cerr << "Generating field exts up to: " << k_bound << "..." << std::flush;
+    // std::cerr << "Generating field exts up to: " << k_bound << "..." << std::flush;
     //TODO eventually we should generate these field extensions on the fly and cache them, similar to how we now do it for torsion bases. at the moment this fails because references to the Fp2k object are stored in all kinds of other objects and those references are invalidated when the std::map is modified. possible solution: use std::shared_ptr for Fp2k references, just like we do for ec references.
     std::map<unsigned,Fp2k> Fexts;
     {
         for (unsigned k = 1; k <= k_bound; ++k) {
-            std::cerr << "\r\x1b[KGenerating field exts up to: " << k_bound << "... " << k << std::flush;
+            // std::cerr << "\r\x1b[KGenerating field exts up to: " << k_bound << "... " << k << std::flush;
             Fexts.emplace(std::make_pair(k, Fp2k {k}));
         }
-        std::cerr << "\r\x1b[KGenerating field exts up to: " << k_bound << "... done" << std::endl;
+        // std::cerr << "\r\x1b[KGenerating field exts up to: " << k_bound << "... done" << std::endl;
     }
 
 
+    FastInteger fast_ell = convert(ell);
+
     clock_t total_time = clock();
 
-    auto [bas0,mat0] = order_to_weber_inv_full_list(order_jinv_map, id_list, p, Bp, Fexts, ell);
+    // convert to fast format 
+    FastQuatAlg fast_Bp = FastQuatAlg(O0.alg);
+    
+    // computation of the list of ell ideals
+    std::vector<quatlat> ell_id_list = left_ideals_of_prime_norm_O0(ell, Bp);
 
-    std::cout << "total data_enum = " << (double)(clock() - total_time) / (CLOCKS_PER_SEC) << "\n";
+    // TODO this could be sped up a bit by directly generating the FastQuatLat. There is a function to do so in the fast_quaternions module already, but when I tried to use it, that seemed to create an error
+    std::vector<FastQuatLat> fast_ell_id_list = {};
+    for (auto & id : ell_id_list) {
+        fast_ell_id_list.push_back( FastQuatLat(id, fast_Bp) );
+    }
+    // some useful precomputation for later on
+    SignedBarrettReducer redl(fast_ell);
+    for (auto & id : fast_ell_id_list) {
+        if (id.good_type) {
+            assert(id.basis[0][2] == 0 && id.basis[0][3] == 0 && id.basis[1][2] == 0 && id.basis[1][3] == 0);
+            id.basis[0][3] = redl.mod((- id.basis[2][1]) * InvMod(id.basis[2][0], redl));
+            id.basis[0][2] = redl.modsqr(InvModSqr( redl.modsqr(id.basis[3][0] * id.basis[3][0] + id.basis[3][1] * id.basis[3][1] - fast_Bp.p), redl) << 1);
+            id.basis[1][3] = redl.modsqr(id.basis[0][2] * id.basis[3][1]);
+            id.basis[1][2] = redl.modsqr( - id.basis[0][2] * id.basis[3][0]);
+        }        
+    }
 
-    // first we enumerate through the set of ell-ideals
     std::vector <Fp2> input_list = {};
     std::vector <Fp2> output_list = {};
 
 
     clock_t tot_interpolation_time = 0;
     clock_t tot_quaternion_time = 0;
-    clock_t tot_weber_fetch_time = 0;
     std::unordered_set<Jinv, JinvHash, JinvEqual> input_weber_list = {};
     clock_t t_loop = clock();
 
     long ellmod24 = NTL::conv<long>(ell) %24;
 
-    int count_curve = 0;
+    std::vector <std::pair<FastQuatLat, Key>> fast_id_list_test;
+    std::unordered_map<Key, std::pair<FpE_elem, std::pair<std::pair<FastInteger, std::pair<std::pair<FastQuat,FastQuat>,std::pair<FastInteger,FastQuat>>>, weber_full_data>>, KeyHash, KeyEqual> fast_order_jinv_map_test;
+    auto [bas0,mat0] = fast_order_to_weber_inv_full_list(fast_order_jinv_map_test, fast_id_list_test, p, Bp, fast_Bp, Fexts, ell);
 
-    for (auto [id, order_pair] : id_list) {
+    std::cout << "total data_enum (include data conversion to fast format) = " << (double)(clock() - total_time) / (CLOCKS_PER_SEC) << "\n";
 
+    // initializer
+    std::array<std::vector<ffp2>, 3> ell_isog_web_list = {std::vector<ffp2>(fast_ell + 1, {Fp(0), Fp(0)}), std::vector<ffp2>(fast_ell + 1, {Fp(0), Fp(0)}), std::vector<ffp2>(fast_ell + 1, {Fp(0), Fp(0)})};
+
+    std::pair<FpX, FpX> phi_ell_new_w;
+    phi_ell_new_w.first.SetMaxLength(fast_ell + 1);
+    phi_ell_new_w.second.SetMaxLength(fast_ell + 1);
+
+ 
+    // Ready to start the main loop
+    for (auto & [id, id_key] : fast_id_list_test) {
         if (input_list.size() < ell + 2) {
-            // std::cout << "treating j = " << new_j << "\n";
             clock_t tt = clock();
-            count_curve++;
-            // auto [new_j, new_web_id] = (order_jinv_map.find(order_pair.second))->second;
-            // auto [new_id, new_web] = new_web_id;
-            // assert((16*new_web.basis.P16).is_identity());
-            // assert((3*new_web.basis.P3).is_identity());
+            // TODO this seems to be the only place where we use the enumerator, thus we could store those directly in fast_id_list to reduce the size of order_jinv_map. To be checked, there may be an obstacle
+            auto weber_list = (fast_order_jinv_map_test.find(id_key))->second.second.second.inv_list;
+            auto weber_enumerator = (fast_order_jinv_map_test.find(id_key))->second.second.second.enumerator;
 
-            std::vector<std::pair<Fp2,std::tuple<bool, Key, std::pair<SmallMatFp,SmallMatFp>>>> ell_isog_j_list = {};
+            // auto weber_enumerator_test = (fast_order_jinv_map_test.find(id_key))->second.second.second.enumerator;
 
-            ell_isog_j_list = SSEvalWeber(id, order_jinv_map, O0, bas0, mat0, ell_id_list, ell);
+            // we compute the list of ell-isogenous weber invariant (we need only 3 among the 72, the others can be deduced from the three we computed)
+            // FastSSEvalWeber(ell_isog_web_list_test, id, fast_order_jinv_map_test, convert(O0.alg.p), mat0_test, fast_ell_id_list, fast_ell, weber_enumerator_test);
+            FastSSEvalWeber(ell_isog_web_list, id, fast_order_jinv_map_test, convert(O0.alg.p), mat0, fast_ell_id_list, fast_ell, weber_enumerator);
 
-            auto weber_list = (order_jinv_map.find(order_pair.second))->second.second.second.enumerator;
+            // for (int i = 0; i < 3; i++) {
+            //     int num_error = 0;
+            //     for (int j = 0; j < ell + 1; j++) {
+            //         if (ell_isog_web_list[i][j] != ell_isog_web_list_test[i][j]) {
+            //             // std::cout << "error at index " << i << " " << j << " " << ell_isog_web_list[i][j] << " " << ell_isog_web_list_test[i][j] <<  "\n";
+            //             num_error++;
+            //         }
+                     
+            //     }
+            //     std::cout << "num error at i = " << i << " is " << num_error << "\n";
+            // }   
+            
             tot_quaternion_time += (clock() - tt);
-
             Fp2 w_ell;
 
-
             for (int i = 0; i < 3; i++) {
-                Fp2 web_inv = weber_list[24*i].first;
+                
+                Fp2 web_inv = Fp2_cast(weber_enumerator[i].first);
+                // std::cout << "big3 winv " << web_inv << "\n";
                 Jinv ww= JToJinv(web_inv);
                 Jinv wwp = JToJinv(Frob(web_inv));
                 auto a = input_weber_list.insert(ww);
                 auto ap = input_weber_list.insert(wwp);
                 bool proceed = a.second && (is_Fp(web_inv) || ap.second) && input_list.size() < ell + 2;
 
-
                 if (proceed) {
-                    std::vector<Fp2> ell_weber_list = {};
+                    clock_t t = clock();
+                    // FastInterpolateFromRoots(phi_ell_new_w, ell_isog_web_list[i]);
+                    FastInterpolateFromRootsKaratsubaPlusTrick(phi_ell_new_w, ell_isog_web_list[i]);
+                    assert(NTL::deg(phi_ell_new_w.first) == ell + 1);
 
-                    for (unsigned j = 0; j<ell_isog_j_list.size(); j++) {
-                        // auto [j_ell, webbool_ell]: ell_isog_j_list
-                        clock_t ttt = clock();
-                        // auto [web_ell, need_frob, enumm, mat_pair] = webbool_ell;
-                        w_ell = WeberGetFromEnum(weber_list[24*i].second, order_jinv_map.find(std::get<1>(ell_isog_j_list[j].second))->second.second.second.enumerator, std::get<2>(ell_isog_j_list[j].second));
-                        tot_weber_fetch_time += (clock() - ttt);
-                        bool check = true;
-                        // Fp2 w_test;
-                        // check = BasCoeffToWeber(&w_test, web_ell, coeffs, Fexts);
-                        // assert((power(w_ell,24) - 16)/power(w_ell,8) == (power(w_test,24) - 16)/power(w_test,8));
-                        // assert(power(w_ell,24) == power(w_test,24));
-                        // assert(w_ell == w_test);
-                        // std::cout << power(w_test,24) << " " << power(w_ell,24) << "   " << (power(w_test,24) - 16)/power(w_test,8) << " " << (power(w_ell,24) - 16)/power(w_ell,8) << "    " << power(w_test,8) << " " << power(w_ell,8) << "\n";
-                        // std::cout << " j_ell = " << j_ell << " need frob = " << need_frob << "\n";
-                        if (check) {
-                            if (std::get<0>(ell_isog_j_list[j].second)) {
-                                w_ell = Frob(w_ell);
-                            }
-                            ell_weber_list.push_back(w_ell);
-                        }
+                    // now we compute the sums
+                    ffp2 sum;
+                    std::array<ffp2, 24> sub_sums;
+                    for (int i =0; i < 24; i++) {
+                        sub_sums[i] = {Fp(0), Fp(0)};
                     }
-                    if (ell_weber_list.size() == ell + 1 ) {
-                        clock_t t = clock();
 
-                        Fp2X phi_ell_new_w = FastInterpolateFromRoots(ell_weber_list);
-                        assert(NTL::deg(phi_ell_new_w) == ell + 1);
+                    // now we compute the sums
+                    ffp2 coeff;
+                    for (int k = 0; k <= ell + 1; k++) {
 
-                        // now we compute the sums
-                        FpX sumX;
-                        Fp2 sum;
+                        if (k <= deg(phi_ell_new_w.second)) {
+                            coeff = {phi_ell_new_w.first[k], phi_ell_new_w.second[k]};
+                        }
+                        else {
+                            coeff = {phi_ell_new_w.first[k], Fp(0)};
+                        }
+                        
+                        // fast_mul(coeff, coeff, {eval_points[k], Fp(0)} );
+                        mul(coeff.first, coeff.first, eval_points[k]);
+                        mul(coeff.second, coeff.second, eval_points[k]);
 
+                        fast_add(sub_sums[k % 24], sub_sums[k % 24], coeff);
 
-                        for (long ii = 0; ii <24 && input_list.size() < ell + 2; ii++) {
+                    }          
 
-                            Fp2 loc_web = weber_list[24*i + ii].first;
-                            Jinv ww_loc= JToJinv(loc_web);
-                            Jinv wwp_loc = JToJinv(Frob(loc_web));
-                            auto b = input_weber_list.insert(ww_loc);
-                            auto bp = input_weber_list.insert(wwp_loc);
-                            bool proceed_bis = b.second && (is_Fp(loc_web) || bp.second) && input_list.size() < ell + 2;
-                            if (proceed_bis) {
-                                Fp2 inverse_web = loc_web/web_inv;
-                                sum = Fp2(0);
-                                std::vector<Fp2> pow = get_powers(inverse_web, 24);
-                                // TODO : this could be optimized, it seems we do a lot of times the same multiplications...
-                                // What we should do to be faster is precompute 24 sub_sum once and for all
-                                // and then these 24 subsums can be multiplied by the correct power of inverse_web
-                                // and summed together
-                                // instead of 24 * 2 * ell mmuls and 24 * ell adds
-                                // we do ell multiplications + sums and then 24 mul and 24 adds
-                                for (long k = 0; k <= ell + 1; k++) {
-                                    long k_pow = (48000000 + ellmod24 * ( 1 - k ) + 1)%24;
-                                    sum += NTL::coeff(phi_ell_new_w, k) * pow[k_pow] * eval_points[k];
-                                }
-                                // std::cout << "\n";
-                                input_list.push_back(loc_web);
-                                output_list.push_back(sum);
-                                // now if the w_inv belong to Fp2 we can also eval for the conjugate
-                                if (!is_Fp(loc_web) && input_list.size() < ell + 2 ) {
-                                    input_list.push_back(Frob(loc_web));
-                                    output_list.push_back(Frob(sum));
-                                }
+                    for (int ii = 0; ii <24 && input_list.size() < ell + 2; ii++) {
+                        
+                        Fp2 loc_web = Fp2_cast(weber_list[24*i + ii]);
+                        Jinv ww_loc= JToJinv(loc_web);
+                        Jinv wwp_loc = JToJinv(Frob(loc_web));
+                        auto b = input_weber_list.insert(ww_loc);
+                        auto bp = input_weber_list.insert(wwp_loc);
+                        bool proceed_bis = ((ii == 0) || (b.second && (is_Fp(loc_web) || bp.second))) && input_list.size() < ell + 2;
+                        
+                        if (proceed_bis) {
+                            ffp2 inverse_web = from_Fp2(web_inv);
+                            fast_inv(inverse_web, inverse_web);
+                            fast_mul(inverse_web, inverse_web, from_Fp2(loc_web));
+
+                            std::vector<ffp2> pow(25); get_powers(pow, inverse_web, 24);
+                            sum = {Fp(0), Fp(0)};
+                            for (int i = 0; i < 24; i++ ) {
+                                fast_mul(coeff, pow[(ellmod24 * ( 25 - i) + 1) % 24], sub_sums[i]);
+                                fast_add(sum, sum, coeff);
+                                
+                            }
+                            
+                            input_list.push_back(loc_web);
+                            // output_list.push_back(sum_test);
+                            output_list.push_back(Fp2_cast(sum));
+                            // now if the w_inv belong to Fp2 we can also eval for the conjugate
+                            if (!is_Fp(loc_web) && input_list.size() < ell + 2 ) {
+                                input_list.push_back(Frob(loc_web));
+                                output_list.push_back(Frob(Fp2_cast(sum)));
                             }
 
-
                         }
-                        tot_interpolation_time += (clock() -t);
+                        // else {
+                            // std::cout << "not proceed bis !!!!!!!!!!!!!!!! \n";
+                            // std::cout << "j = " << fast_order_jinv_map_test.find(id_key)->second.first << " w = " << loc_web << "\n";
+                        // }
                     }
+                    tot_interpolation_time += (clock() -t);
                 }
                 else if (input_list.size() >= ell + 2) {
                     goto endloop;
                 }
-
             }
 
 
@@ -2184,9 +2082,7 @@ FpX SpecialSupersingularEvaluationWeber(const Integer &p, const Integer &ell, co
     endloop:
 
     std::cout << "poly time = " << (double) (tot_interpolation_time)/CLOCKS_PER_SEC << "\n";
-    std::cout << "quat time = " << (double)(tot_quaternion_time) / (CLOCKS_PER_SEC) << "\n";
-    // std::cout << "amortized quat time = " << (double)(tot_quaternion_time) / (CLOCKS_PER_SEC * count_curve) << "\n";
-    std::cout << "fetch weber time = " << (double)(tot_weber_fetch_time) / (CLOCKS_PER_SEC) << "\n";
+    std::cout << "quat time = " << (double)(tot_quaternion_time) / (CLOCKS_PER_SEC) << "\n";    
     std::cout << "total loop time : " << (double) (clock() - t_loop)/(CLOCKS_PER_SEC) << "\n";
     long long_ell = NTL::conv<long>(ell);
 
@@ -2197,12 +2093,13 @@ FpX SpecialSupersingularEvaluationWeber(const Integer &p, const Integer &ell, co
     assert(NTL::deg(res_poly) ==  long_ell + 1 );
     auto result = FpX(long_ell + 1, 1);
     for (long i = 0; i < long_ell + 1; i++) {
+
 #ifndef NDEBUG
         if (!is_Fp(coeff(res_poly, i))){
             std::cout << "not in Fp i = " << i << " \n";
-            for (size_t j = 0; j < input_list.size() ; j++) {
-                std::cout << input_list[j] << " " << output_list[j] << "\n";
-            }
+            // for (size_t j = 0; j < input_list.size() ; j++) {
+            //     std::cout << input_list[j] << " " << output_list[j] << "\n";
+            // }
         }
 #endif
         assert(is_Fp(coeff(res_poly, i)));
@@ -2214,6 +2111,8 @@ FpX SpecialSupersingularEvaluationWeber(const Integer &p, const Integer &ell, co
     return result;
 
 }
+
+
 
 //
 std::pair<long,std::list<std::pair<quatlat, Fp2>>> Reordering_list(const std::vector <std::pair<quatlat, std::pair<quatlat, Key>>> &id_list, const std::unordered_map<Key, std::pair<FpE_elem,quatlat>, KeyHash, KeyEqual> &order_jinv_map ){
@@ -2257,6 +2156,58 @@ Fp2 const_CRT_polynomials( const std::vector<Fp2> &values, const std::vector<Int
     NTL::SetCoeff( res_polX, 0, NTL::conv<Fp>(res0));
     NTL::SetCoeff( res_polX, 1, NTL::conv<Fp>(res1));
     return NTL::conv<Fp2>(res_polX);
+}
+
+// compute the CRT from FFpi^2 = ZZpi[X] / X^2 + 1 (given as the type ffp2 which is a pair of NTL::_zz_p element) to ZZm[X] / X^2 + 1 where m is the product of the pi (where there are len pi). The product m should be smaller than the bound NTL_SP_BOUND
+// values should contain the values of the elements in FFpi^2 
+// modulus should contain the pi 
+// prod_mod should contain the list {p1, p1 p2 , p1 p2 p3, ....}
+// inv should contain the list {p1^{-1} mod p2, (p1p2)^{-1} mod p3, ....}
+// assumes that NTL::_zz_p is init with the value of m
+ffp2 CRT_ffp2( const std::vector<ffp2> &values, const std::vector<FastInteger> &modulus, const std::vector<FastInteger> &prod_mod, const std::vector<FastInteger> &inv, const long len) {
+    FastInteger res0  = values[0].first._zz_p__rep;
+    FastInteger res1  = values[0].second._zz_p__rep;
+    for (int i = 1; i < len; i++) {
+        FastInteger new_res0  = values[i].first._zz_p__rep;
+        FastInteger new_res1  = values[i].second._zz_p__rep;    
+        res0 = (res0 + (((new_res0 - res0) * inv[i - 1]) % modulus[i] ) * prod_mod[i - 1]) % prod_mod[i]; 
+        res1 = (res1 + (((new_res1 - res1) * inv[i - 1]) % modulus[i] ) * prod_mod[i - 1]) % prod_mod[i];
+    }
+
+#ifndef NDEBUG 
+        for (int i = 0; i < len; i++) {
+            // std::cout << "i = " << i << " " << modulus[i] << " " << (res0 + modulus[i]) % modulus[i] << " " << (values[i][array_index][j].first._zz_p__rep + modulus[i]) % modulus[i] << " " << (res1 + modulus[i]) % modulus[i] << " " << (values[i][array_index][j].second._zz_p__rep + modulus[i]) % modulus[i] << "\n";
+            assert((res0 - values[i].first._zz_p__rep  ) % modulus[i] == 0);
+            assert((res1 - values[i].second._zz_p__rep + modulus[i] ) % modulus[i] == 0);
+        }
+#endif
+
+    return {NTL::conv<Fp>(res0), NTL::conv<Fp>(res1)};
+}
+
+// values contains a vector of len arrays of 3 vectors of length_vec
+// the result will be given in the vector crt_values of length length_vec corresponding to the CRT of the vectors at indices array_index in the array
+void CRT_ffp2_array_vector(std::vector<ffp2> &crt_values, const std::vector<std::array<std::vector<ffp2>,3>> &values, int array_index, const std::vector<FastInteger> &modulus, const std::vector<FastInteger> &prod_mod, const std::vector<FastInteger> &inv, const long len, const long len_vec) {
+    FastInteger res0, res1, new_res0, new_res1;
+    for (int j = 0; j < len_vec; j++ ) {
+        res0  = values[0][array_index][j].first._zz_p__rep;
+        res1  = values[0][array_index][j].second._zz_p__rep;
+        for (int i = 1; i < len; i++) {
+            new_res0  = values[i][array_index][j].first._zz_p__rep;
+            new_res1  = values[i][array_index][j].second._zz_p__rep;    
+            res0 = (res0 + (((new_res0 - res0) * inv[i - 1]) % modulus[i] ) * prod_mod[i - 1]) % prod_mod[i]; 
+            res1 = (res1 + (((new_res1 - res1) * inv[i - 1]) % modulus[i] ) * prod_mod[i - 1]) % prod_mod[i];
+        }
+
+#ifndef NDEBUG 
+        for (int i = 0; i < len; i++) {
+            // std::cout << "i = " << i << " " << modulus[i] << " " << (res0 + modulus[i]) % modulus[i] << " " << (values[i][array_index][j].first._zz_p__rep + modulus[i]) % modulus[i] << " " << (res1 + modulus[i]) % modulus[i] << " " << (values[i][array_index][j].second._zz_p__rep + modulus[i]) % modulus[i] << "\n";
+            assert((res0 - values[i][array_index][j].first._zz_p__rep  ) % modulus[i] == 0);
+            assert((res1 - values[i][array_index][j].second._zz_p__rep + modulus[i] ) % modulus[i] == 0);
+        }
+#endif
+        crt_values[j] =  {NTL::conv<Fp>(res0), NTL::conv<Fp>(res1)};
+    }    
 }
 
 FpX SpecialSupersingularEvaluationCRT(const Integer &p1, const Integer &p2, const Integer ell, const std::vector<Fp_elem> eval_points) {
@@ -2462,7 +2413,8 @@ FpX SpecialSupersingularEvaluationCRT(const Integer &p1, const Integer &p2, cons
         NTL::SetCoeff( sumX, 0, Fp(0) );
         NTL::SetCoeff( sumX, 1, Fp(0) );
         sum = NTL::conv<Fp2>(sumX);
-        Fp2X phi_ell_new_j = FastInterpolateFromRoots(ell_isog_j_list);
+        Fp2X phi_ell_new_j;
+        FastInterpolateFromRoots(phi_ell_new_j, ell_isog_j_list);
         assert(NTL::deg(phi_ell_new_j) == ell + 1);
         for (int i = 0; i <= ell + 1; i++) {
             sum += NTL::coeff(phi_ell_new_j, i) * eval_points[i];
@@ -2499,8 +2451,340 @@ FpX SpecialSupersingularEvaluationCRT(const Integer &p1, const Integer &p2, cons
 
 }
 
+// CRT variant of SpecialSupersingularEvaluationWeberCRT 
+// p is the list of prime modulus
+// m is the product of those primes
+// num_crt_prime is the number 
+// the eval_points are already computed modulo m
+FpX SpecialSupersingularEvaluationWeberCRT(const std::vector<FastInteger> &prime_list, const FastInteger &m, int num_crt_prime, const Integer &ell, const std::vector<Fp_elem> eval_points)
+{
+    //////////////////////////////////////////////////////////////////////////////
+    /// CRT variant of SpecialSupersingularEvaluationWeberCRT. Since the primes we use are quite small, they are far below the bound for long integers 
+    /// so to gain time in the polynomial interpolation part, we use CRT to combine the elements from several primes into one as 1 operation mod m = p1 p2 
+    // is more efficient that 1 operation mod p1 and one operation mod p2 (and same for more primes)
+    //////////////////////////////////////////////////////////////////////////////
+
+    std::cout << "SS Eval WeberCRT of size " << num_crt_prime << " with: \n";
+    // setting up the polynomials
+    std::vector<FpX> mod_polys(num_crt_prime);
+    FpX fm;
+    for (int i = 0; i < num_crt_prime; i++) {
+        Fp_push push(prime_list[i]);
+        SetCoeff(mod_polys[i], 2);
+        mod_polys[i][0] = Fp(1);
+        std::cout << prime_list[i] << " ";
+    }
+    std::cout << "\n";
+    {
+        Fp_push push(m);
+        SetCoeff(fm, 2);
+        fm[1] = Fp(1);
+    }
+    
+
+    clock_t total_time = clock();
+    clock_t tot_interpolation_time = 0;
+    clock_t tot_quaternion_time = 0;
+
+    FastInteger fast_ell = convert(ell);
+    FastInteger ellmod24 = fast_ell % 24;
+
+    // the final interpolation input and output
+    std::vector <Fp2> input_list = {};
+    std::vector <Fp2> output_list = {};
+
+    // structure in which is going to be gathered all the values modulo the CRT primes 
+    std::vector<std::array<std::vector<ffp2>, 3>> CRT_ell_isog_web_list(num_crt_prime, {std::vector<ffp2>(fast_ell + 1, {Fp(0), Fp(0)}), std::vector<ffp2>(fast_ell + 1, {Fp(0), Fp(0)}), std::vector<ffp2>(fast_ell + 1, {Fp(0), Fp(0)})});
 
 
+    std::pair<FpX, FpX> phi_ell_new_w;
+    phi_ell_new_w.first.SetMaxLength(fast_ell + 1);
+    phi_ell_new_w.second.SetMaxLength(fast_ell + 1);
+
+    std::vector<quatalg> Bp(num_crt_prime);
+    
+
+    // initializing the quaternion algebras 
+    for (int i = 0; i < num_crt_prime; i++) {
+        Bp[i] = {Integer(prime_list[i]), Integer(1)};
+    }
+    std::vector<FastQuatAlg> fast_Bp(num_crt_prime, FastQuatAlg(Bp[0]));
+    for (int i = 1; i < num_crt_prime; i++) {
+        fast_Bp[i] = FastQuatAlg(Bp[i]);
+    }
+
+    std::vector<std::vector<FastQuatLat>> fast_ell_id_list(num_crt_prime);
+    std::vector<std::vector <std::pair<FastQuatLat, Key>>> fast_id_list(num_crt_prime);
+    std::vector<std::unordered_map<Key, std::pair<FpE_elem, std::pair<std::pair<FastInteger, std::pair<std::pair<FastQuat,FastQuat>,std::pair<FastInteger,FastQuat>>>, weber_full_data>>, KeyHash, KeyEqual>> fast_order_jinv_map(num_crt_prime);
+    std::vector<std::vector<std::pair<VerySmallMat,VerySmallMat>>> matrices(num_crt_prime);
+    std::vector<std::unordered_set<Jinv, JinvHash, JinvEqual>> input_j_inv_list(num_crt_prime);
+    std::vector<std::unordered_set<Jinv, JinvHash, JinvEqual>> weber_tracking_list(num_crt_prime);
+
+    // some precomputation about the modulus
+    std::vector<FastInteger> prod_mod = {prime_list[0]};
+    std::vector<FastInteger> inverse_mod = {};
+
+    for (int i = 1; i < num_crt_prime; i++) {
+        prod_mod.push_back(prod_mod[i - 1] * prime_list[i]);
+        SignedBarrettReducer red(prime_list[i]);
+        inverse_mod.push_back(InvMod(prod_mod[i - 1], red));
+    }
+
+    // first we gather the necessary precomputation
+    for (int prime_index = 0; prime_index < num_crt_prime; prime_index++) {
+        
+        Integer p = Integer(prime_list[prime_index]);
+
+        // init finite field and stuff
+        Fp_integer p_mod;
+        NTL::conv(p_mod, p);
+        Fp::init(p_mod);
+        FpX f;
+        SetCoeff(f, 2);
+        f[0] = Fp(1);
+        Fp2::init(f);
+        auto start = starting_curve(Bp[prime_index], false);
+        quatlat O0 = start.second;
+
+        // generating finite field extensions
+        unsigned k_bound = 20; //Some minimum
+        // std::cerr << "Generating field exts up to: " << k_bound << "..." << std::flush;
+        //TODO eventually we should generate these field extensions on the fly and cache them, similar to how we now do it for torsion bases. at the moment this fails because references to the Fp2k object are stored in all kinds of other objects and those references are invalidated when the std::map is modified. possible solution: use std::shared_ptr for Fp2k references, just like we do for ec references.
+        std::map<unsigned,Fp2k> Fexts;
+        {
+            for (unsigned k = 1; k <= k_bound; ++k) {
+                // std::cerr << "\r\x1b[KGenerating field exts up to: " << k_bound << "... " << k << std::flush;
+                Fexts.emplace(std::make_pair(k, Fp2k {k}));
+            }
+            // std::cerr << "\r\x1b[KGenerating field exts up to: " << k_bound << "... done" << std::endl;
+        }
+
+        // list of ell ideals
+        std::vector<quatlat> ell_id_list = left_ideals_of_prime_norm_O0(ell, Bp[prime_index]);
+        // transforming the ell ideal list to faster format 
+        // TODO could be sped up by directly generating to the fast format, but due to a weird bug it was postponed (this is quite negligible anyway)
+        {
+            for (auto & id : ell_id_list) {
+                fast_ell_id_list[prime_index].push_back( FastQuatLat(id, fast_Bp[prime_index]) );
+            }
+            SignedBarrettReducer redl(fast_ell);
+            for (auto & id : fast_ell_id_list[prime_index]) {
+                if (id.good_type) {
+                    assert(id.basis[0][2] == 0 && id.basis[0][3] == 0 && id.basis[1][2] == 0 && id.basis[1][3] == 0);
+                    id.basis[0][3] = redl.mod((- id.basis[2][1]) * InvMod(id.basis[2][0], redl));
+                    id.basis[0][2] = redl.modsqr(InvModSqr( redl.modsqr(id.basis[3][0] * id.basis[3][0] + id.basis[3][1] * id.basis[3][1] - fast_Bp[prime_index].p), redl) << 1);
+                    id.basis[1][3] = redl.modsqr(id.basis[0][2] * id.basis[3][1]);
+                    id.basis[1][2] = redl.modsqr( - id.basis[0][2] * id.basis[3][0]);
+                }        
+            }
+        }        
+        // computation of the list of orders and a list of small ideals we are going to use to collect all the necessary data
+        auto [bas0,mat0] = fast_order_to_weber_inv_full_list(fast_order_jinv_map[prime_index], fast_id_list[prime_index], p, Bp[prime_index], fast_Bp[prime_index], Fexts, ell);
+        matrices[prime_index] = mat0;
+
+    }
+
+    Fp_integer m_mod;
+    NTL::conv(m_mod, m);
+    Fp::init(m_mod);
+    FpX f;
+    SetCoeff(f, 2);
+    f[0] = Fp(1);
+    Fp2::init(f);
+
+    // std::cout << "total data precomputation (include data conversion to fast format) = " << (double)(clock() - total_time) / (CLOCKS_PER_SEC) << "\n";
+
+
+    // now we're ready for the enumeration
+    // of the weber invariants 
+    std::vector<long> id_list_index(num_crt_prime, 0); 
+    while (input_list.size() < (size_t) fast_ell + 2) {
+
+        bool is_all_fp2_j_inv = true;
+        std::vector<weber_inv_list> list_of_webers(num_crt_prime);
+
+        // computing the ell-isogenous weber structure for all CRT primes
+        for (int prime_index = 0; prime_index < num_crt_prime; prime_index++) {
+
+            FastInteger p = prime_list[prime_index];
+            Fp_push push(prime_list[prime_index]);
+            FpE_push push2(mod_polys[prime_index]);
+
+            clock_t tt = clock();
+
+            // first we select a new ideal that was not already processed
+            auto find_weber_precomp = fast_order_jinv_map[prime_index].find(fast_id_list[prime_index][id_list_index[prime_index]].second)->second;
+            {
+                // this is to decide if we have already handled the galois conjugate 
+                // TODO: does this ever happen? because in principle the list is built to avoid that
+                Jinv jj_loc= JToJinv(find_weber_precomp.first);
+                Jinv jjp_loc = JToJinv(Frob(find_weber_precomp.first));
+                auto a = input_j_inv_list[prime_index].insert(jj_loc);
+                auto ap = input_j_inv_list[prime_index].insert(jjp_loc);
+                bool proceed = a.second && (is_Fp(find_weber_precomp.first) || ap.second) && find_weber_precomp.first != Fp(0) && find_weber_precomp.first != Fp(1728);
+                while (!proceed) {
+                    id_list_index[prime_index]++;
+                    if (id_list_index[prime_index] >= (int) fast_id_list[prime_index].size()) {
+                        std::cout << "fast_id_list too small ! \n";
+                    }
+                    find_weber_precomp = fast_order_jinv_map[prime_index].find(fast_id_list[prime_index][id_list_index[prime_index]].second)->second;
+                    jj_loc= JToJinv(find_weber_precomp.first);
+                    jjp_loc = JToJinv(Frob(find_weber_precomp.first));
+                    a = input_j_inv_list[prime_index].insert(jj_loc);
+                    ap = input_j_inv_list[prime_index].insert(jjp_loc);
+                    proceed = a.second && (is_Fp(find_weber_precomp.first) || ap.second) && find_weber_precomp.first != Fp(0) && find_weber_precomp.first != Fp(1728);
+                }
+
+                // checking if all the j-invariant are Fp2 elements
+                is_all_fp2_j_inv = is_all_fp2_j_inv && !is_Fp(find_weber_precomp.first);
+            }
+            
+            // fetching the required precomputed information
+            list_of_webers[prime_index] = find_weber_precomp.second.second.inv_list;
+            auto weber_enumerator = find_weber_precomp.second.second.enumerator;
+
+            // computing ell-isogenous weber structure
+            FastSSEvalWeber(CRT_ell_isog_web_list[prime_index], fast_id_list[prime_index][id_list_index[prime_index]].first, fast_order_jinv_map[prime_index], p, matrices[prime_index], fast_ell_id_list[prime_index], fast_ell, weber_enumerator);
+            
+            tot_quaternion_time += (clock() - tt);
+
+        }
+
+        // and now exploiting the weber information to compute the interpolation points 
+        for (int i = 0; i < 3; i++) {
+
+            // computing the base point 
+            ffp2 web_inv_i_CRT;
+            std::vector<ffp2> web_inv_i_comp(num_crt_prime);
+            for (int index_prime = 0; index_prime < num_crt_prime; index_prime ++) {
+                web_inv_i_comp[index_prime] = list_of_webers[index_prime][24 * i]; 
+            }
+            web_inv_i_CRT = CRT_ffp2(web_inv_i_comp, prime_list, prod_mod, inverse_mod, num_crt_prime);  
+
+            clock_t t_pol = clock();
+
+            std::vector<ffp2> CRT_web_list(fast_ell + 1);
+            CRT_ffp2_array_vector(CRT_web_list, CRT_ell_isog_web_list, i, prime_list, prod_mod, inverse_mod, num_crt_prime, fast_ell + 1);
+
+            // interpolation from roots
+            FastInterpolateFromRootsKaratsubaPlusTrick(phi_ell_new_w, CRT_web_list);
+
+            // now we compute the evaluation sums
+            ffp2 sum;
+            std::array<ffp2, 24> sub_sums;
+            for (int i =0; i < 24; i++) {
+                sub_sums[i] = {Fp(0), Fp(0)};
+            }
+            // now we compute the sums
+            ffp2 coeff;
+            for (int k = 0; k <= ell + 1; k++) {
+                if (k <= deg(phi_ell_new_w.second)) {
+                    coeff = {phi_ell_new_w.first[k], phi_ell_new_w.second[k]};
+                }
+                else {
+                    coeff = {phi_ell_new_w.first[k], Fp(0)};
+                }
+                
+                mul(coeff.first, coeff.first, eval_points[k]);
+                mul(coeff.second, coeff.second, eval_points[k]);
+                fast_add(sub_sums[k % 24], sub_sums[k % 24], coeff);
+            }     
+
+            // compututation of the CRT of the weber invariants + a data telling if all the components are defined over Fp2
+            std::vector<ffp2> weber_inv_CRT(24);
+            std::vector<bool> is_all_fp2(24, true);
+            std::vector<bool> proceed(24, true);
+
+            for (int ii = 0; ii < 24; ii++) {
+                std::vector<ffp2> web_inv_comp(num_crt_prime);
+
+                for (int index_prime = 0; index_prime < num_crt_prime; index_prime ++) {
+                    auto test = weber_tracking_list[index_prime].insert(JToJinv(Fp2_cast(list_of_webers[index_prime][24 * i + ii]))).second;
+                    auto testp = is_Fp(Fp2_cast(list_of_webers[index_prime][24 * i + ii])) || weber_tracking_list[index_prime].insert(JToJinv(Frob(Fp2_cast(list_of_webers[index_prime][24 * i + ii])))).second;
+                    assert(test == testp);
+                    (void) testp;
+                    proceed[ii] = proceed[ii] && test;
+                    if (!test) {
+                        std::cout << "trying to insert a weber invariant that we already tried \n";
+                    }
+                    web_inv_comp[index_prime] = list_of_webers[index_prime][24 * i + ii]; 
+                    is_all_fp2[ii] = is_all_fp2[ii] && !is_Fp_fast(web_inv_comp[index_prime]);
+
+                }
+
+                weber_inv_CRT[ii] = CRT_ffp2(web_inv_comp, prime_list, prod_mod, inverse_mod, num_crt_prime);  
+
+            }
+            
+            // local list of things we already saw
+            std::unordered_set<Jinv, JinvHash, JinvEqual> input_local_web_inv_list;
+
+            // and now we're ready to compute the output points
+            for (int ii = 0; ii < 24 && input_list.size() < ell + 2; ii++) {
+                
+                ffp2 inverse_web = web_inv_i_CRT;
+                fast_inv(inverse_web, inverse_web);
+                fast_mul(inverse_web, inverse_web, weber_inv_CRT[ii]);
+                std::vector<ffp2> pow(25); get_powers(pow, inverse_web, 24);
+                sum = {Fp(0), Fp(0)};
+                for (int i = 0; i < 24; i++ ) {
+                    fast_mul(coeff, pow[(ellmod24 * ( 25 - i) + 1) % 24], sub_sums[i]);
+                    fast_add(sum, sum, coeff);
+                }
+                // checking that we didn't already added this element 
+                // should only happen when on the component curve is defined over Fp
+                Jinv w_loc= JToJinv(Fp2_cast(weber_inv_CRT[ii]));
+                auto a = input_local_web_inv_list.insert(w_loc);
+                bool proceed = a.second; 
+                if (proceed) {
+                    // and now we push to the input/output lists. Since we are dealing with all Fp2 points we can add directly both the points and its conjugate 
+                    // we just need to check 
+                    // }
+                    input_list.push_back(Fp2_cast(weber_inv_CRT[ii]));
+                    output_list.push_back(Fp2_cast(sum));
+                    // now if the w_inv belong to Fp2 we can also eval for the conjugate
+                    if ((input_list.size() < ell + 2) && is_all_fp2_j_inv) {
+                        assert(is_all_fp2[ii]);
+                        input_list.push_back(Frob(Fp2_cast(weber_inv_CRT[ii])));
+                        output_list.push_back(Frob(Fp2_cast(sum)));
+                    }
+                    
+                }   
+            
+            }
+
+            tot_interpolation_time += clock() - t_pol;
+
+        }
+    }
+
+    // std::cout << "poly time = " << (double) (tot_interpolation_time)/CLOCKS_PER_SEC << "\n";
+    // std::cout << "quat time = " << (double)(tot_quaternion_time) / (CLOCKS_PER_SEC) << "\n";    
+
+    long long_ell = fast_ell;
+
+    assert(input_list.size() == (size_t) long_ell + 2 );
+
+    // out of the loop now we can interpolate the final result
+    auto res_poly = FastInterpolate(input_list, output_list);
+    assert(NTL::deg(res_poly) ==  long_ell + 1 );
+    auto result = FpX(long_ell + 1, 1);
+    for (long i = 0; i < long_ell + 1; i++) {
+
+#ifndef NDEBUG
+        if (!is_Fp(coeff(res_poly, i))){
+            std::cout << "not in Fp i = " << i << " \n";
+        }
+#endif
+        assert(is_Fp(coeff(res_poly, i)));
+        NTL::SetCoeff(result, i, NTL::coeff(rep(coeff(res_poly,i)),0));
+    }
+
+    // std::cout << "total computation time = " << (double)(clock() - total_time) / (CLOCKS_PER_SEC) << "\n";
+
+    return result;
+
+}
 
 
 FpX_big_elem ModEvalBigCharacteristicWeber(NTL::ZZ p, Fp_big_elem const j, NTL::ZZ l)
@@ -2535,86 +2819,175 @@ FpX_big_elem ModEvalBigCharacteristicWeber(NTL::ZZ p, Fp_big_elem const j, NTL::
     std::vector<NTL::ZZ> Pl;
     std::cout << "Finding primes..." << std::endl;
     GetPrimesBigCharWeber(Pl, B, l, p);
-    std::cout << "Done!" << std::endl;
+    std::cout << "Done!\n" << std::endl;
+
+    std::cout << "Set of primes =" << "\n";
+    for (auto pp : Pl) {
+        std::cout << pp << " ";
+    }
+    std::cout << "\n";
 
     int Nprimes = Pl.size();
 
-    // Initialise crt structure
-    crt_info crt;
-    std::cout << "Initialising CRT coeffs..." << std::endl;
-    crt_init(crt, Pl, Nprimes, Ncoeffs, p);
-    std::cout << "Done!" << std::endl;
-
-
     // Compute the F mod q and update crt coeffs
-    std::cout << "We are working with " << Nprimes << " primes." << std::endl;
-
+    std::cout << "We are working with " << Nprimes << " primes.\n" << std::endl;
+    
     // note: we process the primes in reverse order since large primes will probably take longer
     std::atomic<size_t> next_idx = 0;
     std::mutex mtx;
+    crt_info crt;
 
-    auto const fun = [&]() {
+    // non CRT version
+    // {
+    //     // // Initialise crt structure
+        
+    //     std::cout << "Initialising CRT coeffs..." << std::endl;
+    //     crt_init(crt, Pl, Nprimes, Ncoeffs, p);
+    //     std::cout << "Done!" << std::endl;
 
-        while (true) {
-            size_t qidx = ++next_idx;
-            if (qidx > Pl.size())
-                break;
+    //     auto const fun = [&]() {
 
-            NTL::ZZ const &q = Pl[qidx-1];
+    //         while (true) {
+    //             size_t qidx = ++next_idx;
+    //             if (qidx > Pl.size())
+    //                 break;
 
-            std::cerr << "Starting with a new prime: " << q << std::endl;
+    //             NTL::ZZ const &q = Pl[qidx-1];
 
-            // In this function we set this to be in ZZX to not work with two moduli in a function
-            std::vector<Integer> Fq_coeffs(crt.k);
+    //             std::cerr << "Starting with a new prime: " << q << " this is prime number " << qidx << "/" << Nprimes << std::endl;
 
-            // Not confusing at all that p is named q, q is named qq... Makes me qqq
-            Fp_integer q_mod;
-            NTL::conv(q_mod, q);
-            Fp::init(q_mod);
-            FpX f;
-            SetCoeff(f, 2);
-            auto qqs = _avail_qs(q, l);
-            Fp qq;
-            NTL::conv(qq, qqs.at(0));
-            f[0] = Fp(qq);
-            Fp2::init(f);
+    //             // In this function we set this to be in ZZX to not work with two moduli in a function
+    //             std::vector<Integer> Fq_coeffs(crt.k);
 
-            // Fp tau = NTL::conv<Fp>(j_int);
+    //             // Not confusing at all that p is named q, q is named qq... Makes me qqq
+    //             Fp_integer q_mod;
+    //             NTL::conv(q_mod, q);
+    //             Fp::init(q_mod);
+    //             FpX f;
+    //             SetCoeff(f, 2);
+    //             auto qqs = _avail_qs(q, l);
+    //             Fp qq;
+    //             NTL::conv(qq, qqs.at(0));
+    //             f[0] = Fp(qq);
+    //             Fp2::init(f);
 
-            // computation of the eval list
-            std::vector<Fp> eval_points = {};
-            eval_points.push_back(Fp(1));
-            for (size_t i = 1; i<=l+1; i++) {
-                eval_points.push_back(NTL::conv<Fp>(js[i] % q));
-            }
-            // eval_points.push_back(tau);
-            // Fp pow = tau;
-            assert(eval_points.size() == l + 2);
+    //             // Fp tau = NTL::conv<Fp>(j_int);
 
-            FpX Fq = SpecialSupersingularEvaluationWeber(q, l, eval_points);
-            std::cerr << "Done with the polynomial computation!" << std::endl;
+    //             // computation of the eval list
+    //             std::vector<Fp> eval_points = {};
+    //             eval_points.push_back(Fp(1));
+    //             for (size_t i = 1; i<=l+1; i++) {
+    //                 eval_points.push_back(NTL::conv<Fp>(js[i] % q));
+    //             }
+    //             // eval_points.push_back(tau);
+    //             // Fp pow = tau;
+    //             assert(eval_points.size() == l + 2);
 
-            // We view the coeffs as being in NTL::ZZ as we want to go back to working with modulus p
-            for(int i = 0; i <= deg(Fq); i++){
-                Fq_coeffs[i] = NTL::conv<NTL::ZZ>(NTL::coeff(Fq, i)); // Don't know if this is the best way to convert between ZZ_pE to ZZ when it lies in ZZ_p
-            }
+    //             FpX Fq = SpecialSupersingularEvaluationWeber(q, l, eval_points);
+    //             std::cerr << "Done with the polynomial computation!" << std::endl;
 
-            //Update CRT sums
-            {
-                std::lock_guard lock(mtx);
-                std::cerr << "Updating CRT coeffs for q=" << q << "... " << std::flush;
-                crt_update(crt, qidx - 1, Fq_coeffs, crt.k);
-                std::cerr << "Done! \n" << std::endl;
-            }
-        }
-    };
+    //             // We view the coeffs as being in NTL::ZZ as we want to go back to working with modulus p
+    //             for(int i = 0; i <= deg(Fq); i++){
+    //                 Fq_coeffs[i] = NTL::conv<NTL::ZZ>(NTL::coeff(Fq, i)); // Don't know if this is the best way to convert between ZZ_pE to ZZ when it lies in ZZ_p
+    //             }
+
+    //             //Update CRT sums
+    //             {
+    //                 std::lock_guard lock(mtx);
+    //                 std::cerr << "Updating CRT coeffs for q=" << q << "... " << std::flush;
+    //                 crt_update(crt, qidx - 1, Fq_coeffs, crt.k);
+    //                 std::cerr << "Done! \n\n" << std::endl;
+    //             }
+    //         }
+    //     };
+
+    //     {
+    //         std::vector<std::thread> ts;
+    //         for (size_t i = 0; i < num_threads; ++i)
+    //             ts.emplace_back(fun);
+    //         for (auto &t: ts)
+    //             t.join();
+    //     }
+    // }
+    
+    int progress = 0;
 
     {
-        std::vector<std::thread> ts;
-        for (size_t i = 0; i < num_threads; ++i)
-            ts.emplace_back(fun);
-        for (auto &t: ts)
-            t.join();
+         // Initialise crt structure
+        std::vector<Integer> modulos = {};
+        std::vector<std::vector<FastInteger>> prime_list = {};
+        std::cout << "Initialising CRT coeffs..." << std::endl;
+        batched_crt_init(crt, modulos, prime_list, Pl, Nprimes, Ncoeffs, p);
+        std::cout << "Done!\n" << std::endl;
+
+        auto const fun_CRT = [&]() {
+
+            while (true) {
+                size_t qidx = ++next_idx;
+                if (qidx > modulos.size())
+                    break;
+                // we treat one CRT 
+                NTL::ZZ q;
+                q = modulos[qidx-1];
+
+                // In this function we set this to be in ZZX to not work with two moduli in a function
+                std::vector<Integer> Fq_coeffs(crt.k);
+
+                // Not confusing at all that p is named q, q is named qq... Makes me qqq
+                Fp_integer q_mod;
+                NTL::conv(q_mod, q);
+                Fp::init(q_mod);
+                FpX f;
+                SetCoeff(f, 2);
+                f[0] = Fp(1);
+                Fp2::init(f);
+
+                // computation of the eval list
+                std::vector<Fp> eval_points = {};
+                eval_points.push_back(Fp(1));
+                for (size_t i = 1; i<=l+1; i++) {
+                    eval_points.push_back(NTL::conv<Fp>(js[i] % q));
+                }
+                // eval_points.push_back(tau);
+                // Fp pow = tau;
+                assert(eval_points.size() == l + 2);
+                FpX Fq;
+                assert(q < NTL_SP_BOUND);
+
+                progress += (prime_list[qidx - 1]).size();
+                std::cout << "progress = " << progress << "/" << Nprimes << "\n";
+
+                Fq = SpecialSupersingularEvaluationWeberCRT(prime_list[qidx - 1], convert(q), (prime_list[qidx - 1]).size(), l, eval_points);
+            
+
+                // std::cerr << "Done with the polynomial computation!" << std::endl;
+
+                // We view the coeffs as being in NTL::ZZ as we want to go back to working with modulus p
+                for(int i = 0; i <= deg(Fq); i++){
+                    Fq_coeffs[i] = NTL::conv<NTL::ZZ>(NTL::coeff(Fq, i)); // Don't know if this is the best way to convert between ZZ_pE to ZZ when it lies in ZZ_p
+                }
+
+                //Update CRT sums
+                {
+                    std::lock_guard lock(mtx);
+                    // std::cerr << "Updating CRT coeffs for q=" << q << "... " << std::flush;
+                    crt_update(crt, qidx - 1, Fq_coeffs, crt.k);
+                    // std::cerr << "Done!" << std::endl;
+                    std::cout << "\n" << std::endl;
+                }
+            }
+        };
+
+        // fun_CRT();
+        {
+            std::vector<std::thread> ts;
+            for (size_t i = 0; i < num_threads; ++i)
+                ts.emplace_back(fun_CRT);
+            for (auto &t: ts)
+                t.join();
+        }
+
+    
     }
 
     std::cout << "Finalising CRT coeffs..." << std::endl;

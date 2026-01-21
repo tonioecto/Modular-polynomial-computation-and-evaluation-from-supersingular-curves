@@ -1,0 +1,5 @@
+For profiling with gperftools : 
+- compile with -lprofiler
+- LD_PRELOAD=/usr/local/lib/libprofiler.so CPUPROFILE=prof.out ./main ssse w 1051 1601 2 (or whatever command we want to use)
+- pprof -gv main prof.out (for a graphical representation)
+- pprof -tree -cum main prof.out > prof.tree (for a textual representation as some tree of calls sorted by decreasing weight)

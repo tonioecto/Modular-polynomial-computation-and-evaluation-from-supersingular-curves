@@ -1,14 +1,9 @@
 #include "smallint.hpp"
 
-static const std::vector<SmallInteger> invmod16 = {1, 11, 13, 7, 9, 3, 5, 15};
+static const std::array<unsigned char, 8> invmod16 = {1, 11, 13, 7, 9, 3, 5, 15};
 
-SmallInteger InvModSpecial(SmallInteger &a, const SmallInteger &m) {
-
-    if (m == 16) {
-        return invmod16[NTL::conv<long>(a)/2];
-    }
-
-    return NTL::conv<SmallInteger>(1/NTL::conv<Fp>(a));
+unsigned char InvModSpecial(const unsigned char &a) {
+    return invmod16[a >> 1]; 
 }
 
 
@@ -131,10 +126,10 @@ SmallMatFp change_of_basis16(const std::pair<ecp, ecp> &bas1, const std::pair<ec
     auto [a,b] = bi_dlp_16(bas2.first, bas1);
     auto [c,d] = bi_dlp_16(bas2.second, bas1);
     SmallMatFp M(16);
-    M.mat[0][0] = NTL::conv<SmallInteger>(a);
-    M.mat[0][1] = NTL::conv<SmallInteger>(b);
-    M.mat[1][0] = NTL::conv<SmallInteger>(c);
-    M.mat[1][1] = NTL::conv<SmallInteger>(d);
+    M.mat[0][0] = (FastInteger) NTL::conv<long>(a);
+    M.mat[0][1] = (FastInteger) NTL::conv<long>(b);
+    M.mat[1][0] = (FastInteger) NTL::conv<long>(c);
+    M.mat[1][1] = (FastInteger) NTL::conv<long>(d);
 
     return M;
 }

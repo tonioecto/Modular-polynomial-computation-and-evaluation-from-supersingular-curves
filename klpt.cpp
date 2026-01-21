@@ -185,6 +185,73 @@ quat RepresentInteger(quatalg const &B, NTL::ZZ const &M) {// Don't need the ful
     return quat(coeffs, B);
 }
 
+quat DetRepresentInteger(quatalg const &B, NTL::ZZ const &M) {// Don't need the full version
+    //////////////////////////////////////////////////////////////////////
+    // Finds a quaternion of the form x + iy + jz + kw = M, in B
+    //////////////////////////////////////////////////////////////////////
+
+    auto p = B.p;
+    auto q = B.q;
+    assert (M > 50*q*p);
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    long firstbound = 10000;
+    NTL::ZZ better_bound = NTL::SqrRoot(M/(2*p*q));
+    if (better_bound < firstbound) {
+        NTL::conv(firstbound, better_bound);
+    }
+
+    NTL::ZZ z, w, tar;
+    z = 0;
+    w = 0;
+    bool found = false;
+    int count = 0;
+
+    while (!found && count < 100000 ) {
+        
+        count++;
+        w++;
+
+        tar = M - p*z*z - p*q*w*w;
+
+
+
+        if (tar < 0 && w > 1) {
+            w = 0;
+            z++;
+            continue;
+        }
+        else if (tar < 0 && w == 1) {
+            std::cout << "REPINT: TOO SMALL NUM" << std::endl; // This really shouldn't happen
+            assert(0);
+        }
+
+        auto result = Cornacchia(q, tar);
+        
+        if (result) {
+            found = true;
+            std::array<NTL::ZZ,5> coeffs;
+            coeffs[0] = result->first;
+            coeffs[1] = result->second;
+            coeffs[2] = z;
+            coeffs[3] = w;
+            coeffs[4] = NTL::ZZ(1);
+            return quat(coeffs, B);
+        }
+    }
+
+    //In case nothing was found
+    std::cout << "DETREPINT: failed to find a solution!" << std::endl;
+    std::array<NTL::ZZ,5> coeffs;
+    coeffs[0] = NTL::ZZ(0);
+    coeffs[1] = NTL::ZZ(0);
+    coeffs[2] = NTL::ZZ(0);
+    coeffs[3] = NTL::ZZ(0);
+    coeffs[4] = NTL::ZZ(1);
+    return quat(coeffs, B);
+}
+
 std::pair<NTL::ZZ, NTL::ZZ> IdealModConstraint(quatlat const &I, quat const &gamma) {
 
 

@@ -170,6 +170,75 @@ void crt_init(crt_info &crt, std::vector<NTL::ZZ> const m, int n, int k, NTL::ZZ
 	}
 }
 
+// same as CRT init but divide the set of modulus into bacthes of modulus whose product is smaller than 
+void batched_crt_init(crt_info &crt, std::vector<NTL::ZZ> &modulos, std::vector<std::vector<long>> &prime_list, std::vector<NTL::ZZ> const m, int n, int k, NTL::ZZ const P) {
+	/////////////////////////////////////////////////////
+	// Algorithm 2.3 of Hilbert CRT paper by Sutherland
+	/////////////////////////////////////////////////////
+
+	// we start by computing the batches 
+	NTL::ZZ mult(1); 
+	std::vector<long> mod_list = {};
+	int num_batch = 0;
+	for (int i = 0; i<n; i++) {
+		// if this is not the case, there is no point in using this algorithm
+		assert(m[i] < NTL_SP_BOUND);
+		if (mult * m[i] < NTL_SP_BOUND) {
+			mult = mult * m[i];
+			mod_list.push_back(NTL::conv<long>(m[i]));
+			
+		}
+		else {
+			modulos.push_back(mult);
+			prime_list.push_back(mod_list);
+			num_batch++;
+			mult = m[i];
+			mod_list = {NTL::conv<long>(m[i])};
+		}
+	}
+	modulos.push_back(mult);
+	prime_list.push_back(mod_list);
+	num_batch++;
+
+
+
+	int i;
+	NTL::ZZ X;
+	// Compute a[i] = M_i mod m[i] where M_i = prod_{j\ne i} m_i
+	
+	crt.a.resize(num_batch);
+	crt_coeff(crt.a, modulos, num_batch);
+	
+	// Compute M mod P iteratively, don't bother with a tree (unless P is huge, it wouldn't make much of a difference)
+	X = modulos[0];
+	for(i = 1; i < num_batch; i++){
+		NTL::MulMod(X, X, modulos[i], P);
+	}
+
+	crt.MP = X;
+	
+	crt.P = P;
+
+	// _ecrt_init in Sutherland's code (minus parallelisation and "limbs" stuff)
+	crt.n = num_batch;
+	crt.k = k;
+	// crt.j = -1;
+
+
+	crt.Cdata.resize(k);
+	crt.sdata.resize(k);
+	crt.delta = NTL::NumBits(num_batch)+1;
+	crt.m.resize(modulos.size());
+	for(i = 0; i < num_batch; i++){
+		crt.m[i] = modulos[i];
+	}
+
+	// a holds 1/M_i mod m[i]
+	for(i = 0; i < num_batch; i++){
+		NTL::InvMod(crt.a[i], crt.a[i], modulos[i]);	
+	}
+}
+
 void crt_update(crt_info &crt, int i, std::vector<NTL::ZZ> const c, int k){
 	////////////////////////////////////////////////
 	// Algorithm 2.4 of Hilbert CRT paper

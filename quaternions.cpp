@@ -9,6 +9,71 @@
 #include "utils.hpp"
 #include "endring.hpp"
 
+void quat::normalize()
+{
+    // if (coeffs[4] > 2 || (coeffs[4] == 2 && !IsOdd(coeffs[3]) && !IsOdd(coeffs[2]) && !IsOdd(coeffs[1]) && !IsOdd(coeffs[0])) ) {
+        assert(coeffs[4] > 0);
+        NTL::ZZ g = coeffs[4];
+        for (unsigned i = 0; i < 4 && !NTL::IsOne(g); ++i)
+            g = GCD(g, coeffs[i]);
+        assert(g > 0);
+        if (!NTL::IsOne(g))
+            for (auto &c: coeffs)
+                c /= g;
+    // }
+}
+
+std::pair<NTL::ZZ,NTL::ZZ> quat::norm() const  // returns numerator and denominator
+    {
+        // auto const &[a,b,c,d,e] = this->coeffs;
+        // return {a * a + alg.q * b*b + alg.p * (c*c + alg.q * d * d), e*e};
+        return { NTL::power(coeffs[0],2) + alg.q * NTL::power(coeffs[1],2) + alg.p * ( NTL::power(coeffs[2], 2) + alg.q * NTL::power(coeffs[3], 2)), NTL::power(coeffs[4], 2) };
+    }
+
+Integer quat::integral_trace() const {
+    assert(2 * coeffs[0] % coeffs[4] == 0);
+    return 2 * coeffs[0] / coeffs[4];
+}
+
+Integer quat::integral_norm() const {
+    return (NTL::power(coeffs[0],2) + alg.q * NTL::power(coeffs[1],2) + alg.p * ( NTL::power(coeffs[2], 2) + alg.q * NTL::power(coeffs[3], 2))) / NTL::power(coeffs[4], 2);
+}
+
+Integer quat::scalar_remove() {
+    Integer g = Integer(1);
+    int index = 3;
+    while (index >= 0 && coeffs[index] == 0) {
+        index--;
+    }
+    if (index != -1) {
+        g = coeffs[index];
+        for (int i = 0; i<4 && g != 1; i++) {
+            if (coeffs[ (4 + index - i) % 4 ] != 0) {
+                g = GCD(g, coeffs[(4 + index - i) % 4]);
+            }
+        }
+    
+
+        if (g != 1) {
+            coeffs[0] = coeffs[0] / g;
+            coeffs[1] = coeffs[1] / g;
+            coeffs[2] = coeffs[2] / g;
+            coeffs[3] = coeffs[3] / g;
+        }
+        
+    
+    }
+    return g;
+    
+}
+
+void quat::scalar_mul(const Integer N) {
+    this->coeffs[0] *= N;
+    this->coeffs[1] *= N;
+    this->coeffs[2] *= N;
+    this->coeffs[3] *= N;
+    normalize();
+}
 
 quatlat::quatlat(NTL::mat_ZZ const &gens, NTL::ZZ const &denom_, quatalg const &alg_) : alg{alg_}, basis{gens}, denom{denom_}, gen{{Integer(0), Integer(0), Integer(0), Integer(0), Integer(1)}, alg_ }
 {
@@ -185,7 +250,7 @@ void quatlat::normalize(bool safe) {
             if (NTL::IsOne(g)) break;
             for (size_t j = 0; j < (size_t) basis.NumCols(); ++j) {
                 if (NTL::IsOne(g)) break;
-                g = NTL::GCD(g, basis[i][j]);
+                g = GCD(g, basis[i][j]);
             }
         }
 
@@ -385,7 +450,7 @@ std::pair<NTL::ZZ,NTL::ZZ> quatlat::norm() const
             NTL::set(v[0]);
             NTL::ZZ num;
             NTL::solve1(num, x, L.basis, v);
-            auto g = NTL::GCD(num, L.denom);
+            auto g = GCD(num, L.denom);
             the_norm = std::make_pair(num/g, L.denom/g);
         }
         return the_norm;
@@ -429,7 +494,7 @@ void quatlat::_intersect(quatlat const &other, bool safe)
         normalize(safe);
         auto nrm1 = the_norm;
         auto nrm2 = other.norm_no_comput();
-        if ( nrm1.second != 0 && nrm2.second !=0 && nrm1.first % nrm1.second ==0 && nrm2.first % nrm2.second == 0 && NTL::GCD(nrm1.first/nrm1.second, nrm2.first/nrm2.second) == 1 ) {
+        if ( nrm1.second != 0 && nrm2.second !=0 && nrm1.first % nrm1.second ==0 && nrm2.first % nrm2.second == 0 && GCD(nrm1.first/nrm1.second, nrm2.first/nrm2.second) == 1 ) {
             the_norm.first = (nrm1.first * nrm2.first) / (nrm2.second * nrm1.second);
             the_norm.second = NTL::ZZ(1);
         }
@@ -449,15 +514,12 @@ void quatlat::_fast_intersect(quatlat const &other) {
         auto n1 = other.norm().first;
         auto n = this->the_norm.first;
         auto newnorm = n * n1;
-        // std::cout << *this << "\n";
-        // std::cout << other << "\n";
 
         if (n1 > 1) {
 
             basis[0][0] *= n1;
             if (basis[1][0] == 0 && other.basis[1][0] == 0) {
                 basis[1][1] *= n1;
-                auto before = basis[2][0];
                 assert(basis[2][0] >= 0);
                 assert(other.basis[2][0] >=0);
                 NTL::CRT(basis[2][0], n, other.basis[2][0], 2*n1);
@@ -479,13 +541,13 @@ void quatlat::_fast_intersect(quatlat const &other) {
                 auto mod = newnorm;
 
                 // reducing
-                auto a = NTL::GCD(mod,basis[1][1]);
+                auto a = GCD(mod,basis[1][1]);
                 auto b = basis[1][1]/(2*a);
                 basis[1][1] = 2*a;
-                while (NTL::GCD(b,mod) != 1) {
+                while (GCD(b,mod) != 1) {
                     b += mod/a;
                 }
-                assert(NTL::GCD(b,mod) == 1);
+                assert(GCD(b,mod) == 1);
                 auto c = NTL::InvMod(b % mod,mod);
 
 
@@ -500,9 +562,9 @@ void quatlat::_fast_intersect(quatlat const &other) {
 
                 // reducing
                 basis[2][1] = (basis[2][1] - basis[2][2])/2;
-                a = NTL::GCD(mod,basis[2][2]);
+                a = GCD(mod,basis[2][2]);
                 b = basis[2][2]/(a);
-                while (NTL::GCD(b,mod) != 1) {
+                while (GCD(b,mod) != 1) {
                     b += 2*mod/a;
                 }
                 basis[2][2] = a;
@@ -532,7 +594,7 @@ void quatlat::_fast_intersect(quatlat const &other) {
 
                 // reducing
                 basis[3][0] = (basis[3][0] - basis[3][3])/2;
-                a = NTL::GCD(mod,basis[3][3]);
+                a = GCD(mod,basis[3][3]);
                 b = basis[3][3]/(a);
                 basis[3][3] = a;
                 c = NTL::InvMod(b % mod, mod);
@@ -582,9 +644,6 @@ void quatlat::_fast_intersect(quatlat const &other) {
     {
         this->_intersect(other);
     }
-    // std::cout << basis << "\n";
-
-
 }
 
 quatlat quatlat::_compute_order(bool right_order=false) const
@@ -714,7 +773,7 @@ quatlat quatlat::new_right_order() const {
             if (NTL::IsOne(g)) break;
             for (size_t j = 0; j < (size_t) newbasis.NumCols(); ++j) {
                 if (NTL::IsOne(g)) break;
-                g = NTL::GCD(g, newbasis[i][j]);
+                g = GCD(g, newbasis[i][j]);
             }
         }
 
@@ -730,6 +789,35 @@ quatlat quatlat::new_right_order() const {
 
 }
 
+NTL::mat_ZZ compute_HNF_gram_order(quatlat *order) {
+    NTL::mat_ZZ gram;
+    gram.SetDims(3,3);
+    NTL::mat_ZZ HNF;
+    if (order->basis[0][0] == order->denom && order->basis[0][1]==0 && order->basis[0][2]==0 && order->basis[0][3]==0){
+        HNF = order->basis;
+    }
+    else {
+        HNF = order->HNF_basis();
+    }
+    std::array<quat, 3> elts {{
+        {{NTL::ZZ(0), 2*(HNF[1][1]), 2*(HNF[1][2]), 2*(HNF[1][3]), order->denom}, order->alg},
+        {{NTL::ZZ(0), 2*(HNF[2][1]), 2*(HNF[2][2]), 2*(HNF[2][3]), order->denom}, order->alg},
+        {{NTL::ZZ(0), 2*(HNF[3][1]), 2*(HNF[3][2]), 2*(HNF[3][3]), order->denom}, order->alg},
+    }};
+
+
+    for (unsigned i = 0; i < 3; ++i) {
+        for (unsigned j = 0; j < 3; ++j) {
+            auto pair = elts[i] * elts[j].conjugate();
+            assert(pair[0] %(pair[4]) ==0);
+            gram[i][j] = pair[0]/(pair[4]);
+        }
+    }
+    order->basis = HNF;
+    return gram;
+
+}
+
 std::pair<quatlat,NTL::mat_ZZ> quatlat::fast_right_order_and_gram() {
 
     NTL::mat_ZZ gram;
@@ -737,14 +825,17 @@ std::pair<quatlat,NTL::mat_ZZ> quatlat::fast_right_order_and_gram() {
     if (alg.p %4 == 3) {
         Integer norm = the_norm.first/the_norm.second;
         // testing if we are in some weird case
-        Integer a = basis[3][0] * basis[3][0] + basis[3][1] * basis[3][1] - alg.p * ( basis[3][2] * basis[3][2] + basis[3][3] * basis[3][3]);
+        Integer a2 = alg.p * ( basis[3][2] * basis[3][2] + basis[3][3] * basis[3][3]);
+        Integer a = basis[3][0] * basis[3][0] + basis[3][1] * basis[3][1] - a2;
+
         assert(a%2 ==0);
         a = a/2;
-        if (NTL::GCD(a , norm) != 1) {
-            // std::cout << "weird case!!!!! \n";
-            // return { { basis, the_norm, denom, alg, false }, gram };
+
+        // weird rare case, for which we fall back to the slower generic method
+        if (GCD(a , norm) != 1) {
             quatlat O = this->new_right_order();
-            return { O, gram};
+            gram = compute_HNF_gram_order(&O);
+            return {O, gram};
         }
 
         Integer normsqr = norm*norm;
@@ -761,7 +852,7 @@ std::pair<quatlat,NTL::mat_ZZ> quatlat::fast_right_order_and_gram() {
 
         // third element is of the form A * j + x * k
         // where A = GCD(c, norm)
-        Integer A = NTL::GCD(c,norm);
+        Integer A = GCD(c,norm);
         newbasis[2][0] = Integer(0);
         newbasis[2][1] = Integer(0);
         newbasis[2][2] = newdenom * A;
@@ -770,7 +861,7 @@ std::pair<quatlat,NTL::mat_ZZ> quatlat::fast_right_order_and_gram() {
         newbasis[3][0] = norm;
         newbasis[3][1] = Integer(0);
         newbasis[3][2] = Integer(0);
-        newbasis[3][3] = normsqr/A;
+        newbasis[3][3] = normsqr / A;
 
         // computing the value of x
         Integer x;
@@ -781,49 +872,62 @@ std::pair<quatlat,NTL::mat_ZZ> quatlat::fast_right_order_and_gram() {
 
             c = c / A;
             auto old_c = c;
-            while (NTL::GCD(c,norm) != 1) {
+            while (GCD(c,norm) != 1) {
                 basis[2][0] += 2*norm;
                 basis[3][1] += 2*norm;
                 c = basis[3][1] * basis[2][2] - basis[2][1] * basis[3][2];
-                assert(A == NTL::GCD(c,norm));
+                assert(A == GCD(c,norm));
                 c = c/A;
-                a = basis[3][0] * basis[3][0] + basis[3][1] * basis[3][1] - alg.p * ( basis[3][2] * basis[3][2] + basis[3][3] * basis[3][3]);
+                a2 = alg.p * ( basis[3][2] * basis[3][2] + basis[3][3] * basis[3][3]);
+                a = basis[3][0] * basis[3][0] + basis[3][1] * basis[3][1] - a2;
                 assert(a%2 ==0);
                 a = a/2;
             }
-            if (NTL::GCD(c, norm) != 1) {
-                std::cout << basis << "\n";
-                std::cout << old_c << " " << c << " " << A << " " << norm << "\n";
-            }
-            assert( NTL::GCD(c, norm) ==1 );
+            assert (GCD(c, norm) == 1);
             c = NTL::InvMod(c % norm, norm);
             x =  (((basis[3][1] * basis[2][3] - basis[2][1] * basis[3][3]) % norm) * c) % norm ;
+            
         }
         newbasis[2][3] = x * newdenom;
 
-
         // 2nd element is of the form (i + y * j + z * k) / newdenom
         newbasis[1][0] = Integer(0);
-        newbasis[1][1] = Integer(1);
+
+        // std::cout << basis << "\n";
+        
         // let gen be the last basis element
         // a priori this is derived from Conjugate(gen) * i * gen / norm = (a * i + b * j + c * k) / newdenom
         // first we compute b,c (a was computed previously)
         Integer b = basis[3][1] * basis[3][2] - basis[3][0] * basis[3][3];
         c = basis[3][1] * basis[3][3] - basis[3][0] * basis[3][2] ;
 
-        // and new we reduce it
-        assert(NTL::GCD(a , norm) == 1);
-        Integer d = NTL::InvMod(a % normsqr,normsqr);
-        newbasis[1][3] = ((c * d) % (2*normsqr));
-        Integer is_odd = Integer(1);
-        if (a % 2 == 1 && d %2 == 1) {
-            is_odd = Integer(0);
-        }
 
-        newbasis[1][2] = ((b * d + normsqr*is_odd  ) % (2*normsqr));
+        // newbasis[1][1] = a;
+        // newbasis[1][2] = b;
+        // newbasis[1][3] = c;
+
+        // and now we reduce it
+        // assert(GCD(a , norm) == 1);
+
+   
+        
+            Integer d = NTL::InvMod(a % (normsqr), normsqr);
+            newbasis[1][3] = ((c * d) % (2*normsqr));
+            Integer is_odd = Integer(1);
+            if (NTL::IsOdd(a) && NTL::IsOdd(d)) {
+                is_odd = Integer(0);
+            }
+
+            newbasis[1][2] = ((b * d + normsqr*is_odd  ) % (2*normsqr));
+            newbasis[1][1] = Integer(1);
+
+
+
+        // std::cout << a << " " << b << " " << c << "\n";
+        // std::cout << newbasis << "\n";
 
         // computing the gram matrix
-        gram[0][0] = (Integer(1) + this->alg.p * ( newbasis[1][2] * newbasis[1][2] +  newbasis[1][3] * newbasis[1][3]))/normsqr;
+        gram[0][0] = (newbasis[1][1] * newbasis[1][1] + this->alg.p * ( newbasis[1][2] * newbasis[1][2] +  newbasis[1][3] * newbasis[1][3]))/normsqr;
         gram[1][0] = Integer(2) * this->alg.p * (newbasis[1][2] * A +  newbasis[1][3] * x)/norm;
         gram[0][1] = gram[1][0];
         gram[0][2] = this->alg.p * newbasis[1][3] / A;
@@ -835,17 +939,15 @@ std::pair<quatlat,NTL::mat_ZZ> quatlat::fast_right_order_and_gram() {
         gram[2][2] = this->alg.p * quot * quot;
 
 
+
         return {{newbasis, {Integer(1), Integer(1)}, newdenom, alg, false },gram};
     }
     else {
 
         return {this->new_right_order(), gram};
     }
-
-
-
-
 }
+
 
 NTL::mat_ZZ quatlat::HNF_basis() const
 {
@@ -926,7 +1028,7 @@ quat quatlat::compute_gen_cyclic() const {
         [&](quat const &el) -> bool {
         assert (el.norm().second == 1);
         NTL::ZZ N = el.norm().first;
-        if ((NTL::GCD(N*N, el.norm().first) == N)) { //Test that el is a generator.
+        if ((GCD(N*N, el.norm().first) == N)) { //Test that el is a generator.
             alpha[0] = el[0];
             alpha[1] = el[1];
             alpha[2] = el[2];
@@ -1012,7 +1114,7 @@ quatlat quatlat::special_add(const quatlat &other) const
             auto nrm1 = norm();
             auto nrm2 = other.norm();
             if ( (nrm1.first % nrm1.second ==0) && ((nrm2.first % nrm2.second ==0))) {
-                return {newbasis, {NTL::GCD(nrm1.first/nrm1.second, nrm2.first/nrm2.second), NTL::ZZ(1)}, newdenom, alg};
+                return {newbasis, {GCD(nrm1.first/nrm1.second, nrm2.first/nrm2.second), NTL::ZZ(1)}, newdenom, alg};
             }
         }
 
@@ -1059,14 +1161,14 @@ quatlat create_from_generator_O0(const quat &gen, const NTL::ZZ &norm) {
         Integer newdenom = Integer(2);
         NTL::mat_ZZ newbasis;
         newbasis.SetDims(4,4);
-        newbasis[0][0] = 2*norm;
+        newbasis[0][0] = 2 * norm;
         newbasis[0][1] = Integer(0);
         newbasis[0][2] = Integer(0);
         newbasis[0][3] = Integer(0);
         newbasis[1][2] = Integer(0);
         newbasis[1][3] = Integer(0);
-        Integer c = (gen[2]*gen[2] + gen[3]*gen[3])%norm;
-        if (NTL::GCD(norm, c) == 1) {
+        Integer c = (gen[2]*gen[2] + gen[3]*gen[3]) % norm;
+        if (GCD(norm, c) == 1) {
             newbasis[1][0] = Integer(0);
             newbasis[1][1] = newbasis[0][0];
             newbasis[2][2] = Integer(1);
@@ -1116,6 +1218,9 @@ quatlat create_from_generator_O0(const quat &gen, const NTL::ZZ &norm) {
                 a = Integer(99);
             }
             else  {
+                if (!NTL::ProbPrime(norm)) {
+                    std::cout << "potential pb with NTL sqrt modulo a non-prime \n";
+                }
                 a = NTL::SqrRootMod(Integer(norm  - gen.alg.q),norm);
             }
             // auto bb = NTL::SqrRootMod(Integer(48), Integer(49));
@@ -1255,7 +1360,7 @@ std::list<quatlat> quatlat::left_ideals_of_prime_norm(NTL::ZZ const &ell, const 
     NTL::ZZ iterate = NTL::ZZ(0);
     while (iterate < ell) {
         coeff_list.push_back({NTL::ZZ(1),iterate});
-        if (NTL::GCD(iterate,NTL::ZZ(ell))!=1) {
+        if (GCD(iterate,NTL::ZZ(ell))!=1) {
             coeff_list.push_back({iterate,NTL::ZZ(1)});
         }
         iterate++;
@@ -1270,26 +1375,164 @@ std::list<quatlat> quatlat::left_ideals_of_prime_norm(NTL::ZZ const &ell, const 
     return id_list;
 }
 
-// enumerate throught the set of ell-ideals as ideals of the form * first_gen * (C + D *iter) + this * ell
-std::list<quatlat> left_ideals_of_prime_norm_O0(NTL::ZZ const &ell, const quat &first_gen, const quat &iter) {
+quat find_quaternion_iterator(std::list<int>& prime_list, const quatlat& I, const quatlat& O0, const quatalg &Bp) {
+
+    // std::cout << O0 << "\n";
+
+    int is_first = 1;
+
+    quat result = { {NTL::ZZ(0), NTL::ZZ(1), NTL::ZZ(1), NTL::ZZ(1), NTL::ZZ(1)} , Bp};
+
+    NTL::ZZ accumulated_multiple(1);
+    for (auto l : prime_list) {
+        NTL::ZZ ell(l);
+        // generating the iterating quaternion mod ell
+        // we need to find a quaternion element whose norm is coprime to ell that is not contained in ZZ + (I+ O_0 ell)
+        quatlat I_ell = I.copy();
+        I_ell.reduce_norm_cyclic(O0, ell);
+
+        assert(std::get<0>(I_ell.norm())/std::get<1>(I_ell.norm()) == ell);
+        quatlat Eich_ell = I_ell._compute_order(true);
+        Eich_ell._intersect(I_ell.left_order());
+        bool found = false;
+        for (int i1 = 0; i1 < ell && !found; i1++) {
+            for (int i2 = 0; i2 < ell && !found; i2++) {
+                for (int i3 = 0; i3 < ell && !found; i3++) {
+                    for (int i4 = 0; i4 < ell && !found; i4++) {
+                        quat gen = { { NTL::ZZ(i1), NTL::ZZ(i2), NTL::ZZ(i3), NTL::ZZ(i4), NTL::ZZ(1)} , Bp};
+
+                        if ((GCD(ell,O0.denom) == ell) || ell == Bp.q) {
+                            gen[4] = ell;
+                            NTL::vec_ZZ vec;
+                            vec.SetLength(4);
+                            vec[0] = gen[0];
+                            vec[1] = gen[1];
+                            vec[2] = gen[2];
+                            vec[3] = gen[3];
+                            vec = vec * O0.basis;
+                            gen[0] = vec[0];
+                            gen[1] = vec[1];
+                            gen[2] = vec[2];
+                            gen[3] = vec[3];
+                        }
+                        else {
+                            NTL::vec_ZZ vec;
+                            vec.SetLength(4);
+                            vec[0] = gen[0];
+                            vec[1] = gen[1];
+                            vec[2] = gen[2];
+                            vec[3] = gen[3];
+                            vec = vec * O0.basis;
+                            gen[0] = vec[0];
+                            gen[1] = vec[1];
+                            gen[2] = vec[2];
+                            gen[3] = vec[3];
+                        }
+
+
+
+                        auto pair_norm = gen.norm();
+                        NTL::ZZ norm = std::get<0>(pair_norm)/std::get<1>(pair_norm);
+                        assert(O0.contains(gen));
+                        if (GCD(norm,ell) == 1) {
+                            // now we check the second condition
+                            if (!Eich_ell.contains(gen)) {
+                                // for (int scal=0; scal < ell; scal++) {
+                                //     quat check_quat = { {NTL::ZZ(scal), NTL::ZZ(0), NTL::ZZ(0), NTL::ZZ(0), NTL::ZZ(1)} , Bp};
+                                //     check_quat = check_quat + gen;
+                                //     assert(!I_ell.contains(check_quat));
+                                // }
+                                for (int i=0; i<4; i++) {
+                                    NTL::ZZ acc = accumulated_multiple;
+                                    if (is_first) {
+                                        result[i] = gen[i];
+                                    }
+                                    else {
+                                        NTL::ZZ m1, m2;
+                                        NTL::mul(m1, result[i], gen[4]);
+                                        NTL::mul(m2, gen[i], result[4]);
+                                        NTL::CRT(m1, acc, m2, ell);
+                                        result[i] = m1;
+                                    }
+                                }
+                                accumulated_multiple *= ell;
+                                result[4] *= gen[4];
+                                if (is_first) {
+                                    is_first = 0;
+                                }
+                                found = true;
+                                auto pn = result.norm();
+                            }
+
+                        }
+
+                    }
+                }
+            }
+        }
+        if (!found) {
+            std::cout << "quat iter loop failed \n";
+        }
+    }
+
+
+
+    return result;
+
+}
+
+// enumerate throught the set of ell-ideals as ideals of the form * first_gen * (C + D *iter) + O0 * ell
+// ell is prime and >= 5
+std::vector<quatlat> left_ideals_of_prime_norm_O0(NTL::ZZ const &ell, const quatalg &Bp) {
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Enumerates through the set of ell-ideals of O_0 as ideals of the form * first_gen * (C + D *iter) + this * ell
+    // Enumerates through the set of ell-ideals of O_0 as ideals of the form * first_gen * (C + D *iter) + O0 * ell
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    // first, we find the two elements we need, first gen and iter
+
+    bool found = false;
+    quat first_gen = {{NTL::ZZ(0), NTL::ZZ(0), NTL::ZZ(1), NTL::ZZ(0), NTL::ZZ(1)}, Bp};
+    while(!found) {
+        first_gen[0] = (-NTL::power(first_gen[1],2) - Bp.p) % ell;
+        assert(first_gen[0] >= 0);
+        long legendre = NTL::Jacobi( first_gen[0], ell);
+        if (legendre == 1) {
+            found = true;
+            first_gen[0] = NTL::SqrRootMod( first_gen[0], ell); 
+        }
+        else {
+            first_gen[1]++;
+        }
+        assert(first_gen[1] < ell); // we should ALWAYS find a solution before reaching that point
+    }
+
+    quatlat O0 = Bp.maximal_order(false);
+
+    assert(O0.contains(first_gen));
+    assert(first_gen.integral_norm() % ell == 0);
+    quatlat I = create_from_generator_O0( first_gen, ell);
+    assert(std::get<0>(I.norm())/std::get<1>(I.norm()) == ell);
+
+    std::list<int> ell_list = {NTL::conv<int>(ell)};
+    // generating the iterating quaternion
+    quat iter = find_quaternion_iterator(ell_list, I, O0, Bp);
+
 
     assert(NTL::ProbPrime(ell));
 
-    std::list<std::tuple<NTL::ZZ,NTL::ZZ>> coeff_list = {};
-    std::list<quatlat> id_list = {};
+    std::vector<std::tuple<NTL::ZZ,NTL::ZZ>> coeff_list = {};
+    std::vector<quatlat> id_list = {};
 
     // create the list of coeff
     NTL::ZZ iterate = NTL::ZZ(0);
     while (iterate < ell) {
         coeff_list.push_back({NTL::ZZ(1),iterate});
-        if (NTL::GCD(iterate,NTL::ZZ(ell))!=1) {
+        if (GCD(iterate,NTL::ZZ(ell))!=1) {
             coeff_list.push_back({iterate,NTL::ZZ(1)});
         }
         iterate++;
     }
+
 
     for (auto coeff : coeff_list) {
         quat gen = (first_gen * (quat({{std::get<0>(coeff),NTL::ZZ(0),NTL::ZZ(0),NTL::ZZ(0),NTL::ZZ(1)},first_gen.alg}) + iter * std::get<1>(coeff)  ));
@@ -1301,3 +1544,497 @@ std::list<quatlat> left_ideals_of_prime_norm_O0(NTL::ZZ const &ell, const quat &
 }
 
 
+
+// algorithms to kind the kernel of a matrix
+// Row reduce matrix to Row Echelon Form (REF)
+// Fraction-free Gaussian elimination (Bareiss) on mat_ZZ
+// *************** NOT USED ANYMORE **************************
+void rowEchelon(NTL::mat_ZZ& A) {
+    long n = A.NumRows();
+    assert(A.NumCols() == n + 1);
+    Integer prevPivot(1);
+    long rank = 0;
+
+    for (long k = 0; k < n && rank < n; ++k) {
+        // std::cout << "k = " << k << " A = \n" << A << "\n";
+        // Find pivot row
+        long pivot = -1;
+        for (long i = k; i < n; ++i) {
+            if (A[i][k] != 0) { pivot = i; break; }
+        }
+        if (pivot == -1) continue; // no pivot in this column
+
+        if (pivot != k) {swap(A[rank], A[pivot]);}
+
+        if (A[rank][k] == 0) continue;
+        // Eliminate below
+        for (long i = rank+1; i < n; ++i) {
+            for (long j = k+1; j < n + 1; ++j) {
+                A[i][j] = (A[i][j]*A[rank][k] - A[i][k]*A[rank][j]) / prevPivot;
+            }
+            A[i][k] = Integer(0);
+        }
+    
+        prevPivot = A[rank][k];
+        rank++;
+    }
+}
+
+// *************** NOT USED ANYMORE **************************
+bool special_nullspace(const Integer nprod, NTL::mat_ZZ &A, Integer &res0, Integer &res1, Integer &res2, Integer &res3) {
+
+    assert (A.NumRows() == A.NumCols() - 1);
+
+    long used_re = false;
+    Integer ll = A[1][1];
+    A[1][1] = A[0][0] * A[1][1] - A[1][0] * A[0][1];
+
+    if (A[1][1] == 0) {A[1][1] = ll; rowEchelon(A); used_re = true;}
+    else {
+        A[0][2] = ll;
+        ll = A[2][1]; 
+        res0 = (A[2][1] * A[0][3] - A[0][1] * A[2][3]) / nprod;
+        assert((A[2][1] * A[0][3] - A[0][1] * A[2][3]) % nprod == 0);
+        A[2][1] = A[0][0] * A[2][1] - A[0][1] * A[2][0];
+        assert( (A[0][0] * A[2][3] - A[0][3] * A[2][0]) % nprod == 0);
+        res1 = (A[0][3] * A[2][0] - A[0][0] * A[2][3]) / nprod;
+        A[2][0] = ll * A[1][0] - A[0][2] * A[2][0];
+        A[0][2] = Integer(0); // putting back the zero 
+        if (A[0][3] != 0) {
+            A[2][2] = A[2][1];
+            A[2][3] = (A[1][1] * A[2][3]) / A[0][3] + A[2][0];
+            A[2][2] /= nprod;
+            A[2][3] /= nprod;
+        }
+        else {
+            A[2][2] = 0;
+            A[2][3] = A[1][1] * A[2][3] / nprod; 
+        }
+    }
+    
+
+    if (A[2][3] == 0 && A[2][2] == 0 ) {
+        return false;
+    }
+
+    if (A[2][3] != 0 && A[2][2] == 0) {
+        res3 = 0;
+
+        if (!used_re) {
+            A[1][2] = - A[0][0] * A[0][3];
+        }
+
+        assert(A[1][2] != 0);
+        ll = GCD(A[1][1], A[1][2]);
+        res2 =  -A[1][1] / ll;
+        res1 = A[1][2] / ll;
+        
+        if (A[0][1] == 0) {
+            res0 = 0;
+
+        }
+        else {
+            A[2][1] = res1; // this is fp
+            ll = GCD(A[0][0], A[0][1]);
+            res0 = A[0][1] / ll;
+            res1 = A[0][0] / ll;
+            
+            ll = A[2][1] / GCD(A[2][1], res1);
+            res0 *= ll;
+            res1 = - res1 * ll;
+            res2 = (res1 * res2) / A[2][1];
+
+            ll = GCD(ll, res2);
+            res0 = res0 / ll;
+            res1 = res1 / ll;
+            res2 = res2 / ll;
+
+        }
+
+    }
+    else if ( A[2][3] != 0 && A[2][2] != 0 ) {
+
+        res3 = - A[2][2];
+        res2 = A[2][3];
+
+        if (used_re) {
+            A[2][0] = res2; // ip
+            res2 *= A[1][1];
+            A[2][1] = A[1][2] * A[2][0]  + A[1][3] * res3; // fp
+            res1 = A[2][1];
+        } 
+    
+        if (res1 != 0) {
+            assert(used_re || res0 * A[0][0] * res2 == (A[0][1] * res1 * res2 - A[0][3] * res3 * res2) );
+            if (used_re) {
+                ll = GCD(res2,  A[2][1]);
+                res2 = res2 / ll;
+                A[2][1] = A[2][1] / ll;
+                ll = A[2][1] * A[2][0]; // fp * ip
+                res0 = (A[0][1] * ll - A[0][3] * res3 * res2);    
+            }
+            
+            if (res0 != 0 && !used_re) {
+                res1 = - res1;
+                res2 = res2;
+
+                ll = GCD(res0,res1);
+                if (ll != 1) {
+                    ll = GCD(ll, res2);
+                }
+                if (ll != 1) {
+                    ll = GCD(ll, res3);
+                    // std::cout << "final ll in the nominal case " << ll << "\n"; 
+
+                    res0 = res0 / ll;
+                    res1 = res1 / ll;
+                    res2 = res2 / ll;
+                    res3 = res3 / ll;
+                }      
+                
+            }
+            else if (used_re && res0 != 0) {
+
+                res1 = ll * A[0][0];
+                auto aa = GCD( res1, res0 );
+                res0 = res0 / aa;
+                res1 = res1 / aa;
+
+                ll = ll / GCD( res1, ll);
+                res0 = ll * res0;
+                res1 = - ll * res1;
+                res2 = - (res2 * res1) / A[2][1];
+                res3 = (res3 * res2) / A[2][0];
+                if (ll != 1) {
+                    ll = GCD(ll, res2);
+                }
+                if (ll != 1) {
+                    ll = GCD(ll, res3);
+                    res0 = res0 / ll;
+                    res1 = res1 / ll;
+                    res2 = res2 / ll;
+                    res3 = res3 / ll;
+                }
+
+            }
+            else {
+                assert(!used_re); // if not, then we need to implement this case
+                res0 = 0;
+                res1 = - res1;
+                res2 = res2;
+
+                ll = GCD(res2, res3);
+                ll = GCD(ll, res1);
+                res1 = res1 / ll;
+                res2 = res2 / ll;
+                res3 = res3 / ll;
+            }
+        }
+        else {
+            res1 = 0;
+
+            if (!used_re){
+                A[2][0] = res2; // this is ip 
+                // if used_re A[2][0] is already ip and A[2][1] is already fp
+            }
+
+            res2 = A[0][0] * A[2][0];
+            res0 = A[0][2] * A[2][0] + A[0][3] * res3;
+            assert(res0 != 0);
+            assert(res0 == A[0][3] * res3 ); 
+            
+            ll = GCD(res0, res2);
+            res2 = res2 / ll;
+            res0 = res0 / ll;
+        
+            ll = A[2][0] / GCD(A[2][0], res2);
+            res0 = ll * res0;
+            res2 = - ll * res2;
+            res3 = (res2 * res3) / A[2][0] ;
+
+            ll = GCD(ll, res3);
+            res0 = res0 / ll;
+            res2 = res2 / ll;
+            res3 = res3 / ll;
+
+        }
+        
+        
+    }
+    else {
+        res2 = Integer(0);
+
+        if (!used_re) {
+            A[1][3] = - A[0][3] * A[1][0];
+        }
+
+        if (A[1][3] != 0) {
+            ll = GCD( A[1][1], A[1][3] );
+            res3 = - A[1][1] / ll;
+            auto gp = A[1][3] / ll;
+
+            res1 = A[0][0] * gp;
+            res0 = A[0][1] * gp + res3 * A[0][3];
+            ll = GCD(res1, res0);
+            res1 = res1 / ll;
+            res0 = res0 / ll;
+
+            ll = gp / GCD(res1, gp);
+
+            res0 = res0 * ll;
+            res1 = - res1 * ll;
+            res3 = res3 * res1 / gp;
+
+            ll = GCD(ll, res3);
+
+            res0 = res0 / ll;
+            res1 = res1 / ll;
+            res3 = res3 / ll;
+        }
+        else {
+            assert(A[0][3] != 0);
+            res1 = Integer(0);
+            res0 = GCD(A[0][0],A[0][3]);
+            res3 = - A[0][0] / res0;
+            res0 = A[0][3] / res0; 
+        }
+
+    }
+    
+
+    return true;
+}
+
+bool IsIntegralSquare(Integer N) {
+    return (N == NTL::power(NTL::SqrRoot(N),2));
+}
+
+bool commutatorfind(const std::pair<quat,quat> &beta1, const std::pair<quat,quat> &beta2, const std::pair<Integer,Integer> n, const quat prod_quat, const Integer prod_quat_norm, bool is_FP, quat &quat_sol) {
+    //////////////////////////////////////////////////////////
+    //// Finds alpha such that alpha * beta1.first = beta2.first * alpha
+    //// and alpha * beta1.second = beta2.second * alpha
+    //// Assumes that beta1, beta2 have denominator 2
+    //////////////////////////////////////////////////////////
+
+    // std::cout << "alpha1 = " << beta1.first << "\n";
+    // std::cout << "beta1  = " << beta1.second << "\n";
+    // std::cout << "alpha2 = " << beta2.first << "\n";
+    // std::cout << "beta2  = " << beta2.second << "\n";
+    // std::cout << "prod1  = " << prod_quat << "\n";
+    // std::cout << "normp / p = " << prod_quat_norm / beta1.first.alg.p << "\n";
+
+    NTL::mat_ZZ M;
+    M.SetDims(3,4);
+
+    assert( beta1.first.norm().first * beta2.first.norm().second == beta2.first.norm().first * beta1.first.norm().second );
+    assert( beta1.second.norm().first * beta2.second.norm().second == beta2.second.norm().first * beta1.second.norm().second );
+    
+    Integer N12 = GCD(n.first, n.second);
+    auto N22 = n.first / N12;
+    N12 = n.second / N12;
+
+    Integer nprod = N12 * N22;
+
+    auto N11 = (n.first / beta1.first[4]) * N12;
+    auto N21 = (n.second / beta2.first[4]) * N22;
+    N12 *= (n.first / beta1.second[4]);
+    N22 *= (n.second / beta2.second[4]);
+
+    M[1][1] = beta1.first[2] * N11;
+    M[1][0] = beta1.first[3] * N11;
+    M[1][3] =  beta2.first[1] * N21; // tempy
+    M[0][3] = beta1.first[1] * N11 + M[1][3];
+    M[0][2] =  beta2.first[3] * N21; // tempt
+    M[2][2] = beta2.first[2] * N21; // tempz
+    M[0][0] = M[1][1] - M[2][2] ;
+    M[0][1] = - (M[1][0] + M[0][2]);
+    M[1][0] = M[1][0] - M[0][2];
+    M[1][1] = M[1][1] + M[2][2];
+
+    M[2][0] = beta1.second[2] * N12;
+    M[2][2] = beta2.second[2] * N22; // tempzeta
+    M[2][1] =  beta1.second[3] * N12;
+    M[0][2] = beta2.second[3] * N22; // temptau
+    M[2][0] = M[2][0] - M[2][2];
+    M[2][1] = - (M[2][1] + M[0][2]);
+    M[1][2] = beta2.second[1] * N22; // temprho
+    M[2][3] = M[1][2]  + beta1.second[1] * N12;
+
+    // std::cout << M[2][3] << "\n";
+
+    // the solution is equal to  alpha2 * (j * beta1 - beta2 * j) + (j * beta1 - beta2 * j) * alpha1 / p
+    // but it is possible that the signs were bad and in that case the solution is - alpha2 * (j * beta1 + beta2 * j) + (j * beta1 + beta2 * j) * alpha1 / p
+    quat_sol[0] =  ( M[0][3] * M[2][1] - M[2][3] * M[0][1] ) / nprod ; 
+    if (is_FP && quat_sol[0] % beta1.first.alg.p == 0 ) {
+        quat_sol[0] =  ( (M[0][3] - 2 * M[1][3]) * (M[2][1] + 2 * M[0][2]) - ( (M[2][3] - 2 * M[1][2]) * (-M[1][0]) ) ) / nprod ; // 
+        quat_sol[1] =  (M[1][1] * (M[2][3] - 2 * M[1][2]) - (M[0][3] - 2 * M[1][3]) * (M[2][0] + 2 * M[2][2]) ) / nprod ;
+        // if we were very unlucky and in fact both first coordinates is divisible by p, we may have made a mistake and so we switch back to the other formula 
+        if (quat_sol[0] % beta1.first.alg.p == 0 && quat_sol[1] % beta1.first.alg.p == 0){
+            quat_sol[0] =  ( M[0][3] * M[2][1] - M[2][3] * M[0][1] ) / nprod ; 
+            quat_sol[1] =  (M[0][0] * M[2][3] - M[0][3] * M[2][0]) / nprod ;
+            quat_sol[2] =  - (((M[0][3] - 2 * M[1][3] ) * M[2][3]) / beta1.first.alg.p +  M[1][1] * M[2][0] - M[1][0] * M[2][1]) /nprod ;
+            quat_sol[3] =  -(M[2][1] * M[0][0] -  M[2][0] * M[0][1]) / nprod ;
+        }
+        else {
+            quat_sol[2] =  - (((M[0][3]) * (M[2][3] - 2 * M[1][2])) / beta1.first.alg.p +  M[0][0] * (M[2][0] + 2 * M[2][2]) + M[0][1] * (M[2][1] + 2 * M[0][2]) ) /nprod ;
+            quat_sol[3] =  -((M[2][1] + 2* M[0][2]) * M[1][1] -  (M[2][0] + 2 * M[2][2]) * ((-M[1][0]))) / nprod ;
+        }
+    }
+    else {
+        quat_sol[1] =  (M[0][0] * M[2][3] - M[0][3] * M[2][0]) / nprod ;
+        quat_sol[2] =  - (((M[0][3] - 2 * M[1][3] ) * M[2][3]) / beta1.first.alg.p +  M[1][1] * M[2][0] - M[1][0] * M[2][1]) /nprod ;
+        quat_sol[3] =  -(M[2][1] * M[0][0] -  M[2][0] * M[0][1]) / nprod ;
+    }
+    N21 = quat_sol.scalar_remove(); // this contains the removed factor
+    N21 = GCD(nprod, N21); // this is the factor that was potentially removed
+
+    bool boo = !quat_sol.is_zero();
+    // in some unlucky case we may have chosen the wrong sign
+    if (!boo) {
+        // we try by changing the sign of the elements of the second basis
+        if (is_FP) {
+            quat_sol[0] =  ( M[0][3] * M[2][1] - M[2][3] * M[0][1] ) / nprod ;
+            quat_sol[1] =  (M[0][0] * M[2][3] - M[0][3] * M[2][0]) / nprod ;
+            quat_sol[2] =  - (((M[0][3] - 2 * M[1][3] ) * M[2][3]) / beta1.first.alg.p +  M[1][1] * M[2][0] - M[1][0] * M[2][1]) /nprod ;
+            quat_sol[3] =  -(M[2][1] * M[0][0] -  M[2][0] * M[0][1]) / nprod ;
+        }
+        else {
+            quat_sol[0] =  ( (M[0][3] - 2 * M[1][3]) * (M[2][1] + 2 * M[0][2]) - ( (M[2][3] - 2 * M[1][2]) * (-M[1][0]) ) ) / nprod ; // 
+            quat_sol[1] =  (M[1][1] * (M[2][3] - 2 * M[1][2]) - (M[0][3] - 2 * M[1][3]) * (M[2][0] + 2 * M[2][2]) ) / nprod ;
+            quat_sol[2] =  - (((M[0][3]) * (M[2][3] - 2 * M[1][2])) / beta1.first.alg.p +  M[0][0] * (M[2][0] + 2 * M[2][2]) + M[0][1] * (M[2][1] + 2 * M[0][2]) ) /nprod ;
+            quat_sol[3] =  -((M[2][1] + 2* M[0][2]) * M[1][1] -  (M[2][0] + 2 * M[2][2]) * ((-M[1][0]))) / nprod ;
+        }
+        
+        N21 = quat_sol.scalar_remove(); // this contains the removed factor
+        N21 = GCD(nprod, N21); // this is the factor that was potentially removed 
+    }
+    boo = !quat_sol.is_zero();
+    // if it is sill zero, we try alpha2 * (k * beta1 - beta2 * k) + (k * beta1 - beta2 * k) * alpha1 / p
+    if (!boo) {
+        quat kkk = {{Integer(0), Integer(0), Integer(0), Integer(1), Integer(1)}, beta2.first.alg };
+        quat_sol = beta2.first * (kkk * beta1.second + beta2.second * kkk * Integer(-1)) + (kkk * beta1.second + beta2.second * kkk * Integer(-1)) * beta1.first;
+        quat_sol[4] = 1;
+        N21 = quat_sol.scalar_remove(); // this contains the removed factor
+        N21 = GCD(nprod, N21); // this is the factor that was potentially removed 
+    }
+    boo = !quat_sol.is_zero();
+    // if it is sill zero, we try alpha2 * (k * beta1 + beta2 * k) - (k * beta1 + beta2 * k) * alpha1 / p
+    if (!boo) {
+        quat kkk = {{Integer(0), Integer(0), Integer(0), Integer(1), Integer(1)}, beta2.first.alg };
+        quat_sol = beta2.first * (kkk * beta1.second + beta2.second * kkk ) * Integer(-1) + (kkk * beta1.second + beta2.second * kkk ) * beta1.first;
+        quat_sol[4] = 1;
+        N21 = quat_sol.scalar_remove(); // this contains the removed factor
+        
+        N21 = GCD(nprod, N21); // this is the factor that was potentially removed 
+    }
+    boo = !quat_sol.is_zero();
+    if (!boo) {
+        
+
+        std::cout << is_FP << "\n";
+        std::cout << "alpha1 = " << beta1.first << "\n";
+        std::cout << "beta1  = " << beta1.second << "\n";
+        std::cout << "alpha2 = " << beta2.first << "\n";
+        std::cout << "beta2  = " << beta2.second << "\n";
+        quat_sol[4] = Integer(0);
+        return true;
+    }
+
+    // divide by two if we can
+    if ((NTL::IsOdd(quat_sol[0]) == NTL::IsOdd(quat_sol[3]) ) && ( NTL::IsOdd(quat_sol[1]) == NTL::IsOdd(quat_sol[2]) )) {
+        quat_sol[4] = Integer(2);
+    }
+
+    nprod = n.first * n.second;
+
+    // std::cout << is_FP << "\n";
+    // std::cout << "a1 := " << beta1.first << ";\n";
+    // std::cout << "b1  := " << beta1.second << ";\n";
+    // std::cout << "a2 := " << beta2.first << ";\n";
+    // std::cout << "b2  := " << beta2.second << ";\n";
+    // std::cout << "sol    := " << quat_sol << ";\n";
+    // std::cout << nprod << " " << prod_quat_norm << " " << N21 << "\n";
+
+
+    Integer norm = quat_sol.integral_norm();
+    norm = (nprod * beta1.first.alg.p * prod_quat_norm) / norm;
+    // we have nprod * p * prod_quat_norm / norm = p^bp * (prod_quat_norm)^b * ell^2 where bp,b are in {0,1} and ell divides N21 
+    // we need to find the values of bp and b
+    // there is a potential problem to find the value of the bit b when prod_quat_norm is a square having a common factor with N21 
+
+    bool bp = (norm % beta1.first.alg.p == 0); // if bp is true, then p did not divide the norm of quat_sol
+    if (bp) {
+        norm = norm / beta1.first.alg.p;
+    }
+    bool isSquareProd = IsIntegralSquare(prod_quat_norm);
+    bool isSquare = IsIntegralSquare(norm);
+
+    // if prod_quat_norm does not divide norm, then b must be 0
+    // if prod_quat_norm is not a square and norm / p^bp is a square, then b must be zero
+    if ( GCD(prod_quat_norm, norm) == prod_quat_norm && (isSquareProd || !isSquare) ) {
+        
+        // we know that norm is a square
+        // if prod_quat_norm is one, then b must be 1 (this is the Fp case)
+        // if prod_quat_norm does not divide N21, prod_quat_norm cannot divide ell, and so b must be 1
+        // if norm is not a square, then b must be 1
+        if (prod_quat_norm != 1 && N21 % prod_quat_norm == 0 && isSquare) {
+
+            // we still don't know the value of b, we must try to multiply by prod_quat to see what happens            
+            quat test_sol = prod_quat * quat_sol;
+            if (bp) {
+                test_sol[4] *= prod_quat_norm; 
+            } else {
+                test_sol[4] *= prod_quat_norm * beta1.first.alg.p;
+            }
+
+
+            test_sol.normalize();
+            if (test_sol[4] == 1 or test_sol[4] == 2) {
+                // in that case we are going to assume that b = 0 
+                quat_sol = test_sol;
+                // it remains to divide by ell if we can
+
+                quat_sol.scalar_mul(NTL::SqrRoot(norm));
+            
+                return !bp;
+            }
+            else {
+                // in that case we know b must be 1 
+                // it only remains to multiply by ell
+                quat_sol.scalar_mul(NTL::SqrRoot(norm / (prod_quat_norm)));
+                return bp;
+            }
+
+        }
+        else {
+            // b must be 1 this means that quat_sol is the solution we were looking for 
+            // and we only need to renormalize by ell
+            if (is_FP && !bp) {
+                quat_sol = prod_quat * quat_sol;
+                quat_sol[4] *= beta1.first.alg.p;
+            }
+
+            quat_sol.scalar_mul(NTL::SqrRoot(norm / (prod_quat_norm)));
+            return bp || is_FP;
+        }  
+        
+    }
+    else {
+        // b must be 0 
+        quat_sol = prod_quat * quat_sol;
+        
+        if (bp) {
+            quat_sol[4] *= prod_quat_norm;
+            quat_sol.normalize();
+        } else {
+            quat_sol[4] *= prod_quat_norm * beta1.first.alg.p;
+            quat_sol.normalize();
+        }
+        quat_sol.scalar_mul(NTL::SqrRoot(norm));
+
+        return !bp;
+    }
+
+    return bp;
+
+}

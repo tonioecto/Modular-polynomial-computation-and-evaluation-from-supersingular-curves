@@ -1,0 +1,234 @@
++ ./main bigc w 2147483647 2003 2
+2003 22033 31 10.9694
+The target bound is 2279 bits
+Finding primes...
+Done!
+
+Set of primes =
+947 967 971 983 991 1019 1031 1039 1051 1063 1087 1091 1103 1123 1151 1163 1171 1187 1223 1231 1259 1279 1283 1291 1303 1307 1319 1327 1367 1399 1423 1427 1439 1447 1451 1459 1471 1483 1487 1499 1511 1523 1531 1543 1559 1567 1571 1579 1583 1607 1619 1627 1663 1667 1699 1723 1747 1759 1783 1787 1811 1823 1831 1847 1867 1871 1879 1907 1931 1951 1979 1987 1999 2011 2027 2039 2063 2083 2087 2099 2111 2131 2143 2179 2203 2207 2239 2243 2251 2267 2287 2311 2339 2347 2351 2371 2383 2399 2411 2423 2447 2459 2467 2503 2531 2539 2543 2551 2579 2591 2647 2659 2663 2671 2683 2687 2699 2707 2711 2719 2731 2767 2791 2803 2819 2843 2851 2879 2887 2903 2927 2939 2963 2971 2999 3011 3019 3023 3067 3079 3083 3119 3163 3167 3187 3191 3203 3251 3259 3271 3299 3307 3319 3323 3331 3343 3347 3359 3371 3391 3407 3463 3467 3491 3499 3511 3527 3539 3547 3559 3571 3583 3607 3623 3631 3643 3659 3671 3691 3719 3727 3739 3767 3779 3803 3823 3847 3851 3863 3907 3911 3919 3923 3931 3943 3947 3967 4003 4007 4019 4027 4051 4079 4091 4099 
+We are working with 205 primes.
+
+Initialising CRT coeffs...
+Done!
+
+progress = 6/205
+SS Eval WeberCRT of size 6 with: 
+947 967 971 983 991 1019 
+
+
+progress = 11/205
+SS Eval WeberCRT of size 5 with: 
+1031 1039 1051 1063 1087 
+
+
+progress = 16/205
+SS Eval WeberCRT of size 5 with: 
+1091 1103 1123 1151 1163 
+
+
+progress = 21/205
+SS Eval WeberCRT of size 5 with: 
+1171 1187 1223 1231 1259 
+
+
+progress = 26/205
+SS Eval WeberCRT of size 5 with: 
+1279 1283 1291 1303 1307 
+
+
+progress = 31/205
+SS Eval WeberCRT of size 5 with: 
+1319 1327 1367 1399 1423 
+
+
+progress = 36/205
+SS Eval WeberCRT of size 5 with: 
+1427 1439 1447 1451 1459 
+
+
+progress = 41/205
+SS Eval WeberCRT of size 5 with: 
+1471 1483 1487 1499 1511 
+
+
+progress = 46/205
+SS Eval WeberCRT of size 5 with: 
+1523 1531 1543 1559 1567 
+
+
+progress = 51/205
+SS Eval WeberCRT of size 5 with: 
+1571 1579 1583 1607 1619 
+
+
+progress = 56/205
+SS Eval WeberCRT of size 5 with: 
+1627 1663 1667 1699 1723 
+
+
+progress = 61/205
+SS Eval WeberCRT of size 5 with: 
+1747 1759 1783 1787 1811 
+
+
+progress = 66/205
+SS Eval WeberCRT of size 5 with: 
+1823 1831 1847 1867 1871 
+
+
+progress = 71/205
+SS Eval WeberCRT of size 5 with: 
+1879 1907 1931 1951 1979 
+
+
+progress = 76/205
+SS Eval WeberCRT of size 5 with: 
+1987 1999 2011 2027 2039 
+
+
+progress = 81/205
+SS Eval WeberCRT of size 5 with: 
+2063 2083 2087 2099 2111 
+
+
+progress = 86/205
+SS Eval WeberCRT of size 5 with: 
+2131 2143 2179 2203 2207 
+
+
+progress = 91/205
+SS Eval WeberCRT of size 5 with: 
+2239 2243 2251 2267 2287 
+
+
+progress = 96/205
+SS Eval WeberCRT of size 5 with: 
+2311 2339 2347 2351 2371 
+
+
+progress = 101/205
+SS Eval WeberCRT of size 5 with: 
+2383 2399 2411 2423 2447 
+
+
+progress = 106/205
+SS Eval WeberCRT of size 5 with: 
+2459 2467 2503 2531 2539 
+
+
+progress = 111/205
+SS Eval WeberCRT of size 5 with: 
+2543 2551 2579 2591 2647 
+
+
+progress = 116/205
+SS Eval WeberCRT of size 5 with: 
+2659 2663 2671 2683 2687 
+
+
+progress = 121/205
+SS Eval WeberCRT of size 5 with: 
+2699 2707 2711 2719 2731 
+
+
+progress = 126/205
+SS Eval WeberCRT of size 5 with: 
+2767 2791 2803 2819 2843 
+
+
+progress = 131/205
+SS Eval WeberCRT of size 5 with: 
+2851 2879 2887 2903 2927 
+
+
+progress = 136/205
+SS Eval WeberCRT of size 5 with: 
+2939 2963 2971 2999 3011 
+
+
+progress = 141/205
+SS Eval WeberCRT of size 5 with: 
+3019 3023 3067 3079 3083 
+
+
+progress = 146/205
+SS Eval WeberCRT of size 5 with: 
+3119 3163 3167 3187 3191 
+
+
+progress = 151/205
+SS Eval WeberCRT of size 5 with: 
+3203 3251 3259 3271 3299 
+
+
+progress = 156/205
+SS Eval WeberCRT of size 5 with: 
+3307 3319 3323 3331 3343 
+
+
+progress = 161/205
+SS Eval WeberCRT of size 5 with: 
+3347 3359 3371 3391 3407 
+
+
+progress = 166/205
+SS Eval WeberCRT of size 5 with: 
+3463 3467 3491 3499 3511 
+
+
+progress = 171/205
+SS Eval WeberCRT of size 5 with: 
+3527 3539 3547 3559 3571 
+
+
+progress = 176/205
+SS Eval WeberCRT of size 5 with: 
+3583 3607 3623 3631 3643 
+
+
+progress = 181/205
+SS Eval WeberCRT of size 5 with: 
+3659 3671 3691 3719 3727 
+
+
+progress = 186/205
+SS Eval WeberCRT of size 5 with: 
+3739 3767 3779 3803 3823 
+
+
+progress = 191/205
+SS Eval WeberCRT of size 5 with: 
+3847 3851 3863 3907 3911 
+
+
+progress = 196/205
+SS Eval WeberCRT of size 5 with: 
+3919 3923 3931 3943 3947 
+
+
+progress = 201/205
+SS Eval WeberCRT of size 5 with: 
+3967 4003 4007 4019 4027 
+
+
+progress = 205/205
+SS Eval WeberCRT of size 4 with: 
+4051 4079 4091 4099 
+
+
+Finalising CRT coeffs...
+Done!
+
+
+Total ModEvalBigCW time = 123.187
+Coefficient of x^0 is: 1048576
+Coefficient of x^1 is: 1718504070
+Coefficient of x^2 is: 1498706412
+Coefficient of x^2001 is: 1187410995
+Coefficient of x^2002 is: 1613841965
+Coefficient of x^2003 is: 357846998
+Coefficient of x^2004 is: 1
+
+real	2m3,226s
+user	2m3,038s
+sys	0m0,152s

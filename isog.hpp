@@ -77,3 +77,8 @@ class isog_chain
         ec const &get_domain() const { return isog_parts.front().get_domain(); }
         ec const &get_codomain() const { return isog_parts.back().get_codomain(); }
 };
+
+// fast isogeny chain of degree 16 
+// this is used for fast weber invariant enumeration
+// only compute the 4 sucessive codomains
+std::vector<ec> fast_16_isog(ecp const &P); 

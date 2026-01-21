@@ -34,7 +34,7 @@ std::optional<ecp> ec::lift_x(Fp2k const &Fext, FpE_elem const &x) const
     FpE_push Push(Fext.F);
 
     FpE_elem rhs = (x*x + lift(this->_a, Fext))*x + lift(this->_b, Fext);
-    auto y = sqrt(rhs);
+    auto y = fast_sqrt(Fext, rhs);
     if (y)
         return ecp(std::make_shared<const ec>(*this), Fext, x, *y);
     return {};
@@ -106,6 +106,102 @@ std::pair<ecp, ecp> const ec::torsionBasis(Fp2k const &Fext, int ell, int e) con
             return {P, Q};
         }
     }
+}
+
+std::optional<ecp> ec::det_lift_x(Fp2k const &Fext, FpE_elem const &x) const
+{
+    
+    FpE_elem rhs = (x*x + lift(this->_a, Fext))*x + lift(this->_b, Fext);
+    auto y = fast_sqrt(Fext, rhs);
+    auto p = Fp::modulus(); 
+    // FpE_elem p2 = FpE_elem(p);
+    if (y) {
+        if (!NTL::IsZero(*y) && (2 * NTL::conv<long>(rep(*y)[0]) >= p)) {
+            *y = - *y;
+        }
+        return ecp(std::make_shared<const ec>(*this), Fext, x, *y);
+    }
+    return {};
+}
+
+
+ecp ec::point_of_order_det(Fp2k const &Fext, NTL::ZZ cof, int ell, int e, long &try_x) const {
+    
+    bool found = false;
+    ecp P = ecp(std::make_shared<const ec>(*this), Fext);
+    FpE_elem t = FpE_elem(1) + Fext.Fp2_gen;
+    int count = 0;
+    ecp P_rec = ecp(std::make_shared<const ec>(*this), Fext);
+    while (!found && count < 1000) {
+        try_x++;
+        count++;
+        t._zz_pE__rep[2 * Fext.k - 1] += try_x;
+        t._zz_pE__rep[ Fext.k ] += try_x;
+        auto Pt = det_lift_x(Fext, t);
+        if (Pt) {
+            P_rec = NTL::ZZ(1) * (*Pt);
+            P = cof * (*Pt);
+            found = (NTL::power(NTL::ZZ(ell), e-1) * P).get_z() != 0;
+        }
+    }
+    if (!found) {
+        std::cout << "point_order_det looped 1000 times without finding an answer, this is not normal !!\n";
+        std::cout << "extension degree = " << Fext.k << " modulus = " << Fp_elem::modulus() << " polymod =  " << FpE_elem::modulus() << "\n";
+        std::cout <<  "curve = " << *this << " order = " << ell << " " << e << "\n";
+        std::cout << "cof = " << cof << "\n";
+        P_rec.normalize();
+        P.normalize();
+        std::cout << "Pt = " << P_rec << "\n";
+        std::cout << "P = " << P << "\n";
+        // auto Pt = det_lift_x(Fext, t);
+        // if (Pt) {
+        //     std::cout << "Pt = " << Pt << "\n";
+        //     P = cof * (*Pt);
+        //     std::cout << "P =  " << P << "\n";
+        // }
+        // else {
+        //     std::cout << "no Pt \n";
+        // }
+        // std::cout << try_x;
+        assert(0); 
+    }
+
+    assert (NTL::power(NTL::ZZ(ell), e-1)*P);
+    assert (!(NTL::power(NTL::ZZ(ell), e)*P));
+
+    return P;
+}
+
+
+std::pair<ecp, ecp> const ec::torsionBasisDet(Fp2k const &Fext, int ell, int e) const
+{
+    // What if we are on the twist?
+    NTL::ZZ cof = NTL::power(NTL::ZZ(Fp_elem::modulus()), long(Fext.k)) - NTL::power_long(long(-1), long(Fext.k % 2));
+
+    NTL::ZZ ellcof = NTL::power(NTL::ZZ(ell), e-1);
+    NTL::ZZ le = ellcof * ell;
+    assert (cof % le == 0);
+    cof /= le;
+
+    long try_x = 0;
+
+    FpE_push Push(Fext.F);
+
+    ecp P = point_of_order_det(Fext, cof, ell, e, try_x);
+    auto ellP = ellcof * P;
+
+    int count = 0;
+    while (true && count < 50) {
+        count++;
+        ecp Q = this->point_of_order_det(Fext, cof, ell, e, try_x);
+        if (DLP(ellcof * Q, ellP, ell, 1) == NTL::ZZ(-1)) {
+            return {P, Q};
+        }
+    }
+    // we shouldn't go outside the loop unless there is a problem somewhere else
+    // the bound of 50 should be more than enough for the intended sizes of prime p
+    assert(0);
+    return {P,P};
 }
 
 std::vector<ecp> const ec::allTorsionPoints(Fp2k const &Fext, int ell, int e) const

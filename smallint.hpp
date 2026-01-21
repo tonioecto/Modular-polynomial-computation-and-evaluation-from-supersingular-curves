@@ -12,12 +12,17 @@
 #include "choosetorsion.hpp"
 #include "hashmap.hpp"
 
-typedef long SmallInteger;
-typedef long FastInteger;
+typedef int SmallInteger;
+typedef std::array<std::array<unsigned char, 2>, 2> VerySmallMat; 
+typedef std::pair<unsigned char, unsigned char> VerySmallIntegerPair;
 
 typedef std::pair<SmallInteger,SmallInteger> SmallIntegerPair;
 
-SmallInteger InvModSpecial(SmallInteger &a, const long &m);
+// unsigned char MulMod16(const unsigned char &a, const unsigned char &b, ) {
+
+// } 
+
+unsigned char InvModSpecial(const unsigned char &a);
 
 class SmallMatFp {
     public:

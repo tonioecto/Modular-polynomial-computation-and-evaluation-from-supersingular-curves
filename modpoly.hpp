@@ -4,6 +4,7 @@
 
 #pragma once
 
+
 #include "utils.hpp"
 #include "endring.hpp"
 #include "choosetorsion.hpp"
@@ -33,7 +34,10 @@ FpX SpecialSupersingularEvaluation(const Integer &p, const Integer &ell, const s
 FpX SpecialSupersingularEvaluationWeber(const Integer &p, const Integer &ell, const std::vector<Fp_elem> eval_points);
 Fp2 const_CRT_polynomials( const std::vector<Fp2> &values, const std::vector<Integer> &modulus, const long len);
 
-
+/// CRT 
+Integer const_CRT( const std::vector<Integer> &values, const std::vector<Integer> &modulus, const long len);
+Fp2 const_CRT_polynomials( const std::vector<Fp2> &values, const std::vector<Integer> &modulus, const long len);
+ffp2 CRT_ffp2( const std::vector<ffp2> &values, const std::vector<FastInteger> &modulus, const std::vector<FastInteger> &prod_mod, const std::vector<FastInteger> &inv, const long len);
 FpX SpecialSupersingularEvaluationCRT(const Integer &p1, const Integer &p2, const Integer ell, const std::vector<Fp_elem> eval_points);
 FpX_big_elem ModEvalBigCharacteristicWeber(NTL::ZZ p, Fp_big_elem const j, NTL::ZZ l);
 

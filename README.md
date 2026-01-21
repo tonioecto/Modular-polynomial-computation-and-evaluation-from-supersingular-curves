@@ -1,6 +1,6 @@
 # Evaluation of Modular Polynomials
 
-This repository contains a C++ implementation of the algorithms in the research paper *Evaluation of Modular Polynomials from Supersingular Elliptic Curves* by Maria Corte‑Real Santos, Jonathan Komada Eriksen, Antonin Leroux, Michael Meyer, and Lorenz Panny.
+This repository contains a C++ implementation of the algorithms in the research paper *Evaluation of Modular Polynomials from Supersingular Elliptic Curves* by Maria Corte‑Real Santos, Jonathan Komada Eriksen, Antonin Leroux, Michael Meyer, and Lorenz Panny, it includes the latest algorithmic improvement described in the paper *Efficient quaternion algorithms for the Deuring correspondence, and application to the evaluation of modular polynomials* by Antonin Leroux.  
 
 ## Requirements
 
@@ -55,6 +55,14 @@ $ ./experiments.sh
 ```
 
 WARNING: The experiments should only be run on a machine with sufficient computing power. In total, the runtime exceeds 50 core days.
+
+### Profiling 
+For profiling with gperftools : 
+- compile with -lprofiler
+- LD_PRELOAD=/usr/local/lib/libprofiler.so CPUPROFILE=prof.out ./main ssse w 1051 1601 2 (or whatever command we want to use). It might be another path to libprofiler.so like /usr/lib/x86_64-linux-gnu/libprofiler.so 
+- google-pprof -gv main prof.out (for a graphical representation)
+- pprof -tree -cum main prof.out > prof.tree (for a textual representation as some tree of calls sorted by decreasing weight)
+
 
 ## Additional Comments
 

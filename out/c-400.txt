@@ -1,0 +1,74 @@
++ ./main bigc w 2147483647 419 2
+419 3771 31 8.71768
+The target bound is 438 bits
+Finding primes...
+Done!
+
+Set of primes =
+683 691 719 727 739 743 751 787 811 823 827 839 859 863 883 887 907 911 919 947 967 971 983 991 1019 1031 1039 1051 1063 1087 1091 1103 1123 1151 1163 1171 1187 1223 1231 1259 1279 1283 1291 1303 1307 
+We are working with 45 primes.
+
+Initialising CRT coeffs...
+Done!
+
+progress = 6/45
+SS Eval WeberCRT of size 6 with: 
+683 691 719 727 739 743 
+
+
+progress = 12/45
+SS Eval WeberCRT of size 6 with: 
+751 787 811 823 827 839 
+
+
+progress = 18/45
+SS Eval WeberCRT of size 6 with: 
+859 863 883 887 907 911 
+
+
+progress = 24/45
+SS Eval WeberCRT of size 6 with: 
+919 947 967 971 983 991 
+
+
+progress = 29/45
+SS Eval WeberCRT of size 5 with: 
+1019 1031 1039 1051 1063 
+
+
+progress = 34/45
+SS Eval WeberCRT of size 5 with: 
+1087 1091 1103 1123 1151 
+
+
+progress = 39/45
+SS Eval WeberCRT of size 5 with: 
+1163 1171 1187 1223 1231 
+
+
+progress = 44/45
+SS Eval WeberCRT of size 5 with: 
+1259 1279 1283 1291 1303 
+
+
+progress = 45/45
+SS Eval WeberCRT of size 1 with: 
+1307 
+
+
+Finalising CRT coeffs...
+Done!
+
+
+Total ModEvalBigCW time = 16.186
+Coefficient of x^0 is: 131072
+Coefficient of x^1 is: 1535750675
+Coefficient of x^2 is: 1310038099
+Coefficient of x^417 is: 418829743
+Coefficient of x^418 is: 679036670
+Coefficient of x^419 is: 572724187
+Coefficient of x^420 is: 1
+
+real	0m16,205s
+user	0m16,175s
+sys	0m0,015s

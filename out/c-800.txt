@@ -1,0 +1,114 @@
++ ./main bigc w 2147483647 811 2
+811 8110 31 9.66711
+The target bound is 879 bits
+Finding primes...
+Done!
+
+Set of primes =
+739 743 751 787 823 827 839 859 863 883 887 907 911 919 947 967 971 983 991 1019 1031 1039 1051 1063 1087 1091 1103 1123 1151 1163 1171 1187 1223 1231 1259 1279 1283 1291 1303 1307 1319 1327 1367 1399 1423 1427 1439 1447 1451 1459 1471 1483 1487 1499 1511 1523 1531 1543 1559 1567 1571 1579 1583 1607 1619 1627 1663 1667 1699 1723 1747 1759 1783 1787 1811 1823 1831 1847 1867 1871 1879 1907 1931 1951 1979 
+We are working with 85 primes.
+
+Initialising CRT coeffs...
+Done!
+
+progress = 6/85
+SS Eval WeberCRT of size 6 with: 
+739 743 751 787 823 827 
+
+
+progress = 12/85
+SS Eval WeberCRT of size 6 with: 
+839 859 863 883 887 907 
+
+
+progress = 18/85
+SS Eval WeberCRT of size 6 with: 
+911 919 947 967 971 983 
+
+
+progress = 23/85
+SS Eval WeberCRT of size 5 with: 
+991 1019 1031 1039 1051 
+
+
+progress = 28/85
+SS Eval WeberCRT of size 5 with: 
+1063 1087 1091 1103 1123 
+
+
+progress = 33/85
+SS Eval WeberCRT of size 5 with: 
+1151 1163 1171 1187 1223 
+
+
+progress = 38/85
+SS Eval WeberCRT of size 5 with: 
+1231 1259 1279 1283 1291 
+
+
+progress = 43/85
+SS Eval WeberCRT of size 5 with: 
+1303 1307 1319 1327 1367 
+
+
+progress = 48/85
+SS Eval WeberCRT of size 5 with: 
+1399 1423 1427 1439 1447 
+
+
+progress = 53/85
+SS Eval WeberCRT of size 5 with: 
+1451 1459 1471 1483 1487 
+
+
+progress = 58/85
+SS Eval WeberCRT of size 5 with: 
+1499 1511 1523 1531 1543 
+
+
+progress = 63/85
+SS Eval WeberCRT of size 5 with: 
+1559 1567 1571 1579 1583 
+
+
+progress = 68/85
+SS Eval WeberCRT of size 5 with: 
+1607 1619 1627 1663 1667 
+
+
+progress = 73/85
+SS Eval WeberCRT of size 5 with: 
+1699 1723 1747 1759 1783 
+
+
+progress = 78/85
+SS Eval WeberCRT of size 5 with: 
+1787 1811 1823 1831 1847 
+
+
+progress = 83/85
+SS Eval WeberCRT of size 5 with: 
+1867 1871 1879 1907 1931 
+
+
+progress = 85/85
+SS Eval WeberCRT of size 2 with: 
+1951 1979 
+
+
+Finalising CRT coeffs...
+Done!
+
+
+Total ModEvalBigCW time = 35.5246
+Coefficient of x^0 is: 64
+Coefficient of x^1 is: 1489633952
+Coefficient of x^2 is: 1369510358
+Coefficient of x^809 is: 421963006
+Coefficient of x^810 is: 560431565
+Coefficient of x^811 is: 575866454
+Coefficient of x^812 is: 1
+
+real	0m35,543s
+user	0m35,493s
+sys	0m0,035s

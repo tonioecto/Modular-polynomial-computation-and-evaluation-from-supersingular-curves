@@ -20,6 +20,7 @@ void small_solutions(NTL::ZZ const &N, NTL::ZZ const &C, NTL::ZZ const &A, NTL::
                      std::function<bool(NTL::ZZ const &x, NTL::ZZ const &y)> const &fun, double maxdist);
 
 quat RepresentInteger(quatalg const &B, NTL::ZZ const &M);
+quat DetRepresentInteger(quatalg const &B, NTL::ZZ const &M);
 std::optional<std::pair<NTL::ZZ, NTL::ZZ>> Cornacchia(const NTL::ZZ d,const NTL::ZZ &M);
 std::pair<NTL::ZZ, NTL::ZZ> IdealModConstraint(quatlat const &I, quat const &gamma);
 std::pair<quat, NTL::ZZ> KLPT(quatlat const &J, factor_list const &fac_list, NTL::ZZ const &coprime = NTL::ZZ(1));

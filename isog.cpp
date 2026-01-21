@@ -15,7 +15,7 @@
 #include "ec.hpp"
 #include "ecp.hpp"
 #include "isog.hpp"
-
+#include "fast_ff.hpp"
 
 FpEX_elem _derivative(FpEX_elem const &F)
 {
@@ -44,6 +44,7 @@ isog isogeny(ecp const &K, int degree) {
     FpEX_elem h_K;
     if (degree > 2) {
         h_K = kernel_polynomial(K, degree);
+        // std::cout << "kernel polynomial = " << h_K << "\n";
     } else {
         NTL::SetCoeff(h_K, 1);
         h_K[0] = -coerce(K.aff_x(), K.field());
@@ -70,8 +71,8 @@ isog isogeny(ecp const &K, int degree) {
 
 
         FpE_elem x0 = -coeff(h_K, 0);
-        FpE_elem t = 3*x0*x0 + a;
-        FpE_elem w = x0*t;
+        FpE_elem t = 3 * x0 * x0 + a;
+        FpE_elem w = x0 * t;
 
         ec E1(a - 5*t, b - 7*w);
         return isog(K.curve_ptr(), std::make_shared<const ec>(E1), degree, h_K, t);
@@ -79,8 +80,14 @@ isog isogeny(ecp const &K, int degree) {
 }
 
 std::pair<FpE_elem, FpE_elem> _prod_derivative_pair(std::pair<FpE_elem, FpE_elem> const &f1, std::pair<FpE_elem, FpE_elem> const &f2) {
-    std::pair<FpE_elem, FpE_elem> out(f1.first*f2.first, f1.first*f2.second + f1.second*f2.first);
-    return out;
+    // std::pair<FpE_elem, FpE_elem> out(f1.first*f2.first, f1.first*f2.second + f1.second*f2.first);
+    // return out;
+    FpE_elem t1,t2,t3;
+    SpecialMul(t1, f1.first, f2.first);
+    SpecialMul(t2, f1.first, f2.second);
+    SpecialMul(t3, f1.second, f2.first);
+    return {t1, t2 + t3};
+
 }
 
 ecp isog::operator()(ecp const &P) const
@@ -218,6 +225,7 @@ FpEX_elem kernel_polynomial(ecp const&K, int degree) {
     }
 
     FpEX_elem f0 = MinPoly(x, K.field());
+    // std::cout << "min poly for deg " << degree << " and x =  " << x << " f0 = " <<f0 << "\n";
     int k = NTL::deg(f0);
 
     size_t m = (degree-1)/(2*k);
@@ -242,9 +250,9 @@ FpEX_elem kernel_polynomial(ecp const&K, int degree) {
 
 isog_chain::isog_chain(std::vector<std::pair<ecp,std::pair<int, int>>> kerGens) //Somehow this horrible structure feels like bad practice
 {
-    auto start_id2ker = std::chrono::steady_clock::now();
-    std::chrono::duration<long, std::milli> duration_compisog = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-std::chrono::steady_clock::now());
-    std::chrono::duration<long, std::milli> duration_pushpoints = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-std::chrono::steady_clock::now());
+    // auto start_id2ker = std::chrono::steady_clock::now();
+    // std::chrono::duration<long, std::milli> duration_compisog = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-std::chrono::steady_clock::now());
+    // std::chrono::duration<long, std::milli> duration_pushpoints = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-std::chrono::steady_clock::now());
 
     while (kerGens.size() > 0) {
 
@@ -255,12 +263,12 @@ isog_chain::isog_chain(std::vector<std::pair<ecp,std::pair<int, int>>> kerGens) 
         int ell = deg.first; int e = deg.second;
 
         //std::cout << "ISOG CHAIN: Computing isogeny over Fp2k, k = " << K.field().k << "of degree ell = " << ell << std::endl;
-        auto start_isog = std::chrono::steady_clock::now();
+        // auto start_isog = std::chrono::steady_clock::now();
         isog_parts.push_back(isogeny(NTL::power(NTL::ZZ(ell), e-1)*K, ell));
-        duration_compisog = std::chrono::duration_cast<std::chrono::milliseconds>(duration_compisog + std::chrono::steady_clock::now() - start_isog);
+        // duration_compisog = std::chrono::duration_cast<std::chrono::milliseconds>(duration_compisog + std::chrono::steady_clock::now() - start_isog);
 
         //std::cout << "ISOG CHAIN: Done! Now pushing points!" << std::endl;
-        auto start_push = std::chrono::steady_clock::now();
+        // auto start_push = std::chrono::steady_clock::now();
         std::vector<std::pair<ecp,std::pair<int, int>>> newKerGens;
         for (std::pair<ecp, std::pair<int, int>> KerPart : kerGens) {
             ecp Kpart = KerPart.first; std::pair<int, int> deg = KerPart.second;
@@ -274,12 +282,31 @@ isog_chain::isog_chain(std::vector<std::pair<ecp,std::pair<int, int>>> kerGens) 
             newKerGens.push_back(std::pair<ecp, std::pair<int, int>>(isog_parts.back()(K), deg));
         }
 
-        duration_pushpoints = std::chrono::duration_cast<std::chrono::milliseconds>(duration_pushpoints + std::chrono::steady_clock::now() - start_push);
+        // duration_pushpoints = std::chrono::duration_cast<std::chrono::milliseconds>(duration_pushpoints + std::chrono::steady_clock::now() - start_push);
         //std::cout << "Done!" << std::endl;
         kerGens = newKerGens;
     }
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start_id2ker);
+    // auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start_id2ker);
     // std::cout << ">>> kernel to isog took: " << duration.count() << " milliseconds" << std::endl;
     // std::cout << ">>> On computing isogs: " << duration_compisog.count() << " milliseconds" << std::endl;
     // std::cout << ">>> On pushing points: " << duration_pushpoints.count() << " milliseconds" << std::endl;
+}
+
+
+std::vector<ec> fast_16_isog(ecp const &P) {
+    std::vector<ec> inner_isog(4);
+
+    // assumes that the correct modulus is already in place
+    FpE_elem a = P.curve_ptr()->a();
+    FpE_elem b = P.curve_ptr()->b();
+    FpE_elem x = P.aff_x();
+    FpE_elem t , w;
+
+    for (int i = 0; i < 4; i++) {
+        
+
+        inner_isog[i] = ec(a, b);
+    }
+    
+    return inner_isog;
 }

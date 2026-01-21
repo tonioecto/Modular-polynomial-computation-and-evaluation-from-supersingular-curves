@@ -22,14 +22,19 @@ class ecp {
         mutable FpE_elem x, y, z;
     public:
         // Given only a curve and field extension, it creates point at infinity
-        // ecp();
+        // ecp() {};
         ecp(std::shared_ptr<const ec> curve, Fp2k const &Fext) : E{curve}, Fext{Fext}, x{0}, y{1}, z{0} {};
         ecp(std::shared_ptr<const ec> curve, Fp2k const &Fext, FpE_elem const &x, FpE_elem const &y, FpE_elem const &z);
         ecp(std::shared_ptr<const ec> curve, Fp2k const &Fext, FpE_elem const &x, FpE_elem const &y);
+        
 
         FpE_elem const &get_x() const {return this->x;}
         FpE_elem const &get_y() const {return this->y;}
         FpE_elem const &get_z() const {return this->z;}
+        void set_x(const FpE_elem &_x) {this->x = _x;}
+        void set_y(const FpE_elem &_y) {this->y = _y;}
+        void set_z(const FpE_elem &_z) {this->z = _z;}
+
 
         FpE_elem const aff_x() const {if (this->is_identity()) {return FpE_elem(0);} FpE_push push(this->field().F); return this->x/this->z;}
         FpE_elem const aff_y() const {if (this->is_identity()) {return FpE_elem(1);} FpE_push push(this->field().F); return this->y/this->z;}

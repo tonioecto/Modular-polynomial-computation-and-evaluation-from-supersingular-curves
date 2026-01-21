@@ -60,8 +60,7 @@ Jinv JToJinv(const FpE_elem &j);
 bool is_Fp(const Fp2 &j);
 Fp2 Frob(const Fp2 &j);
 
-quat find_quaternion_iterator(std::list<int>& prime_list, const quatlat& I, const quatlat& O0, const quatalg &Bp);
-
 void order_to_jinv_full_list(std::unordered_map<Key, std::pair<FpE_elem, quatlat>, KeyHash, KeyEqual> &m, std::vector<std::pair<quatlat, std::pair<quatlat, Key>>> &ideal_list, const NTL::ZZ &p, const quatalg &Bp, const std::map<unsigned,Fp2k> &Fexts, const Integer &coprime = Integer(1));
 
-std::pair<weber_bas,std::vector<std::pair<SmallMatFp,SmallMatFp>>> order_to_weber_inv_full_list(std::unordered_map<Key, std::pair<FpE_elem, std::pair<std::pair<quatlat,quat>, weber_full_data>>, KeyHash, KeyEqual> &m, std::vector<std::pair<quatlat, std::pair<quatlat, Key>>> &ideal_list, const NTL::ZZ &p, const quatalg &Bp, const std::map<unsigned,Fp2k> &Fexts, const Integer &coprime = Integer(1));
+// std::pair<weber_bas,std::vector<std::pair<VerySmallMat,VerySmallMat>>> order_to_weber_inv_full_list(std::unordered_map<Key, std::pair<FpE_elem, std::pair<std::pair<Integer, std::pair<std::pair<quat,quat>,std::pair<Integer,quat>>>, weber_full_data>>, KeyHash, KeyEqual> &m, std::vector<std::pair<quatlat, Key>> &ideal_list, const NTL::ZZ &p, const quatalg &Bp, const std::map<unsigned,Fp2k> &Fexts, const Integer &coprime = Integer(1));
+std::pair<weber_bas,std::vector<std::pair<VerySmallMat,VerySmallMat>>> fast_order_to_weber_inv_full_list(std::unordered_map<Key, std::pair<FpE_elem, std::pair<std::pair<FastInteger, std::pair<std::pair<FastQuat,FastQuat>,std::pair<FastInteger,FastQuat>>>, weber_full_data>>, KeyHash, KeyEqual> &m, std::vector<std::pair<FastQuatLat, Key>> &id_list, const Integer &p, const quatalg &Bp, const FastQuatAlg &fast_Bp, const std::map<unsigned,Fp2k> &Fexts, const Integer &coprime = Integer(1));

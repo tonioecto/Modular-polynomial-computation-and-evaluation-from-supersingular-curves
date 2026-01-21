@@ -25,6 +25,7 @@ struct crt_info{
 
 void crt_coeff(std::vector<NTL::ZZ> &a, std::vector<NTL::ZZ> const m, int n);
 void crt_init(crt_info &crt, std::vector<NTL::ZZ> const m, int n, int k, NTL::ZZ const P);
+void batched_crt_init(crt_info &crt, std::vector<NTL::ZZ> &modulos, std::vector<std::vector<long>> &prime_list, std::vector<NTL::ZZ> const m, int n, int k, NTL::ZZ const P);
 void crt_update(crt_info &crt, int i, std::vector<NTL::ZZ> const c, int k);
 void crt_finalize_coeff(crt_info &crt, int j, NTL::ZZ tf);
 void crt_finalise(crt_info &crt);

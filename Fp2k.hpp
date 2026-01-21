@@ -25,7 +25,7 @@
 #include <NTL/mat_lzz_p.h>
 
 #include <optional>
-
+#include <vector>
 
 /*typedef NTL::ZZ_p Fp_elem;
 typedef NTL::ZZ_pE FpE_elem;
@@ -71,6 +71,8 @@ size_t myroots_ZZ(NTL::ZZ_pE *roots, NTL::ZZ_pEX const &f);
 
 std::optional<FpE_elem> sqrt(FpE_elem const &alpha);
 
+void BuildNiceIrred(FpEX_elem &f, int n);
+
 struct Fp2k
 {
     FpE_context F;        // The field extension
@@ -97,9 +99,15 @@ struct Fp2k
     bool maximal; // whether to use iota or 2iota + 1
 
     size_t iota_degree;
+    // integer s such that k = 2^s c where c is odd
+    int s;
+    // vector of pairs of precomputed elements to allow for fast sqr computation
+    std::vector<std::pair<FpE_elem, FpE_elem>> QR_precomp;
+
 };
 
-std::optional<FpE_elem> sqrt(Fp2k Fext, FpE_elem const &alpha);
+std::optional<FpE_elem> sqrt(const Fp2k &Fext, FpE_elem const &alpha);
+std::optional<FpE_elem> fast_sqrt(const Fp2k &Fext, FpE_elem const &a);
 FpE_elem lift(FpE_elem const &alpha, Fp2k const &Fext);
 FpE_elem coerce(FpE_elem const &alpha, Fp2k const &Fext);
 FpEX_elem lift(FpEX_elem const &f, Fp2k const &Fext);

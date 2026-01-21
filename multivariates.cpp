@@ -58,7 +58,7 @@ FpEX_elem EvaluateBivariate(ZZ_pEXY F, FpE_elem a){
     FpEX_elem f = FpEX_elem(0);
 
     for(unsigned i = 0; i <= F.dY; i++){
-        FpEX_elem g = powers[i]*F.coeffs[i];
+        FpEX_elem g = powers[i] * F.coeffs[i];
         f = f + g;
     }
 

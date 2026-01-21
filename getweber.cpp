@@ -23,26 +23,24 @@
 
 
 
-
 ///////////////////////////////////////////////////////////////////////////////
 // Implementing elimination theory algos needed to obtain the weber invariant
 //   Inspired by https://github.com/mariascrs/SplitSearcher
 ///////////////////////////////////////////////////////////////////////////////
 
 
-std::vector<FpE_elem> get_powers(FpE_elem a, unsigned k){
+void get_powers(std::vector<Fp2> &powers, const Fp2 &a, unsigned k){
 
-    std::vector<FpE_elem> powers(k+1);
+    // asumes the vector has been init with the correct amount of elements
+    powers[0] = FpE_elem(1);
 
-    FpE_elem A = FpE_elem(1);
-    powers[0] = A;
+    FpX t;
+    t.SetLength(2);
 
     for(unsigned i = 1; i <= k; i++){
-        A = A*a;
-        powers[i] = A;
+        faster_mul(powers[i], a, powers[i - 1], t);
+        powers[i]._zz_pE__rep.normalize();
     }
-
-    return powers;
 }
 
 std::vector<FpEX_elem> EvaluateResultants(ZZ_pEXY R1, ZZ_pEXYZ R2, std::vector<FpE_elem> cs)
@@ -59,14 +57,23 @@ std::vector<FpEX_elem> EvaluateResultants(ZZ_pEXY R1, ZZ_pEXYZ R2, std::vector<F
     return rs;
 }
 
+ffp2 FastCommonRootTwoResultants(const ffp2X &p1, const ffp2X &p2) {
+    ffp2X g;
+    fast_PlainGCD_2(g, p1, p2);
+    negate(g.coeffs[0], g.coeffs[0]);
+    return g.coeffs[0]; 
+}
 
-FpE_elem CommonRootTwoResultants(std::vector<FpEX_elem> rs)
+FpE_elem CommonRootTwoResultants(const std::vector<FpEX_elem> &rs)
 {
-    FpEX_elem r0 = rs[0];
-    FpEX_elem r1 = rs[1];
+    // FpEX_elem r0 = rs[0];
+    // FpEX_elem r1 = rs[1];
 
-    // TODO: implement fast GCDs?
-    FpEX_elem g = GCD(r0,r1);
+    // // TODO: implement fast GCDs?
+    // FpEX_elem g = GCD(r0,r1);
+
+    FpEX_elem g;
+    fast_PlainGCD(g, rs[0], rs[1]);
 
     return FpE_elem(-g[0]);
 }
@@ -86,6 +93,115 @@ FpE_elem GetCommonRoot(std::vector<FpE_elem> cs){
 ////////////////////////////////////////////////////////
 // Algorithms to get powers of the Weber invariant
 ////////////////////////////////////////////////////////
+
+ffp2 Fast_getWeberThirdPowerFromRoot(const ffp2 &x, const ffp2 &y){
+
+    // FpEX_elem n1,n2,n3,n4,n5;
+    // NTL::SetCoeff(n1,2,FpE_elem(1));
+    // NTL::SetCoeff(n2,6,FpE_elem(-1));
+    // NTL::SetCoeff(n3,2,FpE_elem(20));
+    // NTL::SetCoeff(n4,6,FpE_elem(-16));
+    // NTL::SetCoeff(n5,2,FpE_elem(64));
+    // ffp2X n1, n2, n3, n4, n5;
+    // n1 = ffp2X(2, 1);
+    // n2 = ffp2X(6, -1);
+    // n3 = ffp2X(2, 20);
+    // n4 = ffp2X(6, -16);
+    // n5 = ffp2X(2, 64);
+
+    // ffp2X empty; 
+    // std::vector<ffp2> zero_list = {};
+    // zero_list.push_back( {Fp(0), Fp(0)} );
+    // empty = ffp2X(zero_list, 0);
+
+
+    // std::vector<ffp2X> cs_N1 = {};
+    // for (int i = 0; i < 17; i++) {
+    //     cs_N1.push_back(empty);
+    // }
+
+    // cs_N1[0] = n1;
+    // cs_N1[4] = n2;
+    // cs_N1[8] = n3;
+    // cs_N1[12] = n4;
+    // cs_N1[16] = n5;
+
+    // // std::vector<ffp2X> cs_D1(16, empty);
+    // std::vector<ffp2X> cs_D1 = {};
+    // for (int i = 0; i < 16; i++) {
+    //     cs_D1.push_back(empty);
+    // }    
+    // cs_D1[7] = ffp2X(0, 4);
+    // cs_D1[15] = ffp2X(0, 32); 
+
+    // std::cout << "after init \n";
+
+    // std::cout << "before biv create \n";
+    // for (int i = 0; i < 17; i++) {
+    //     std::cout << " i = " << i << "\n";
+    //     std::cout << cs_N1[i] << "\n";
+    // }
+
+    // ffp2XY N1; 
+    // N1 = ffp2XY(cs_N1);
+    // for (int i = 0; i < 16; i++) {
+    //     std::cout << " i = " << i << "\n";
+    //     std::cout << cs_D1[i] << "\n";
+    // }
+    // ffp2XY D1;
+    // D1 = ffp2XY(cs_D1);
+
+    // std::cout << "after biv create \n";
+
+    // // TODO : share the powers computation here 
+    // ffp2 t1, t2;
+    // N1.Evaluate(t1, x, y);
+    // D1.Evaluate(t2, x, y);
+    // std::cout << "fast 3rd power \n";
+    ffp2 t1, t2;
+
+    ffp2 x2, x6;
+    ffp2 y4, y8, y7, temp;
+
+    // computation of x^6 and x^2
+    fast_sqr(x2, x);
+    fast_sqr(x6, x2);
+    fast_mul(x6, x2, x6);
+    
+    t1 = x2;
+
+    // computation of y^4 and y^7
+    fast_sqr(y4, y); // y^2
+    fast_mul(y7, y, y4); // y^3
+    fast_sqr(y4, y4); // y^4 
+    fast_mul(y7, y7, y4); // y^7
+    
+    t2 = {4 * y7.first, 4 * y7.second}; // t2 = 4 y^7
+    
+    fast_mul(temp, y4, {-x6.first, -x6.second});
+    fast_add(t1, t1, temp); // t1 = x^2 - y^4 x^6
+
+    fast_sqr(y8, y4); // y^8
+    fast_mul(y7, y8, y7); // y^15
+
+    fast_add(t2, t2, {32 * y7.first, 32 * y7.second}); // t2 =  4 y^7 + 32 y^15
+
+    fast_mul(temp, y8, {20 * x2.first, 20 * x2.second});
+    fast_add(t1, t1, temp); // t1 = x^2 - y^4 x^6 + 20 * y^8 x^2
+
+    fast_mul(y4, y4, y8); // y^12
+    fast_mul(temp, y4, {-16 * x6.first, -16 * x6.second});
+    fast_add(t1, t1, temp); // t1 = x^2 - y^4 x^6 + 20 * y^8 x^2 -16 y^12 x^6 
+    
+    fast_sqr(y8, y8); // y^16
+    fast_mul(temp, y8, {64 * x2.first, 64 * x2.second});
+    fast_add(t1, t1, temp); // t1 = x^2 - y^4 x^6 + 20 * y^8 x^2 -16 y^12 x^6 + 64 * y^16 * x^2
+
+    fast_inv(t2, t2);
+    fast_mul(t1, t1, t2);
+
+    return t1;
+};
 
 
 FpE_elem _getWeberThirdPowerFromRoot(FpE_elem x, FpE_elem y){
@@ -115,6 +231,9 @@ FpE_elem _getWeberThirdPowerFromRoot(FpE_elem x, FpE_elem y){
 
     auto N1_eval = EvaluateBivariate(N1, y);
     auto D1_eval = EvaluateBivariate(D1, y);
+
+    // std::cout << "fast 3rd power NTL \n";
+    // std::cout << NTL::eval(N1_eval,x) << " " << NTL::eval(D1_eval,x) << "\n";
 
     return NTL::eval(N1_eval,x)/NTL::eval(D1_eval,x);
 
@@ -278,6 +397,27 @@ FpE_elem _getWeberThirdPower(bool *check, std::vector<FpE_elem> cs){
 };
 
 
+ffp2 Fast_getWeberEighthPower(const ffp2 &gamma2, const ffp2 &t_inv){
+
+    ffp2X f1, f2, g;
+    f1 = ffp2X({ t_inv, {Fp(0), Fp(0)}, {Fp(0), Fp(0)}, {Fp(1), Fp(0)}}, 3);
+    ffp2 t;
+    negate(t, gamma2);
+    f2 = ffp2X({ {Fp(-16), Fp(0)}, t, {Fp(0), Fp(0)}, {Fp(1), Fp(0)} }, 3);
+
+    // NTL::SetCoeff(f1, 3, FpE_elem(1));
+    // NTL::SetCoeff(f1, 0, FpE_elem(t_inv));
+    // NTL::SetCoeff(f2, 3, FpE_elem(1));
+    // NTL::SetCoeff(f2, 1, FpE_elem(-gamma2));
+    // NTL::SetCoeff(f2, 0, FpE_elem(-16));
+
+    fast_PlainGCD_2(g, f1,f2);
+    negate(t, g.coeffs[0]);
+
+    return t;
+
+};
+
 
 FpE_elem _getWeberEighthPower(FpE_elem gamma2, FpE_elem t_inv){
 
@@ -309,6 +449,7 @@ FpE_elem _getGammaTwoInvariant(std::vector<ecp> tors3, ec E){
     assert((3*tors3[1]).is_identity());
     assert((3*tors3[2]).is_identity());
     assert((3*tors3[3]).is_identity());
+
     // Ordering should be fixed from the first step
     std::vector<FpE_elem> tors3_image = {tors3[0].aff_x(),
                                            tors3[1].aff_x(),
@@ -320,8 +461,8 @@ FpE_elem _getGammaTwoInvariant(std::vector<ecp> tors3, ec E){
     assert((tors3_image[0] != tors3_image[1]) && (tors3_image[0] != tors3_image[3]) && (tors3_image[0] != tors3_image[2]) && (tors3_image[2] != tors3_image[1]) && (tors3_image[3] != tors3_image[1]) && (tors3_image[3] != tors3_image[2]));
 
     Fp2 A_image = (E).a();
-    Fp2 c3 = 2*A_image;
-    Fp2 c4 = -24*c3;
+    Fp2 c3 = 2 * A_image;
+    Fp2 c4 = -24 * c3;
 
     Fp2 c;
 
@@ -346,7 +487,55 @@ FpE_elem _getGammaTwoInvariant(std::vector<ecp> tors3, ec E){
 
 };
 
+std::vector<ffp2> _getAllGammaTwoInvariant(std::vector<ecp> tors3, ec E){
 
+    assert((3*tors3[0]).is_identity());
+    assert((3*tors3[1]).is_identity());
+    assert((3*tors3[2]).is_identity());
+    assert((3*tors3[3]).is_identity());
+
+    // Ordering should be fixed from the first step
+    std::vector<FpE_elem> tors3_image = {tors3[0].aff_x(),
+                                           tors3[1].aff_x(),
+                                           tors3[2].aff_x(),
+                                           tors3[3].aff_x()};
+
+
+
+    assert((tors3_image[0] != tors3_image[1]) && (tors3_image[0] != tors3_image[3]) && (tors3_image[0] != tors3_image[2]) && (tors3_image[2] != tors3_image[1]) && (tors3_image[3] != tors3_image[1]) && (tors3_image[3] != tors3_image[2]));
+
+    Fp2 A_image = (E).a();
+    Fp2 c3 = 2 * A_image;
+    Fp2 c4 = -24 * c3;
+
+    Fp2 c,c1,c2;
+
+    if (NTL::deg(rep(tors3_image[0])) > 1 || NTL::deg(rep(tors3_image[1])) > 1 || NTL::deg(rep(tors3_image[2])) > 1 || NTL::deg(rep(tors3_image[2])) > 1) {
+        // the extension degree might be 4
+        // assert(NTL::deg(rep(tors3_image[0])) == 3);
+        Fp2 c_FpE,c1_FpE,c2_FpE;
+        {
+            FpE_push push(tors3[0].field().F);
+            c_FpE = tors3_image[0]*tors3_image[1] + tors3_image[2]*tors3_image[3];
+            c1_FpE = tors3_image[0]*tors3_image[2] + tors3_image[3]*tors3_image[1];
+            c2_FpE = tors3_image[0]*tors3_image[3] + tors3_image[2]*tors3_image[1];
+        }
+
+        c = coerce(c_FpE, tors3[0].field());
+        c1 = coerce(c1_FpE, tors3[0].field());
+        c2 = coerce(c2_FpE, tors3[0].field());
+    }
+    else {
+        c = tors3_image[0]*tors3_image[1] + tors3_image[2]*tors3_image[3];
+        c1 = tors3_image[0]*tors3_image[2] + tors3_image[3]*tors3_image[1];
+        c2 = tors3_image[0]*tors3_image[3] + tors3_image[2]*tors3_image[1];
+    }
+
+
+
+    return {from_Fp2(c4/(c3 - 3*c)), from_Fp2(c4/(c3 - 3*c1)), from_Fp2(c4/(c3 - 3*c2))};
+
+};
 
 FpE_elem _getTInvariant(ecp P2, ec E){
     // P2 is a two torsion point
@@ -355,6 +544,7 @@ FpE_elem _getTInvariant(ecp P2, ec E){
     isog phi2 = isogeny(P2, 2);
 
     auto E2 = phi2.get_codomain();
+
 
     return E2.disc()/E.disc();
 };
@@ -678,6 +868,10 @@ weber_enum_poly_precomp SetWeberPrecomp() {
     return precomp;
  }
 
+ fast_weber_enum_poly_precomp Set(const weber_enum_poly_precomp *t) {
+    return {ffp2XY(t->R1),ffp2XYZ(t->R2), t->G0, t->H0, t->I0, t->J0, ffp2XY(t->Xs16),ffp2XY(t->D1),ffp2XY(t->D2),ffp2XY(t->N1),ffp2XY(t->N2)};
+ }
+
 
 bool _getCoeffs(std::vector<FpE_elem> &output, std::vector<ecp> tors16, ec E){
     // tors16 contains two 16-torsion points on E where jE = j(E)
@@ -942,7 +1136,6 @@ std::vector<ecp> allCyclicGenerators(ec E, const Fp2k &Fext, int ell, int e) {
 }
 
 std::vector<ecp> _getConsistentSixteenTorsion(ec E, FpE_elem w, const Fp2k &Fext){
-    //std::cout << "in 16 thing" << std::endl;
     auto tors16 = allCyclicGenerators(E, Fext, 2, 4);
     //std::cout << "allCyclicGens done" << std::endl;
     // E.allTorsionPoints(Fext, 2, 4);
@@ -1141,17 +1334,6 @@ std::vector<SmallIntegerPair> PairApplication(const std::vector<SmallIntegerPair
               (vec1[0].second * vec2[1].first + vec1[1].second * vec2[1].second)%modulus} };
 }
 
-// SmallIntegerPair Normalize(const SmallIntegerPair bas) {
-//     Fp_push push((Fp_integer(16)));
-//     if (bas.first%2 == 1) {
-//         return {Integer(1), NTL::conv<Integer>( NTL::conv<Fp>(bas.second)/NTL::conv<Fp>(bas.first) ) };
-//     }
-//     else {
-//         return {NTL::conv<Integer>( NTL::conv<Fp>(bas.first)/NTL::conv<Fp>(bas.second) ), Integer(1)  };
-//     }
-// }
-
-
 
 bool IsWeberCoeffsEquivalent(const std::vector<std::vector<SmallIntegerPair>> coeffs1, const std::vector<std::vector<SmallIntegerPair>> coeffs2) {
     assert(IsEqual( coeffs1[0][0], coeffs2[0][0]));
@@ -1191,174 +1373,15 @@ bool IsWeberCoeffsEquivalent(const std::vector<std::vector<SmallIntegerPair>> co
 }
 
 
-Fp2 WeberGetFromEnum(const std::vector<std::vector<SmallIntegerPair>> &coeffs, const weber_enum &webdat, const std::pair<SmallMatFp, SmallMatFp> change_mats) {
 
-    std::vector<SmallIntegerPair> order_2 = {};
-    std::vector<SmallIntegerPair> order_3 = {};
-    std::vector<SmallIntegerPair> order_16 = {};
-
-    assert(coeffs.size() == 3);
-
-    // order 2
-    {
-        SmallIntegerPair o2 = change_mats.first * coeffs[0][0];
-        o2.first = o2.first %2;
-        o2.second = o2.second %2;
-        order_2.push_back( o2 );
-    }
-    // order 3
-    {
-        order_3.push_back( change_mats.second * coeffs[1][0]);
-        order_3.push_back( change_mats.second * coeffs[1][1]);
-    }
-    // order 16
-    {
-        order_16.push_back(change_mats.first * coeffs[2][0]);
-        order_16.push_back(change_mats.first * coeffs[2][1]);
-    }
-
-    int j2;
-    if (order_2[0].first == 0) {j2 = 0;}
-    else if (order_2[0].second == 0) {j2 = 1;}
-    else {j2 = 2;}
-
-    int j3;
-    if (order_3[0].first == 0) {
-        assert(order_3[1].first != 0);
-        if (order_3[1].second == 0) {j3 = 0;}
-        else if (order_3[1].first == order_3[1].second) {j3 = 2;}
-        else {j3 = 1;}
-    }
-    else if (order_3[1].first == 0) {
-        if (order_3[0].second == 0) {j3 = 0;}
-        else if (order_3[0].first == order_3[0].second) {j3 = 2;}
-        else {j3 = 1;}
-    }
-    else {
-        assert(order_3[0].first !=0 && order_3[1].first != 0);
-        if (order_3[0].second == 0) {
-            if (order_3[1].first == order_3[1].second) { j3 = 1;}
-            else {j3 = 2;}
-        }
-        else if (order_3[1].second == 0) {
-            if (order_3[0].first == order_3[0].second) { j3 = 1;}
-            else {j3 = 2;}
-        }
-        else {j3 = 0;}
-    }
-
-
-
-    long web_index;
-    // alternate way to find the correct valus
-    // the treament first depends on the values mod 2
-    if (order_2[0].first == 0 && order_2[0].second  == 1) {
-
-        std::vector<long> list_of_coeffs = { 1, 7, 13, 3, 9, 15, 5, 11 };
-        std::vector<long> list_of_indices = {0, 3, 6, 1, 4, 7, 2, 5};
-
-        // checking if we need to swap
-        if (order_16[0].second%2 == 1) {
-            assert(order_16[1].second%2 == 0);
-            SmallInteger tmp = order_16[0].first;
-            order_16[0].first = order_16[1].first;
-            order_16[1].first = tmp;
-            tmp = order_16[0].second;
-            order_16[0].second = order_16[1].second;
-            order_16[1].second = tmp;
-
-        }
-        assert(order_16[0].second%2 == 0);
-        assert(order_16[1].second%2 == 1);
-        order_16[0].second = (order_16[0].second * InvModSpecial(order_16[0].first, 16)) % 16;
-        order_16[0].first = 1;
-        order_16[1].second = (order_16[1].second * InvModSpecial(order_16[1].first, 16)) % 16;
-        order_16[1].first = 1;
-
-        long index1 = NTL::conv<long>(order_16[0].second) / 2;
-        long index2 = list_of_indices[NTL::conv<long>(order_16[1].second - 1) / 2];
-        web_index = (list_of_coeffs[(8 + index2 - index1)%8] - 1)/2;
-        // std::cout << "alt index = " << final_index << "\n";
-    }
-    else if (order_2[0].first == 1 && order_2[0].second  == 0) {
-
-        std::vector<long> list_of_coeffs = { 1, 7, 5, 11, 9, 15, 13, 3 };
-        std::vector<long> list_of_indices = {0, 7, 2, 1, 4, 3, 6, 5};
-
-        // checking if we need to swap
-        if (order_16[0].first%2 == 1) {
-            assert(order_16[1].first%2 == 0);
-            SmallInteger tmp = order_16[0].first;
-            order_16[0].first = order_16[1].first;
-            order_16[1].first = tmp;
-            tmp = order_16[0].second;
-            order_16[0].second = order_16[1].second;
-            order_16[1].second = tmp;
-
-        }
-        assert(order_16[0].first%2 == 0);
-        assert(order_16[1].first%2 == 1);
-        order_16[0].first = (order_16[0].first * InvModSpecial(order_16[0].second, 16))%16;
-        order_16[0].second = 1;
-        order_16[1].second = (order_16[1].second*InvModSpecial(order_16[1].first, 16))%16;
-        order_16[1].first = 1;
-
-        long index1 = NTL::conv<long>(order_16[0].first) / 2;
-        long index2 = list_of_indices[NTL::conv<long>(order_16[1].second - 1) / 2];
-        web_index = (list_of_coeffs[(8 + index2 - index1)%8] - 1)/2;
-        // std::cout << "alt index = " << final_index << "\n";
-    }
-    else {
-        std::vector<long> list_of_coeffs;
-        std::vector<long> list_of_indices;
-        // checking if we need to swap
-        if (order_16[1].first%2 == 1) {
-            assert(order_16[1].first%2 == 1);
-            SmallInteger tmp = order_16[0].first;
-            order_16[0].first = order_16[1].first;
-            order_16[1].first = tmp;
-            tmp = order_16[0].second;
-            order_16[0].second = order_16[1].second;
-            order_16[1].second = tmp;
-
-        }
-        assert(order_16[0].first%2 == 1);
-        assert(order_16[0].second%2 == 0);
-        assert(order_16[1].first%2 == 0);
-        assert(order_16[1].second%2 == 1);
-        order_16[0].second = (order_16[0].second * InvModSpecial(order_16[0].first, 16)) % 16;
-        order_16[0].first = 1;
-        order_16[1].first = (order_16[1].first * InvModSpecial(order_16[1].second, 16)) % 16;
-        order_16[1].second = 1;
-        // the list depends on the value mod 4
-        if (( 16 +  order_16[0].second - order_16[1].first) %4 == 2) {
-            list_of_coeffs = {0, 2, 4, 6, 8, 10, 12, 14 };
-            list_of_indices = {0, 1, 2, 3, 4, 5, 6, 7};
-        }
-        else {
-            list_of_coeffs = {0, 10, 4, 14, 8, 2, 12, 6};
-            list_of_indices = {0, 5, 2, 7, 4, 1, 6, 3};
-        }
-        long index1 = NTL::conv<long>(order_16[0].second) / 2;
-        long index2 = list_of_indices[NTL::conv<long>(order_16[1].first) / 2];
-        web_index = (list_of_coeffs[(8 + index2 - index1)%8])/2;
-    }
-
-#ifndef NDEBUG
-    std::vector<std::vector<SmallIntegerPair>> new_coeffs = {order_2, order_3, order_16};
-    assert(IsWeberCoeffsEquivalent(new_coeffs, webdat[web_index + 8 * j3 + 24 * j2].second));
-#endif
-
-    assert( web_index + 8* j3 + 24 * j2 < 72 );
-    return webdat[ web_index + 8* j3 + 24 * j2 ].first;
-}
 
 bool GetWeberOfLevelStruct_j0(Fp2 *w, std::vector<std::vector<ecp>> levelstruc, const std::map<unsigned,Fp2k> &Fexts) {
 
     weber_enum_poly_precomp precomp = SetWeberPrecomp();
+    fast_weber_enum_poly_precomp fast_precomp = Set(&precomp);
     weber_bas w0 = { levelstruc[2][0], levelstruc[2][1], levelstruc[1][0], levelstruc[1][1]};
-    weber_enum wb0 = EnumerateAllWeberFast(w0, Fexts, &precomp);
-    *w = wb0[48].first;
+    weber_full_data wb0 = EnumerateAllWeberFastFast(w0, Fexts, &fast_precomp);
+    *w = Fp2_cast(wb0.inv_list[48]);
     return true;
 }
 
@@ -1666,88 +1689,62 @@ bool BasCoeffToWeber(Fp2 *w, const weber_bas &web, const std::vector<std::vector
 
 }
 
-std::vector<std::vector<std::vector<SmallIntegerPair>>> EnumerateAllWeberCoeff() {
+std::array<std::vector<std::vector<VerySmallIntegerPair>>, 72>  EnumerateAllWeberCoeff() {
 
-    std::vector<std::vector<std::vector<SmallIntegerPair>>> result = {};
-    // order 2
-    std::vector<SmallIntegerPair> order_2 = { {0,1}, {1,0}, {1, 1} };
+    std::array<std::vector<std::vector<VerySmallIntegerPair>>, 72> result;
+
+    std::vector<VerySmallIntegerPair> order_2 = { {0,1}, {1,0}, {1, 1} };
     // order 3
-    std::vector<std::vector<SmallIntegerPair>> order_3 = { { {1, 0}, {0, 1} }, { {1,0}, {1, 1} }, { {1, 0}, {1, 2} } };
+    std::vector<std::vector<VerySmallIntegerPair>> order_3 = { { {1, 0}, {0, 1} }, { {1,0}, {1, 1} }, { {1, 0}, {1, 2} } };
 
     // // pairs of relevant order_16 generators
-    std::vector<std::vector<SmallIntegerPair>> order_16_pairs = {};
-    order_16_pairs.push_back( { {1,0}, {1,1} } );
-    order_16_pairs.push_back( { {1,0}, {1,3} } );
-    order_16_pairs.push_back( { {1,0}, {1,5} } );
-    order_16_pairs.push_back( { {1,0}, {1,7} } );
-    order_16_pairs.push_back( { {1,0}, {1,9} } );
-    order_16_pairs.push_back( { {1,0}, {1,11} } );
-    order_16_pairs.push_back( { {1,0}, {1,13} } );
-    order_16_pairs.push_back( { {1,0}, {1,15} } );
-    order_16_pairs.push_back( { {0,1}, {1,1} } );
-    order_16_pairs.push_back( { {0,1}, {1,3} } );
-    order_16_pairs.push_back( { {0,1}, {1,5} } );
-    order_16_pairs.push_back( { {0,1}, {1,7} } );
-    order_16_pairs.push_back( { {0,1}, {1,9} } );
-    order_16_pairs.push_back( { {0,1}, {1,11} } );
-    order_16_pairs.push_back( { {0,1}, {1,13} } );
-    order_16_pairs.push_back( { {0,1}, {1,15} } );
-    order_16_pairs.push_back( { {1,0}, {0,1} } );
-    order_16_pairs.push_back( { {1,0}, {2,1} } );
-    order_16_pairs.push_back( { {1,0}, {4,1} } );
-    order_16_pairs.push_back( { {1,0}, {6,1} } );
-    order_16_pairs.push_back( { {1,0}, {8,1} } );
-    order_16_pairs.push_back( { {1,0}, {10,1} } );
-    order_16_pairs.push_back( { {1,0}, {12,1} } );
-    order_16_pairs.push_back( { {1,0}, {14,1} } );
+    std::vector<std::vector<VerySmallIntegerPair>> order_16_pairs = {};
+    {
+        order_16_pairs.push_back( { {1,0}, {1,1} } );
+        order_16_pairs.push_back( { {1,0}, {1,3} } );
+        order_16_pairs.push_back( { {1,0}, {1,5} } );
+        order_16_pairs.push_back( { {1,0}, {1,7} } );
+        order_16_pairs.push_back( { {1,0}, {1,9} } );
+        order_16_pairs.push_back( { {1,0}, {1,11} } );
+        order_16_pairs.push_back( { {1,0}, {1,13} } );
+        order_16_pairs.push_back( { {1,0}, {1,15} } );
+        order_16_pairs.push_back( { {0,1}, {1,1} } );
+        order_16_pairs.push_back( { {0,1}, {1,3} } );
+        order_16_pairs.push_back( { {0,1}, {1,5} } );
+        order_16_pairs.push_back( { {0,1}, {1,7} } );
+        order_16_pairs.push_back( { {0,1}, {1,9} } );
+        order_16_pairs.push_back( { {0,1}, {1,11} } );
+        order_16_pairs.push_back( { {0,1}, {1,13} } );
+        order_16_pairs.push_back( { {0,1}, {1,15} } );
+        order_16_pairs.push_back( { {1,0}, {0,1} } );
+        order_16_pairs.push_back( { {1,0}, {2,1} } );
+        order_16_pairs.push_back( { {1,0}, {4,1} } );
+        order_16_pairs.push_back( { {1,0}, {6,1} } );
+        order_16_pairs.push_back( { {1,0}, {8,1} } );
+        order_16_pairs.push_back( { {1,0}, {10,1} } );
+        order_16_pairs.push_back( { {1,0}, {12,1} } );
+        order_16_pairs.push_back( { {1,0}, {14,1} } );
+    }
 
-    // now we combine everything togeter
-    for (size_t i = 0; i < order_2.size(); i++) {
-        for (size_t j = 0; j < order_3.size(); j++) {
-            for (size_t k =0; k < order_16_pairs.size(); k++) {
-                if (!(((order_2[i].first == (order_16_pairs[k][0].first % 2)) && (order_2[i].second == (order_16_pairs[k][0].second % 2))) || ((order_2[i].first == (order_16_pairs[k][1].first % 2)) && (order_2[i].second == (order_16_pairs[k][1].second % 2))))) {
-                    result.push_back( { {order_2[i]}, order_3[j], order_16_pairs[k] } );
-                }
+    // now we combine everything together
+    for (size_t i = 0; i < 3; i++) {
+        
+        for (size_t j = 0; j < 3; j++) {
+            result[24*i + 8*j] = {{order_2[i]}, order_3[j], order_16_pairs[8*i]};
+            result[24*i + 8*j + 1] = {{order_2[i]}, order_3[j], order_16_pairs[8*i + 1]};
+            result[24*i + 8*j + 2] = {{order_2[i]}, order_3[j], order_16_pairs[8*i + 2]};
+            result[24*i + 8*j + 3] = {{order_2[i]}, order_3[j], order_16_pairs[8*i + 3]};
+            result[24*i + 8*j + 4] = {{order_2[i]}, order_3[j], order_16_pairs[8*i + 4]};
+            result[24*i + 8*j + 5] = {{order_2[i]}, order_3[j], order_16_pairs[8*i + 5]};
+            result[24*i + 8*j + 6] = {{order_2[i]}, order_3[j], order_16_pairs[8*i + 6]};
+            result[24*i + 8*j + 7] = {{order_2[i]}, order_3[j], order_16_pairs[8*i + 7]};
 
-            }
+
         }
     }
     return result;
 }
 
-
-// std::vector<std::pair< Fp2, std::vector<std::vector<SmallIntegerPair>>>> EnumerateAllWeber(const weber_bas &web, const std::vector<std::vector<std::vector<SmallIntegerPair>>> &coeff_list, const std::map<unsigned,Fp2k> &Fexts) {
-
-//     std::cout << "curve = " << web.P3.curve().j_invariant() << "\n";
-//     assert(web.P3.curve() == web.P16.curve());
-//     std::vector<std::pair<Fp2, std::vector<std::vector<SmallIntegerPair>>>> result = {};
-
-//     std::cout << "number of levelstruct = " << coeff_list.size() << "\n";
-
-//     clock_t t = clock();
-//     for (size_t i = 0; i< coeff_list.size(); i++) {
-//         if (result.size() == 72) {
-//             goto endloop;
-//         }
-
-//         Fp2 w;
-//         bool check = BasCoeffToWeber(&w, web, coeff_list[i], Fexts);
-//         // assert(check);
-
-
-//         if (check) {
-//             result.push_back( {w, coeff_list[i]} );
-//         }
-
-
-
-//     }
-//     endloop:
-
-//     std::cout << "number of weber invariants = " << result.size() << "\n";
-//     std::cout << "time to compute them :" << (double) (clock() - t)/CLOCKS_PER_SEC << "\n";
-//     return result;
-// }
 
 NTL::Vec<Fp2X> add_bivariate(const NTL::Vec<Fp2X> &v1, const NTL::Vec<Fp2X> &v2) {
     NTL::Vec<Fp2X> result;
@@ -1771,13 +1768,165 @@ NTL::Vec<Fp2X> add_bivariate(const NTL::Vec<Fp2X> &v1, const NTL::Vec<Fp2X> &v2)
 }
 
 
-weber_enum SpecialEnumFastWeber(const weber_bas web, const std::map<unsigned,Fp2k> &Fexts, const weber_enum_poly_precomp *precomp) {
+// weber_full_data SpecialEnumFastWeber(const weber_bas web, const std::map<unsigned,Fp2k> &Fexts, const weber_enum_poly_precomp *precomp) {
+//         // std::cout << "special enum ! \n";
+
+//         weber_full_data result;
+//         ec E = web.P3.curve();
+
+//         // std::cout << "special case for j=" << E.j_invariant() << "\n";
+
+//         // first the 5 torsion
+//         unsigned k = torsionToFieldDegree(Integer(5));
+//         auto jt = Fexts.find(k);
+//         assert(jt != Fexts.end());
+//         assert(jt->first == jt->second.k);
+//         auto bas5 = E.torsionBasis(jt->second, int(5), 1);
+//         k = torsionToFieldDegree(Integer(7));
+//         jt = Fexts.find(k);
+//         assert(jt != Fexts.end());
+//         assert(jt->first == jt->second.k);
+//         auto bas7 = E.torsionBasis(jt->second, int(7), 1);
+//         k = torsionToFieldDegree(Integer(11));
+//         jt = Fexts.find(k);
+//         assert(jt != Fexts.end());
+//         assert(jt->first == jt->second.k);
+//         auto bas11 = E.torsionBasis(jt->second, int(11), 1);
+
+//         std::vector<std::pair<ecp,std::pair<int, int>>> ker5, ker7, ker11;
+
+//         std::vector<SmallIntegerPair> c5 = {};
+//         weber_full_data w5 = {};
+//         weber_full_data w7 = {};
+//         weber_full_data w11 = {};
+//         c5.push_back({0, 1});
+//         c5.push_back({1, 0});
+//         c5.push_back({1, 2});
+//         c5.push_back({1, 3});
+//         c5.push_back({1, 4});
+
+//         std::vector<SmallIntegerPair> c7 = {};
+//         c7.push_back( { 0, 1});
+//         c7.push_back( { 1, 0});
+//         c7.push_back( { 1, 2});
+//         c7.push_back( { 1, 3});
+//         c7.push_back( { 1, 4});
+//         c7.push_back( { 1, 1});
+//         c7.push_back( { 1, 5});
+//         c7.push_back( { 1, 6});
+
+//         std::vector<SmallIntegerPair> c11 = {};
+//         c11.push_back( { 0, 1});
+//         c11.push_back( { 1, 0});
+//         c11.push_back( { 1, 2});
+//         c11.push_back( { 1, 3});
+//         c11.push_back( { 1, 4});
+//         c11.push_back( { 1, 1});
+//         c11.push_back( { 1, 5});
+//         c11.push_back( { 1, 6});
+//         c11.push_back( { 1, 7});
+//         c11.push_back( { 1, 8});
+//         c11.push_back( { 1, 9});
+//         c11.push_back( { 1, 10});
+
+//         bool check5 = false;
+//         bool check = false;
+//         for (size_t i5 = 0; i5 < c5.size(); i5++) {
+//             auto cc5 = c5[i5];
+
+//             ker5.push_back(std::pair<ecp,std::pair<int, int>>(cc5.first*bas5.first + cc5.second * bas5.second, std::pair<int, int>(5,1)));
+//             isog_chain phi5(ker5);
+//             check5 = (phi5.get_codomain().j_invariant() != Fp2(1728) && phi5.get_codomain().j_invariant() != Fp2(287496) && phi5.get_codomain().j_invariant() != Fp2(0));
+//             ker5.pop_back();
+//             if (check5) {
+//                 w5 = EnumerateAllWeberFast( {phi5(web.P16), phi5(web.Q16), phi5(web.P3), phi5(web.Q3)}, Fexts, precomp);
+//                 check5 = w5.check;
+//             }
+//             if (!check5) {
+//                 continue;
+//             }
+//             bool check7 = false;
+//             for (size_t i7 = 0; i7 < c7.size(); i7++) {
+//                 auto cc7 = c7[i7];
+//                 ker7.push_back(std::pair<ecp,std::pair<int, int>>(cc7.first*bas7.first + cc7.second * bas7.second, std::pair<int, int>(7,1)));
+//                 isog_chain phi7(ker7);
+//                 check7 = (phi7.get_codomain().j_invariant() != Fp2(1728) && phi7.get_codomain().j_invariant() != Fp2(287496) && phi7.get_codomain().j_invariant() != Fp2(0));
+
+//                 ker7.pop_back();
+//                 if (check7) {
+//                     w7 = EnumerateAllWeberFast( {phi7(web.P16), phi7(web.Q16), phi7(web.P3), phi7(web.Q3)}, Fexts, precomp);
+//                     check7 = (w7.check);
+//                 }
+//                 if (!check7)
+//                     continue;
+
+//                 bool check11 = false;
+//                 for (size_t i11 = 0; i11 < c11.size(); i11++) {
+//                     auto cc11 = c11[i11];
+
+//                     //std::cout << i5 << " " << i7 <<  " " << i11 << "\n";
+//                     ker11.push_back(std::pair<ecp,std::pair<int, int>>(cc11.first*bas11.first + cc11.second * bas11.second, std::pair<int, int>(11,1)));
+//                     isog_chain phi11(ker11);
+
+//                     check11 = (phi11.get_codomain().j_invariant() != Fp2(1728) && phi11.get_codomain().j_invariant() != Fp2(287496) && phi11.get_codomain().j_invariant() != Fp2(0));
+//                     ker11.pop_back();
+//                     if (check11) {
+//                         w11 = EnumerateAllWeberFast( {phi11(web.P16), phi11(web.Q16), phi11(web.P3), phi11(web.Q3)}, Fexts, precomp);
+//                         check11 = (w11.check);
+//                     }
+//                     if (!check11)
+//                         continue;
+
+                        
+//                     if (check5 && check7 && check11) {
+//                         // std::cout << "tried a full round \n";
+//                         assert(w5.check && w7.check);
+//                         assert(w11.check && w7.check);
+//                         check = true;
+//                         result.check = true;
+//                         for (unsigned i = 0; i < 72; i++)
+//                         {
+//                             Fp2X p5 = eval_phi5_weber(w5.inv_list[i]);
+//                             Fp2X p7 = eval_phi7_weber(w7.inv_list[i]);
+//                             Fp2X p11 = eval_phi11_weber(w11.inv_list[i]);
+//                             Fp2X g = NTL::GCD(p5, p7);
+//                             g = NTL::GCD(g, p11);
+//                             check = check && (NTL::deg(g)==1);
+//                             if (check) {
+//                                 // *w = -g[0];
+//                                 // result.push_back( {-g[0], w5[i].second} );
+//                                 result.inv_list[i] = (-g[0]);
+
+//                             }
+//                             else {
+//                                 result.check = false;
+//                             }
+//                         }
+//                         if (result.check) {
+//                             result.enumerator[0] = {result.inv_list[0], w5.enumerator[0].second};
+//                             result.enumerator[1] = {result.inv_list[24], w5.enumerator[1].second};
+//                             result.enumerator[2] = {result.inv_list[48], w5.enumerator[2].second}; 
+//                         }
+//                     }
+//                     if (result.check) {
+//                         goto endloop;
+//                     }
+//                 }
+//             }
+
+//         }
+
+
+//         endloop:
+//         return result;
+
+// }
+
+weber_full_data SpecialEnumFastFastWeber(const weber_bas web, const std::map<unsigned,Fp2k> &Fexts, const fast_weber_enum_poly_precomp *precomp) {
         // std::cout << "special enum ! \n";
 
-        weber_enum result = {};
+        weber_full_data result;
         ec E = web.P3.curve();
-
-        // std::cout << "special case for j=" << E.j_invariant() << "\n";
 
         // first the 5 torsion
         unsigned k = torsionToFieldDegree(Integer(5));
@@ -1799,9 +1948,9 @@ weber_enum SpecialEnumFastWeber(const weber_bas web, const std::map<unsigned,Fp2
         std::vector<std::pair<ecp,std::pair<int, int>>> ker5, ker7, ker11;
 
         std::vector<SmallIntegerPair> c5 = {};
-        weber_enum w5 = {};
-        weber_enum w7 = {};
-        weber_enum w11 = {};
+        weber_full_data w5 = {};
+        weber_full_data w7 = {};
+        weber_full_data w11 = {};
         c5.push_back({0, 1});
         c5.push_back({1, 0});
         c5.push_back({1, 2});
@@ -1839,11 +1988,12 @@ weber_enum SpecialEnumFastWeber(const weber_bas web, const std::map<unsigned,Fp2
 
             ker5.push_back(std::pair<ecp,std::pair<int, int>>(cc5.first*bas5.first + cc5.second * bas5.second, std::pair<int, int>(5,1)));
             isog_chain phi5(ker5);
-            check5 = (phi5.get_codomain().j_invariant() != Fp2(1728) && phi5.get_codomain().j_invariant() != Fp2(287496) && phi5.get_codomain().j_invariant() != Fp2(0));
+            auto j5 = phi5.get_codomain().j_invariant();
+            check5 = (j5 != Fp2(1728) && j5 != Fp2(287496) && j5 != Fp2(0));
             ker5.pop_back();
             if (check5) {
-                w5 = EnumerateAllWeberFast( {phi5(web.P16), phi5(web.Q16), phi5(web.P3), phi5(web.Q3)}, Fexts, precomp);
-                check5 = (w5.size() == 72);
+                w5 = EnumerateAllWeberFastFast( {phi5(web.P16), phi5(web.Q16), phi5(web.P3), phi5(web.Q3)}, Fexts, precomp);
+                check5 = w5.check;
             }
             if (!check5) {
                 continue;
@@ -1857,8 +2007,8 @@ weber_enum SpecialEnumFastWeber(const weber_bas web, const std::map<unsigned,Fp2
 
                 ker7.pop_back();
                 if (check7) {
-                    w7 = EnumerateAllWeberFast( {phi7(web.P16), phi7(web.Q16), phi7(web.P3), phi7(web.Q3)}, Fexts, precomp);
-                    check7 = (w7.size() == 72);
+                    w7 = EnumerateAllWeberFastFast( {phi7(web.P16), phi7(web.Q16), phi7(web.P3), phi7(web.Q3)}, Fexts, precomp);
+                    check7 = (w7.check);
                 }
                 if (!check7)
                     continue;
@@ -1874,36 +2024,44 @@ weber_enum SpecialEnumFastWeber(const weber_bas web, const std::map<unsigned,Fp2
                     check11 = (phi11.get_codomain().j_invariant() != Fp2(1728) && phi11.get_codomain().j_invariant() != Fp2(287496) && phi11.get_codomain().j_invariant() != Fp2(0));
                     ker11.pop_back();
                     if (check11) {
-                        w11 = EnumerateAllWeberFast( {phi11(web.P16), phi11(web.Q16), phi11(web.P3), phi11(web.Q3)}, Fexts, precomp);
-                        check11 = (w11.size() == 72);
+                        w11 = EnumerateAllWeberFastFast( {phi11(web.P16), phi11(web.Q16), phi11(web.P3), phi11(web.Q3)}, Fexts, precomp);
+                        check11 = (w11.check);
                     }
                     if (!check11)
                         continue;
 
+                        
                     if (check5 && check7 && check11) {
                         // std::cout << "tried a full round \n";
-                        assert(w5.size() == w7.size());
-                        assert(w11.size() == w7.size());
+                        assert(w5.check && w7.check);
+                        assert(w11.check && w7.check);
                         check = true;
-                        for (unsigned i = 0; i<w5.size(); i++)
+                        result.check = true;
+                        for (unsigned i = 0; i < 72; i++)
                         {
-                            Fp2X p5 = eval_phi5_weber(w5[i].first);
-                            Fp2X p7 = eval_phi7_weber(w7[i].first);
-                            Fp2X p11 = eval_phi11_weber(w11[i].first);
+                            Fp2X p5 = eval_phi5_weber(Fp2_cast(w5.inv_list[i]));
+                            Fp2X p7 = eval_phi7_weber(Fp2_cast(w7.inv_list[i]));
+                            Fp2X p11 = eval_phi11_weber(Fp2_cast(w11.inv_list[i]));
                             Fp2X g = NTL::GCD(p5, p7);
                             g = NTL::GCD(g, p11);
                             check = check && (NTL::deg(g)==1);
                             if (check) {
                                 // *w = -g[0];
-                                result.push_back( {-g[0], w5[i].second} );
+                                // result.push_back( {-g[0], w5[i].second} );
+                                result.inv_list[i] = (from_Fp2(-g[0]));
 
                             }
                             else {
-                                result = {};
+                                result.check = false;
                             }
                         }
+                        if (result.check) {
+                            result.enumerator[0] = {result.inv_list[0], w5.enumerator[0].second};
+                            result.enumerator[1] = {result.inv_list[24], w5.enumerator[1].second};
+                            result.enumerator[2] = {result.inv_list[48], w5.enumerator[2].second}; 
+                        }
                     }
-                    if (result.size() == 72) {
+                    if (result.check) {
                         goto endloop;
                     }
                 }
@@ -1911,405 +2069,722 @@ weber_enum SpecialEnumFastWeber(const weber_bas web, const std::map<unsigned,Fp2
 
         }
 
-        assert(result.size()==72);
 
         endloop:
-        assert(result.size()==72);
         return result;
 
 }
 
-weber_enum EnumerateAllWeberFast(const weber_bas &web, const std::map<unsigned,Fp2k> &Fexts, const weber_enum_poly_precomp *precomp) {
+// works with weiersrass
+bool getW016_invariant_fast_from_ecp(FpE_elem &w016, const ecp &P1, const ec &E, const FpEX_elem &I0, const FpEX_elem &J0, const FpEX_elem &G) {
+    
+    // setting up the kernel
+    std::vector<std::pair<ecp,std::pair<int, int>>> kerGens1;
+    kerGens1.push_back(std::pair<ecp,std::pair<int, int>>(P1, std::pair<int, int>(2,4)));
+    
+    // computing the isogeny and retrieving the j_invariant
+    isog_chain phi_P1(kerGens1);
+    auto E1 = phi_P1.get_codomain();
+    auto jE1 = E1.j_invariant();
+    auto F1 = I0 - jE1 * J0;
+    FpEX_elem f1 = GCD(G, F1);
 
+    auto d1 = NTL::deg(f1);
 
-    clock_t tot = clock(); (void) tot;
-    clock_t t = clock();
-    ec E = web.P3.curve();
-    auto jE = E.j_invariant();
+    // this shouldn't be possible
+    if (d1 == 0 ) {
+        assert(0);
+        return false;
+    }
+    if (d1 == 1) {
+        w016 = -f1[0];
+        return true;
+    }
+    else {
+        // doesn't work because there are several 16-isogenies between the same pair of curves
+        // we use more precisely the information we get using the middle curves
+        std::vector<Fp2> r1 = {};
+        ec EE2 = phi_P1.get_middle_codomain(0);
+        ec EE4 = phi_P1.get_middle_codomain(1);
+        ec EE8 = phi_P1.get_middle_codomain(2);
+        // computing the t-invariants
+        Fp2 t1 = EE2.disc()/E.disc();
+        Fp2 t2 = EE4.disc()/EE2.disc();
+        Fp2 t3 = EE8.disc()/EE4.disc();
+        Fp2 t4 = E1.disc()/EE8.disc();
+        auto v1 = FindRoots(f1);
+        bool found = false;
+        int i1 = 0;
+        while (i1 < NTL::deg(f1)) {
+                Fp2 w016 = v1[i1];
+                Fp2 w041 = NTL::power(w016,4) / ( NTL::power(w016,3) + 6 * NTL::power(w016,2) + 16 * w016 + 16 );
+                Fp2 w042 = ( NTL::power(w016,4) + 8* NTL::power(w016,3) + 24 * NTL::power(w016,2) + 32 * w016);
+                Fp2 w021 = NTL::power(w041,2) / (w041 + 16) ;
+                Fp2 w022 = (NTL::power(w041,2) + 16 * w041);
+                Fp2 w023 = NTL::power(w042,2) / (w042 + 16) ;
+                Fp2 w024 = (NTL::power(w042,2) + 16 * w042);
+                found = t1 * w021 == 4096 &&
+                    t2 * w022 == 4096 &&
+                    t3 * w023 == 4096 &&
+                    t4 * w024 == 4096;
+                if (found) {r1.push_back(v1[i1]);}
+                i1++;
+        }
 
-
-    // first check if we are not in some special case
-    if (jE ==Fp2(1728) || jE == Fp2(287496) || jE == Fp2(0)) {
-        return SpecialEnumFastWeber(web, Fexts, precomp);
+        if (r1.size() == 1) {
+                w016 = r1[0];
+                return true;
+        }
+        else {
+            return false;
+        }
     }
 
-    // first we start by enumerating the X016 points that because this where things can fail most dramatically
-    std::vector<std::pair<Fp2, std::vector<std::vector<SmallIntegerPair>>>> result(72);
-    // std::unordered_set<Jinv, JinvHash, JinvEqual> weber_list = {};
+
+}
+
+// works with montgomery, is hopefully faster
+bool getW016_invariant_fast_from_mont(ffp2 &w016, const ecp &P, const Fp2k &Fext, const ec &E, mont &mE, const FpEX_elem &I0, const FpEX_elem &J0, const FpEX_elem &G) {
+    
+    
+    Fp2 jE1;
+    {
+        FpE_push push(Fext.F);
+        montXZ mP = mE.to_montXZ(P);
+        std::vector<mont> monts(4);
+        monts = fast_2k_isog(mE, mP, 4);
+        jE1 = coerce(monts[3].j_inv(), Fext);
+        
+    }
+    
+    auto F1 = I0 - jE1 * J0;
+
+    ffp2X ff1, fG, fF1;
+    fG = ffp2X(G);
+    fF1 = ffp2X(F1);
+    fast_PlainGCD_2(ff1, fG, fF1);
+
+    // FpEX_elem f1_test = GCD(G, F1);
+    // FpEX_elem f1;
+
+    // fast_PlainGCD(f1, G, F1);
+
+    // auto d1 = NTL::deg(f1);
+    auto d1 = ff1.deg;
+
+    // this shouldn't be possible
+    if (d1 == 0 ) {
+        assert(0);
+        return false;
+    }
+    if (d1 == 1) {
+        // w016 = -f1[0];
+        // w016 = - ff1.coeffs[0];
+        // to_Fp2(w016, ff1.coeffs[0]);
+        // w016 = -w016;
+        negate(w016, ff1.coeffs[0]);
+        return true;
+    }
+    else {
+        // doesn't work because there are several 16-isogenies between the same pair of curves
+        // we use the slow method, this doesn't happen often anyway 
+        Fp2 temp_w016;
+        bool t = getW016_invariant_fast_from_ecp(temp_w016, P, E, I0, J0, G);
+        w016 = from_Fp2(temp_w016);
+        return t;
+    }
+
+}
+
+
+weber_full_data EnumerateAllWeberFastFast(const weber_bas &web, const std::map<unsigned,Fp2k> &Fexts, const fast_weber_enum_poly_precomp *precomp) {
+
+    ec E = web.P3.curve();
+    auto jE = E.j_invariant();
+    
+    // first check if we are not in some special case
+    if (jE ==Fp2(1728) || jE == Fp2(287496) || jE == Fp2(0)) {
+        return SpecialEnumFastFastWeber(web, Fexts, precomp);
+    }
+
+    // first we start by enumerating the X016 points thats because this is where things can fail most dramatically
 
     assert(web.P3.curve() == web.P16.curve());
 
+    // TODO
     Fp2X G, F1, F2;
-    G = precomp->G0 - jE*precomp->H0;
+    G = precomp->G0 - jE * precomp->H0;
 
 
     // the two main 16 subgroup
     // we compute their point on X0(16)
     ecp P1 = web.P16;
     ecp P2 = web.Q16;
-    assert((16*P1).is_identity());
-    assert((16*P2).is_identity());
-    assert(!((8*P1).is_identity()));
-    assert(!((8*P2).is_identity()));
-    assert(!((8*(P1-P2)).is_identity()));
+    assert((16 * P1).is_identity());
+    assert((16 * P2).is_identity());
+    assert(!((8 * P1).is_identity()));
+    assert(!((8 * P2).is_identity()));
+    assert(!((8 * (P1-P2)).is_identity()));
 
+    mont mE = mont_from_E(E);
+    assert(jE == mE.j_inv());
 
-    t = clock();
-    clock_t isog_time = clock() - t;
-    std::vector<std::pair<ecp,std::pair<int, int>>> kerGens1, kerGens2;
-    // computing the w016 invariants for the 2 main subgroups
-    Fp2 w0161,w0162;
     {
-        kerGens1.push_back(std::pair<ecp,std::pair<int, int>>(P1, std::pair<int, int>(2,4)));
-        kerGens2.push_back(std::pair<ecp,std::pair<int, int>>(P2, std::pair<int, int>(2,4)));
-        isog_chain phi_P1(kerGens1);
-        isog_chain phi_P2(kerGens2);
-        auto E1 = phi_P1.get_codomain();
-        auto jE1 = E1.j_invariant();
-        auto E2 = phi_P2.get_codomain();
-        assert(E == phi_P1.get_domain());
-        assert(E == phi_P2.get_domain());
-        auto jE2 = E2.j_invariant();
+        FpE_push push(P1.field().F);
+        mE.set_A24( lift(mE.A24(), P1.field()) ); 
+        mE.set_C24( lift(mE.C24(), P1.field()) );
+        mE.set_sq(  lift(mE.sq(), P1.field())  );
 
-        F1 = precomp->I0 - jE1*precomp->J0;
-        F2 = precomp->I0 - jE2*precomp->J0;
+#ifndef NDEBUG
+        montXZ mtest = mE.to_montXZ(P1);
+        
+        assert(!mtest.is_zero());
+        mtest.rec_XDBL(3, mE.A24(), mE.C24());
+        assert(!mtest.is_zero());
+        auto tt = mtest.x() / mtest.z();
 
-        FpEX_elem f1 = GCD(G, F1);
-        FpEX_elem f2 = GCD(G, F2);
-
-        if (NTL::deg(f1) == 0 || NTL::deg(f2) == 0) {
-            assert(0);
-        }
-
-        std::vector<Fp2> r1 = {};
-        std::vector<Fp2> r2 = {};
-        if (NTL::deg(f1)==1) {
-            r1.push_back(-f1[0]);
-        }
-        else if (NTL::deg(f1) > 1) {
-            ec EE2 = phi_P1.get_middle_codomain(0);
-            ec EE4 = phi_P1.get_middle_codomain(1);
-            ec EE8 = phi_P1.get_middle_codomain(2);
-            // alternate try
-            // computing the t-invariants
-            Fp2 t1 = EE2.disc()/E.disc();
-            Fp2 t2 = EE4.disc()/EE2.disc();
-            Fp2 t3 = EE8.disc()/EE4.disc();
-            Fp2 t4 = E1.disc()/EE8.disc();
-            auto v1 = FindRoots(f1);
-            bool found = false;
-            int i1 = 0;
-            while (i1 < NTL::deg(f1)) {
-                Fp2 w016 = v1[i1];
-                Fp2 w041 = NTL::power(w016,4) / ( NTL::power(w016,3) + 6 * NTL::power(w016,2) + 16 * w016 + 16 );
-                Fp2 w042 = ( NTL::power(w016,4) + 8* NTL::power(w016,3) + 24 * NTL::power(w016,2) + 32 * w016);
-                Fp2 w021 = NTL::power(w041,2) / (w041 + 16) ;
-                Fp2 w022 = (NTL::power(w041,2) + 16 * w041);
-                Fp2 w023 = NTL::power(w042,2) / (w042 + 16) ;
-                Fp2 w024 = (NTL::power(w042,2) + 16 * w042);
-                found = t1 * w021 == 4096 &&
-                    t2 * w022 == 4096 &&
-                    t3 * w023 == 4096 &&
-                    t4 * w024 == 4096;
-                if (found) {r1.push_back(v1[i1]);  }
-                i1++;
-            }
-        }
-        if (NTL::deg(f2)==1) {
-            r2.push_back(-f2[0]);
-        }
-        else if (NTL::deg(f2) > 1) {
-
-            ec EE2 = phi_P2.get_middle_codomain(0);
-            ec EE4 = phi_P2.get_middle_codomain(1);
-            ec EE8 = phi_P2.get_middle_codomain(2);
-            // alternate try
-            // computing the t-invariants
-            Fp2 t1 = EE2.disc()/E.disc();
-            Fp2 t2 = EE4.disc()/EE2.disc();
-            Fp2 t3 = EE8.disc()/EE4.disc();
-            Fp2 t4 = E2.disc()/EE8.disc();
-
-            bool found = false;
-            int i2 = 0;
-            auto v2 = FindRoots(f2);
-            while (i2 < NTL::deg(f2)) {
-                // we compute the X0(4) invariants associated
-                Fp2 w016 = v2[i2];
-                Fp2 w041 = NTL::power(w016,4) / ( NTL::power(w016,3) + 6 * NTL::power(w016,2) + 16 * w016 + 16 );
-                Fp2 w042 = ( NTL::power(w016,4) + 8* NTL::power(w016,3) + 24 * NTL::power(w016,2) + 32 * w016);
-                Fp2 w021 = NTL::power(w041,2) / (w041 + 16) ;
-                Fp2 w022 = (NTL::power(w041,2) + 16 * w041);
-                Fp2 w023 = NTL::power(w042,2) / (w042 + 16) ;
-                Fp2 w024 = (NTL::power(w042,2) + 16 * w042);
-                found = t1 * w021 == 4096 &&
-                    t2 * w022 == 4096 &&
-                    t3 * w023 == 4096 &&
-                    t4 * w024 == 4096;
-                if (found) {r2.push_back(v2[i2]);  }
-                i2++;
-            }
-        }
-
-        if (r1.size() == 1) {
-                w0161 = r1[0];
-        }
-        else {return SpecialEnumFastWeber(web, Fexts, precomp);}
-        if (r2.size() == 1) {
-                w0162 = r2[0];
-        }
-        else {return SpecialEnumFastWeber(web, Fexts, precomp);}
-
+        mtest.xDBL(mE.A24(), mE.C24());
+        assert(mtest.is_zero());
+        assert( tt * (tt * tt + tt * ( lift(mE.A(), P1.field()) / lift(mE.C(), P1.field()) ) + 1)  == 0 );
+        assert( tt * (tt * tt + tt * ( 4 * mE.A24() / mE.C24() - 2 ) + 1)  == 0 );  
+#endif  
     }
+    
 
-    // now we compute the 16 others
-    std::vector<SmallIntegerPair> coeff_list_16 = {};
-    {
-        coeff_list_16.push_back( {1,1}  );
-        coeff_list_16.push_back( {1,3}  );
-
+    ffp2 w0161,w0162;
+    std::vector<ffp2> w016_list = {};
+    ffp2 temp;
+    if (!getW016_invariant_fast_from_mont(w0161, P1, P1.field(), E, mE, precomp->I0, precomp->J0, G)) {
+        return SpecialEnumFastFastWeber(web, Fexts, precomp);
     }
-    std::vector<Fp2> w016_list = {};
-    // computing the w016 invariants for the remaing subgroups
-    for (auto coeff : coeff_list_16 ) {
-        clock_t t_loc = clock();
-        ecp P = coeff.first * P1 + coeff.second * P2;
-        kerGens1.pop_back();
-        kerGens1.push_back(std::pair<ecp,std::pair<int, int>>(P, std::pair<int, int>(2,4)));
-        isog_chain phi_P1(kerGens1);
-        auto E1 = phi_P1.get_codomain();
-        auto jE1 = E1.j_invariant();
-        assert(E == phi_P1.get_domain());
-        isog_time += (clock() - t_loc);
-        F1 = precomp->I0 - jE1*precomp->J0;
-        FpEX_elem f1 = GCD(G, F1);
-        if (NTL::deg(f1) == 1) {
-            w016_list.push_back(-f1[0]);
-            Fp2 w016 = -f1[0];
-        }
-        else {
-            auto v1 = FindRoots(f1);
-            // There are several possibilies we need to find which one is the correct
-            ec EE2 = phi_P1.get_middle_codomain(0);
-            ec EE4 = phi_P1.get_middle_codomain(1);
-            ec EE8 = phi_P1.get_middle_codomain(2);
-            Fp2 t1 = EE2.disc()/E.disc();
-            Fp2 t2 = EE4.disc()/EE2.disc();
-            Fp2 t3 = EE8.disc()/EE4.disc();
-            Fp2 t4 = E1.disc()/EE8.disc();
-
-            bool found = false;
-            int i1 = 0;
-            std::vector<Fp2> r1 = {};
-            while (i1 < NTL::deg(f1)) {
-                // we compute the X0(4) invariants associated
-                Fp2 w016 = v1[i1];
-                Fp2 w041 = NTL::power(w016,4) / ( NTL::power(w016,3) + 6 * NTL::power(w016,2) + 16 * w016 + 16 );
-                Fp2 w042 = ( NTL::power(w016,4) + 8* NTL::power(w016,3) + 24 * NTL::power(w016,2) + 32 * w016);
-                Fp2 w021 = NTL::power(w041,2) / (w041 + 16) ;
-                Fp2 w022 = (NTL::power(w041,2) + 16 * w041);
-                Fp2 w023 = NTL::power(w042,2) / (w042 + 16) ;
-                Fp2 w024 = (NTL::power(w042,2) + 16 * w042);
-                found = t1 * w021 == 4096 &&
-                    t2 * w022 == 4096 &&
-                    t3 * w023 == 4096 &&
-                    t4 * w024 == 4096;
-                if (found) {r1.push_back(v1[i1]);  }
-                i1++;
-            }
-            if (r1.size() == 1) {
-                w016_list.push_back(r1[0]);
-            }
-            else {
-                return SpecialEnumFastWeber(web, Fexts, precomp);
-            }
-        }
+    if (!getW016_invariant_fast_from_mont(w0162, P2, P1.field(), E, mE, precomp->I0, precomp->J0, G)) {
+        return SpecialEnumFastFastWeber(web, Fexts, precomp);
     }
+    if (!getW016_invariant_fast_from_mont(temp, P1 + P2, P1.field(), E, mE, precomp->I0, precomp->J0, G)) {
+        return SpecialEnumFastFastWeber(web, Fexts, precomp);
+    }
+    w016_list.push_back(temp);
+    if (!getW016_invariant_fast_from_mont(temp, P1 + 3 * P2, P1.field(), E, mE, precomp->I0, precomp->J0, G)) {
+        return SpecialEnumFastFastWeber(web, Fexts, precomp);
+    }
+    w016_list.push_back(temp);
 
-    t = clock();
+
     // Now that we have computed all relevant w016 invariants we can proceed to the computation of the xs16 invariants
     // For that we precompute some informations related to the two main ones.
     // First precomputing the powers
-    std::vector<Fp2> pow1 = get_powers(w0161, 34);
-    std::vector<Fp2> pow2 = get_powers(w0162, 34);
+    std::vector<ffp2> pow1(35); get_powers(pow1, w0161, 34);
+    std::vector<ffp2> pow2(35); get_powers(pow2, w0162, 34);
 
     // Doing the bivariate part
-    Fp2X biv1 = Fp2X(0);
-    Fp2X biv2 = Fp2X(0);
-    for (unsigned int i = 0 ; i <= precomp->R1.dY ; i++ ) {
-        biv1 += pow1[i]*precomp->R1.coeffs[i];
-        biv2 += pow2[i]*precomp->R1.coeffs[i];
-    }
+    ffp2X biv1;
+    precomp->R1.Evaluate(biv1, pow1);
+    ffp2X biv2;
+    precomp->R1.Evaluate(biv2, pow2);
+
+
+    // TODO there is probably a faster method to compute our weber invariants from the X0(16) invariants 
+    // the current method use this very big trivariate polynomial stemming from resultant computations coming from the paper
+    // there seems to be a way to exploit smaller resultants, but it would require a bit more work 
+
 
     // Doing the trivariate ones
-    std::vector<std::vector<Fp2>> resultant_ws16(4);
+    std::vector<std::vector<ffp2>> resultant_ws16(4);
 
-
-
-    NTL::Vec<Fp2X> triv1_vec,triv2_vec;
-    triv1_vec.SetLength(precomp->R2.dZ + 1);
-    triv2_vec.SetLength(precomp->R2.dZ + 1);
-    for (unsigned int i = 0; i <= precomp->R2.dZ ; i++) {
-        triv1_vec[i] = Fp2X(0);
-        triv2_vec[i] = Fp2X(0);
-        for (unsigned int j = 0; j <= precomp->R2.coeffs[i].dY; j++ ) {
-            triv1_vec[i] += pow1[j] * precomp->R2.coeffs[i].coeffs[j];
-            triv2_vec[i] += pow2[j] * precomp->R2.coeffs[i].coeffs[j];
-        }
+    std::vector<ffp2X> triv1_vec(precomp->R2.degZ + 1),triv2_vec(precomp->R2.degZ + 1);
+    for (int i = 0; i <= precomp->R2.degZ ; i++) {
+        precomp->R2.coeffs[i].Evaluate(triv1_vec[i], pow1);
+        precomp->R2.coeffs[i].Evaluate(triv2_vec[i], pow2);
     }
+
+    ffp2XY triv1XY, triv2XY;
+    triv1XY = ffp2XY(triv1_vec);
+    triv2XY = ffp2XY(triv2_vec); 
+
 
     w016_list.push_back(w0162);
 
     for (int id = 0; id < 3; id++) {
-        std::vector<Fp2> powi = get_powers(w016_list[id], precomp->R2.dZ+1);
-        Fp2X triv1j = Fp2X(0);
-        Fp2X triv2j = Fp2X(0);
-
-        for (unsigned int i = 0; i <= precomp->R2.dZ ; i++) {
-            triv1j += powi[i] * triv1_vec[i];
-            if (id == 0) {
-                triv2j += powi[i] * triv2_vec[i];
-            }
-        }
+        std::vector<ffp2> powi(precomp->R2.degZ + 2);
+        get_powers(powi, w016_list[id], precomp->R2.degZ + 1);
+        ffp2X triv1j;
+        ffp2X triv2j;
+        triv1XY.Evaluate(triv1j, powi);
         if (id == 0) {
-            resultant_ws16[0] = {w0161,w016_list[id],CommonRootTwoResultants({biv1, triv1j})};
-            resultant_ws16[1] = {w0162, w016_list[id],CommonRootTwoResultants({biv2, triv2j})};
+            triv2XY.Evaluate(triv2j, powi);
+        }
+
+        if (id == 0) {
+            resultant_ws16[0] = {w0161, w016_list[id], FastCommonRootTwoResultants(biv1, triv1j)};
+            resultant_ws16[1] = {w0162, w016_list[id], FastCommonRootTwoResultants(biv2, triv2j)};
         }
         else if (id == 1) {
-            resultant_ws16[3] = {w0161,w016_list[id],CommonRootTwoResultants({biv1, triv1j})};
+            resultant_ws16[3] = {w0161 , w016_list[id], FastCommonRootTwoResultants(biv1, triv1j)};
         }
         else {
             assert(id==2);
-            resultant_ws16[2] = {w0161, w016_list[id],CommonRootTwoResultants({biv1, triv1j})};
+            resultant_ws16[2] = {w0161, w016_list[id], FastCommonRootTwoResultants(biv1, triv1j)};
         }
     }
 
+    
 
-    t = clock();
-    std::vector<Fp2> w3_list = {};
-    // Computing all third roots
+
+    // t = clock();
+    std::vector<ffp2> w3_list = {};
+
+    // Computing all third roots 
     for (auto yy : resultant_ws16) {
-        Fp2 y = yy[2];
-        auto d1 = EvaluateBivariate(precomp->D1,y);
-        auto d2 = EvaluateBivariate(precomp->D2,y);
-        auto n1 = EvaluateBivariate(precomp->N1,y);
-        auto n2 = EvaluateBivariate(precomp->N2,y);
 
-        Fp2X F1 = n1 - yy[0]*d1;
-        Fp2X F2 = n2 - yy[1]*d2;
-        Fp2X g = GCD(F1,F2);
-        // assert(NTL::deg(g) > 0);
-        if (NTL::deg(g) == 0) {
-            // std::cout << "g was empty \n";
-            return SpecialEnumFastWeber(web, Fexts, precomp);
+        ffp2 y = yy[2];
+        ffp2X d1, d2, n1, n2;
+        precomp->D1.Evaluate( d1, y);
+        precomp->D2.Evaluate( d2, y);
+        precomp->N1.Evaluate( n1, y);
+        precomp->N2.Evaluate( n2, y);
+
+        d1.mul(yy[0]);
+        d2.mul(yy[1]);
+        sub(n1, n1, d1);
+        sub(n2, n2, d2);
+
+        ffp2X g;
+        fast_PlainGCD_2(g, n1, n2);
+        if (g.deg == 0) {
+            return SpecialEnumFastFastWeber(web, Fexts, precomp);
         }
 
         // seems to be true most of the time but not always
-        if (NTL::deg(g) == 1) {
-            w3_list.push_back(_getWeberThirdPowerFromRoot(-g[0],y));
+        if (g.deg == 1) {
+            
+            ffp2 t;
+            negate(t, g.coeffs[0]);
+            w3_list.push_back(Fast_getWeberThirdPowerFromRoot(t,y));
         }
         else {
-            Fp2X F = EvaluateBivariate(precomp->Xs16,y);
-            F /= LeadCoeff(F);
-            Fp2X gg = GCD(g,F);
-            if (NTL::deg(gg) != 1) {
-                return SpecialEnumFastWeber(web, Fexts, precomp);
+            // std::cout << "alternate path \n";
+            // Fp2X F = EvaluateBivariate(precomp->Xs16,y);
+            ffp2X F;
+            precomp->Xs16.Evaluate(F, y);
+            ffp2 t;
+            fast_inv(t, F.lead_coeff());
+            F.mul(t);
+            ffp2X gg;
+            fast_PlainGCD_2(gg, g, F);
+            // Fp2X gg = GCD(g,F);
+            if (gg.deg != 1) {
+                return SpecialEnumFastFastWeber(web, Fexts, precomp);
                 // std::cout << "problematic curve = " << jE << " deg = " << NTL::deg(g) << NTL::deg(gg) << " " << yy[0] << " " << yy[1] << "\n";
             }
-            assert(NTL::deg(gg)==1);
-            w3_list.push_back(_getWeberThirdPowerFromRoot(-gg[0],y));
+            assert(gg.deg==1);
+            negate(t, gg.coeffs[0]);
+            w3_list.push_back(Fast_getWeberThirdPowerFromRoot(t,y));
         }
     }
-    Fp2 zeta_80 = w3_list[0]/w3_list[3];
-    Fp2 zeta_8 = power(zeta_80,5);
-    Fp2 zeta_8bis = power(zeta_80,7);
-    assert(power(zeta_8, 8) == Fp2(1));
-    Fp2 zeta_4 = -power(zeta_8,2);
-    std::vector<Fp2> z8_list = { zeta_8, zeta_8bis, - zeta_8 };
-    std::vector<Fp2> z4_list = { zeta_4, zeta_4, - zeta_4 };
+    
+    // std::cout << "Xs tot " << tic() - t << "\n";
+
+    ffp2 zeta_80, zeta_8, zeta_8bis, zeta_4;
+    fast_inv(zeta_80, w3_list[3]);
+    fast_mul(zeta_80, zeta_80, w3_list[0]);
+    fast_sqr(zeta_8, zeta_80);
+    fast_sqr(zeta_8, zeta_8);
+    fast_mul(zeta_8, zeta_8, zeta_80);
+    fast_mul(zeta_8bis, zeta_8, zeta_80);
+    fast_mul(zeta_8bis, zeta_8bis, zeta_80);
+    fast_sqr(zeta_4, zeta_8);
+    negate(zeta_4, zeta_4);
+    std::vector<ffp2> z8_list = { zeta_8, zeta_8bis, zeta_8 };
+    std::vector<ffp2> z4_list = { zeta_4, zeta_4, zeta_4 };
+    negate(z4_list[2], z4_list[2]);
+    negate(z8_list[2], z8_list[2]);
+
 
     // computing all t-invariants
-    std::vector<Fp2> tinv_list = { _getTInvariant(8*web.Q16, E), _getTInvariant(8*web.P16, E), _getTInvariant(8*(web.P16+web.Q16), E) };
-
-    // computing gamma2-invariants
-    std::vector<std::pair<ecp,ecp>> ord3_bases = {{web.P3, web.Q3}, {web.P3, web.Q3 + web.P3}, {web.P3, 2*web.Q3 + web.P3}};
-    std::vector<Fp2> gamma2_list = {};
-    for (auto bas3 : ord3_bases) {
-        gamma2_list.push_back( _getGammaTwoInvariant( {bas3.first, bas3.second, bas3.first + bas3.second, bas3.first + 2*bas3.second}, E ));
+    std::vector<ffp2> tinv_list = {};
+    for (int i = 0; i < 3; i++) {
+        ffp2 temp = w3_list[i];
+        fast_pow(temp, temp, 8);
+        negate(temp, temp);
+        tinv_list.push_back(temp);
     }
 
+    std::vector<ffp2> gamma2_list = _getAllGammaTwoInvariant( {web.P3, web.Q3, web.P3 + web.Q3, web.P3 + 2 * web.Q3}, E );
 
+
+    // std::cout << "all inv " << tic() - t << "\n";
 
     // Constructing the coefficients
     // order 2
-    std::vector<SmallIntegerPair> order_2 = { {0,1}, {1,0}, {1, 1} };
+    std::vector<VerySmallIntegerPair> order_2 = { {0,1}, {1,0}, {1, 1} };
     // order 3
-    std::vector<std::vector<SmallIntegerPair>> order_3 = { { {1, 0}, {0, 1} }, { {1,0}, {1, 1} }, { {1, 0}, {1, 2} } };
+    std::vector<std::vector<VerySmallIntegerPair>> order_3 = { { {1, 0}, {0, 1} }, { {1,0}, {1, 1} }, { {1, 0}, {1, 2} } };
 
     // // pairs of relevant order_16 generators
-    std::vector<std::vector<SmallIntegerPair>> order_16_pairs = {};
+    std::vector<std::vector<VerySmallIntegerPair>> order_16_pairs = {};
     {
         order_16_pairs.push_back( { {1,0}, {1,1} } );
-        order_16_pairs.push_back( { {1,0}, {1,3} } );
-        order_16_pairs.push_back( { {1,0}, {1,5} } );
-        order_16_pairs.push_back( { {1,0}, {1,7} } );
-        order_16_pairs.push_back( { {1,0}, {1,9} } );
-        order_16_pairs.push_back( { {1,0}, {1,11} } );
-        order_16_pairs.push_back( { {1,0}, {1,13} } );
-        order_16_pairs.push_back( { {1,0}, {1,15} } );
+        // order_16_pairs.push_back( { {1,0}, {1,3} } );
+        // order_16_pairs.push_back( { {1,0}, {1,5} } );
+        // order_16_pairs.push_back( { {1,0}, {1,7} } );
+        // order_16_pairs.push_back( { {1,0}, {1,9} } );
+        // order_16_pairs.push_back( { {1,0}, {1,11} } );
+        // order_16_pairs.push_back( { {1,0}, {1,13} } );
+        // order_16_pairs.push_back( { {1,0}, {1,15} } );
         order_16_pairs.push_back( { {0,1}, {1,1} } );
-        order_16_pairs.push_back( { {0,1}, {1,3} } );
-        order_16_pairs.push_back( { {0,1}, {1,5} } );
-        order_16_pairs.push_back( { {0,1}, {1,7} } );
-        order_16_pairs.push_back( { {0,1}, {1,9} } );
-        order_16_pairs.push_back( { {0,1}, {1,11} } );
-        order_16_pairs.push_back( { {0,1}, {1,13} } );
-        order_16_pairs.push_back( { {0,1}, {1,15} } );
+        // order_16_pairs.push_back( { {0,1}, {1,3} } );
+        // order_16_pairs.push_back( { {0,1}, {1,5} } );
+        // order_16_pairs.push_back( { {0,1}, {1,7} } );
+        // order_16_pairs.push_back( { {0,1}, {1,9} } );
+        // order_16_pairs.push_back( { {0,1}, {1,11} } );
+        // order_16_pairs.push_back( { {0,1}, {1,13} } );
+        // order_16_pairs.push_back( { {0,1}, {1,15} } );
         order_16_pairs.push_back( { {1,0}, {0,1} } );
-        order_16_pairs.push_back( { {1,0}, {2,1} } );
-        order_16_pairs.push_back( { {1,0}, {4,1} } );
-        order_16_pairs.push_back( { {1,0}, {6,1} } );
-        order_16_pairs.push_back( { {1,0}, {8,1} } );
-        order_16_pairs.push_back( { {1,0}, {10,1} } );
-        order_16_pairs.push_back( { {1,0}, {12,1} } );
-        order_16_pairs.push_back( { {1,0}, {14,1} } );
+        // order_16_pairs.push_back( { {1,0}, {2,1} } );
+        // order_16_pairs.push_back( { {1,0}, {4,1} } );
+        // order_16_pairs.push_back( { {1,0}, {6,1} } );
+        // order_16_pairs.push_back( { {1,0}, {8,1} } );
+        // order_16_pairs.push_back( { {1,0}, {10,1} } );
+        // order_16_pairs.push_back( { {1,0}, {12,1} } );
+        // order_16_pairs.push_back( { {1,0}, {14,1} } );
     }
 
+    // std::vector<std::pair<Fp2, std::vector<std::vector<VerySmallIntegerPair>>>> result(72);
+    weber_full_data result;
+    result.check = true;
     // now we combine everything together
     for (size_t i = 0; i < 3; i++) {
+        
         for (size_t j = 0; j < 3; j++) {
-            Fp2X W1,W2;
+            ffp2X W1,W2;
             // first we combine t-inv and gamma2 together
-            Fp2 w8 = _getWeberEighthPower(gamma2_list[j], tinv_list[i]);
+            ffp2 w8t = Fast_getWeberEighthPower(gamma2_list[j], tinv_list[i]);
+            negate(w8t, w8t);
 
-            NTL::SetCoeff(W2, 8, FpE_elem(1));
-            NTL::SetCoeff(W2, 0, FpE_elem(-w8));
-            NTL::SetCoeff(W1, 3, FpE_elem(1));
-            NTL::SetCoeff(W1, 0, FpE_elem(-w3_list[i]));
-            auto g = NTL::GCD(W1,W2);
-            assert(NTL::deg(g) <= 1);
-            if (NTL::deg(g)==0) {
+            ffp2 w3t;
+            negate(w3t, w3_list[i]);
+
+            W1 = ffp2X({ w8t, {Fp(0), Fp(0)}, {Fp(0), Fp(0)}, {Fp(0), Fp(0)}, {Fp(0), Fp(0)}, {Fp(0), Fp(0)}, {Fp(0), Fp(0)}, {Fp(0), Fp(0)}, {Fp(1), Fp(0)}}, 8);
+            W2 = ffp2X({ w3t, {Fp(0), Fp(0)}, {Fp(0), Fp(0)}, {Fp(1), Fp(0)}}, 3);
+            // ffp2 w8; 
+            // to_Fp2(w8, w8t);
+
+            // NTL::SetCoeff(W2, 8, FpE_elem(1));
+            // NTL::SetCoeff(W2, 0, FpE_elem(-w8));
+            // NTL::SetCoeff(W1, 3, FpE_elem(1));
+            // NTL::SetCoeff(W1, 0, -Fp2_cast(w3_list[i]));
+            ffp2X g;
+            fast_PlainGCD_2(g, W1,W2);
+            assert(g.deg <= 1);
+            if (g.deg==0) {
                 // std::cout << "problem in weber for curve " << E.j_invariant()    << " with w3 = " << w3 << " w8 = " << w8 << "\n";
                 assert(0);
             }
             else {
-                assert(NTL::deg(g) == 1);
-                Fp2 w = Fp2(-g[0]);
-                result[24*i + 8*j] = {w, {{order_2[i]}, order_3[j], order_16_pairs[8*i]}};
-                result[24*i + 8*j + 1] = {z8_list[i] * w, {{order_2[i]}, order_3[j], order_16_pairs[8*i + 1]}};
-                result[24*i + 8*j + 2] = {z4_list[i] * w, {{order_2[i]}, order_3[j], order_16_pairs[8*i + 2]}};
-                result[24*i + 8*j + 3] = {z4_list[i] * result[24*i + 8*j + 1].first, {{order_2[i]}, order_3[j], order_16_pairs[8*i + 3]}};
-                result[24*i + 8*j + 4] = {- w, {{order_2[i]}, order_3[j], order_16_pairs[8*i + 4]}};
-                result[24*i + 8*j + 5] = {- result[24*i + 8*j + 1].first, {{order_2[i]}, order_3[j], order_16_pairs[8*i + 5]}};
-                result[24*i + 8*j + 6] = {- result[24*i + 8*j + 2].first, {{order_2[i]}, order_3[j], order_16_pairs[8*i + 6]}};
-                result[24*i + 8*j + 7] = {- result[24*i + 8*j + 3].first, {{order_2[i]}, order_3[j], order_16_pairs[8*i + 7]}};
+                assert(g.deg == 1);
+                ffp2 w = g.coeffs[0];
+                negate(w, w);
+                // Fp2 w = - to_Fp2( g.coeffs[0] );
+                if (j == 0) {
+                    result.enumerator[i] = {w, {{order_2[i]}, order_3[0], order_16_pairs[i]}};
+                }
+                // result[24*i + 8*j] = {w, {{order_2[i]}, order_3[j], order_16_pairs[8*i]}};
+                // result[24*i + 8*j + 1] = {z8_list[i] * w, {{order_2[i]}, order_3[j], order_16_pairs[8*i + 1]}};
+                // result[24*i + 8*j + 2] = {z4_list[i] * w, {{order_2[i]}, order_3[j], order_16_pairs[8*i + 2]}};
+                // result[24*i + 8*j + 3] = {z4_list[i] * result[24*i + 8*j + 1].first, {{order_2[i]}, order_3[j], order_16_pairs[8*i + 3]}};
+                // result[24*i + 8*j + 4] = {- w, {{order_2[i]}, order_3[j], order_16_pairs[8*i + 4]}};
+                // result[24*i + 8*j + 5] = {- result[24*i + 8*j + 1].first, {{order_2[i]}, order_3[j], order_16_pairs[8*i + 5]}};
+                // result[24*i + 8*j + 6] = {- result[24*i + 8*j + 2].first, {{order_2[i]}, order_3[j], order_16_pairs[8*i + 6]}};
+                // result[24*i + 8*j + 7] = {- result[24*i + 8*j + 3].first, {{order_2[i]}, order_3[j], order_16_pairs[8*i + 7]}};
+                result.inv_list[24*i + 8*j] = w;
+                fast_mul(result.inv_list[24*i + 8*j + 1], z8_list[i], w);
+                fast_mul(result.inv_list[24*i + 8*j + 2], z4_list[i], w);
+                fast_mul(result.inv_list[24*i + 8*j + 3], z4_list[i], result.inv_list[24*i + 8*j + 1]);
+                negate(result.inv_list[24*i + 8*j + 4], w);
+                negate(result.inv_list[24*i + 8*j + 5], result.inv_list[24*i + 8*j + 1]);
+                negate(result.inv_list[24*i + 8*j + 6], result.inv_list[24*i + 8*j + 2]);
+                negate(result.inv_list[24*i + 8*j + 7], result.inv_list[24*i + 8*j + 3]);
             }
 
 
         }
     }
 
+    // std::cout << "Xs + final time = " << tic() - t << "\n";
     return result;
 }
 
 
+std::pair<VerySmallMat,VerySmallMat> WeberBasApplicationRemoteEndo(const std::vector<std::pair<VerySmallMat,VerySmallMat>> &mat0, FastQuat &gamma) {
+    ///////////////////////////////////////////////////////////////////////////////
+    ////// Function applies the matrix of gamma (wrt bas0) to bas
+    //////  It assumes that the P16 and Q16 points of bas0 are
+    //////  actually of order 32 so that we can perform the division by two.
+    //////  If q = 3, we also assume that P3, Q3 are of order 9
+    ///////////////////////////////////////////////////////////////////////////////
+
+    VerySmallMat M16,M3;
+    
+    SmallInteger correc = 2/(SmallInteger) gamma[4];
+
+    // first we do mod 16
+    unsigned char c0 = ((unsigned char) (16 +  ((SmallInteger) (gamma[0] - gamma[3])/(gamma[4])) % 16)) & 15; // mod 16 and positive
+    unsigned char c1 = ((unsigned char) (16 +  ((SmallInteger) (gamma[1] - gamma[2])/(gamma[4])) % 16)) & 15;
+    unsigned char c2 = ((unsigned char) (16 +  ((SmallInteger) (correc * gamma[2])) % 16)) & 15;
+    unsigned char c3 = ((unsigned char) (16 +  ((SmallInteger) (correc * gamma[3])) % 16)) & 15;
+    M16[0][0] = ((mat0[0].first[0][0] * c0) & 15) 
+              + ((mat0[1].first[0][0] * c1) & 15) 
+              + ((mat0[2].first[0][0] * c2) & 15) 
+              + ((mat0[3].first[0][0] * c3) & 15);
+    M16[0][1] = ((mat0[0].first[0][1] * c0) & 15) 
+              + ((mat0[1].first[0][1] * c1) & 15) 
+              + ((mat0[2].first[0][1] * c2) & 15) 
+              + ((mat0[3].first[0][1] * c3) & 15);
+    M16[1][0] = ((mat0[0].first[1][0] * c0) & 15) 
+              + ((mat0[1].first[1][0] * c1) & 15) 
+              + ((mat0[2].first[1][0] * c2) & 15) 
+              + ((mat0[3].first[1][0] * c3) & 15);
+    M16[1][1] = ((mat0[0].first[1][1] * c0) & 15) 
+              + ((mat0[1].first[1][1] * c1) & 15) 
+              + ((mat0[2].first[1][1] * c2) & 15) 
+              + ((mat0[3].first[1][1] * c3) & 15);
+
+    M16[0][0] = M16[0][0] & 15;
+    M16[0][1] = M16[0][1] & 15;
+    M16[1][0] = M16[1][0] & 15;
+    M16[1][1] = M16[1][1] & 15;
+    
+    c0 = ((unsigned char) (3 +  ((SmallInteger) (gamma[0] - gamma[3])/(gamma[4])) % 3)) % 3; // mod 16 and positive
+    c1 = ((unsigned char) (3 +  ((SmallInteger) (gamma[1] - gamma[2])/(gamma[4])) % 3)) % 3;
+    c2 = ((unsigned char) (3 +  ((SmallInteger) (correc * gamma[2])) % 3)) % 3;
+    c3 = ((unsigned char) (3 +  ((SmallInteger) (correc * gamma[3])) % 3)) % 3;
+    M3[0][0] = ((mat0[0].second[0][0] * c0)) 
+             + ((mat0[1].second[0][0] * c1)) 
+             + ((mat0[2].second[0][0] * c2)) 
+             + ((mat0[3].second[0][0] * c3));
+    M3[0][1] = ((mat0[0].second[0][1] * c0)) 
+             + ((mat0[1].second[0][1] * c1)) 
+             + ((mat0[2].second[0][1] * c2)) 
+             + ((mat0[3].second[0][1] * c3));
+    M3[1][0] = ((mat0[0].second[1][0] * c0)) 
+             + ((mat0[1].second[1][0] * c1)) 
+             + ((mat0[2].second[1][0] * c2)) 
+             + ((mat0[3].second[1][0] * c3));
+    M3[1][1] = ((mat0[0].second[1][1] * c0)) 
+             + ((mat0[1].second[1][1] * c1)) 
+             + ((mat0[2].second[1][1] * c2)) 
+             + ((mat0[3].second[1][1] * c3));
+
+    M3[0][0] = M3[0][0] % 3;
+    M3[0][1] = M3[0][1] % 3;
+    M3[1][0] = M3[1][0] % 3;
+    M3[1][1] = M3[1][1] % 3;  
+    
+    // now on to mod 3
+    
+
+    // SmallMatFp alt_M16 = SmallMatFp(16);
+    // SmallMatFp alt_M3 = SmallMatFp(3);
+
+    //     SmallInteger correc = 2/(SmallInteger) gamma[4];
+    //     SmallInteger c0 = (SmallInteger) (gamma[0] - gamma[3])/(gamma[4]);
+    //     SmallInteger c1 = (SmallInteger )(gamma[1] - gamma[2])/(gamma[4]);
+    //     SmallInteger c2 = (SmallInteger) correc * gamma[2];
+    //     SmallInteger c3 = (SmallInteger) correc * gamma[3];
+
+    //     alt_M16 = alt_M16
+    //     + mat0[0].first * c0
+    //     + mat0[1].first * c1
+    //     + mat0[2].first * c2
+    //     + mat0[3].first * c3;
+    //     alt_M3 = alt_M3
+    //     + mat0[0].second * c0
+    //     + mat0[1].second * c1
+    //     + mat0[2].second * c2
+    //     + mat0[3].second * c3;
+    // }
+    // alt_M16.normalize();
+    // alt_M3.normalize();
+
+    // 
+
+    // M16[0][0] = (unsigned char) alt_M16.mat[0][0];
+    // M16[1][0] = (unsigned char) alt_M16.mat[1][0];
+    // M16[0][1] = (unsigned char) alt_M16.mat[0][1];
+    // M16[1][1] = (unsigned char) alt_M16.mat[1][1];
+    // M3[0][0] = (unsigned char) alt_M3.mat[0][0];
+    // M3[1][0] = (unsigned char) alt_M3.mat[1][0];
+    // M3[0][1] = (unsigned char) alt_M3.mat[0][1];
+    // M3[1][1] = (unsigned char) alt_M3.mat[1][1];
+
+
+    return { M16, M3};
+}
+
+
+static const std::array<std::array<unsigned char, 8>, 4> precomputed_indices = {{{0, 3, 6, 1, 4, 7, 2, 5}, {0, 7, 2, 1, 4, 3, 6, 5}, {0, 1, 2, 3, 4, 5, 6, 7}, {0, 5, 2, 7, 4, 1, 6, 3}}};
+static const std::array<std::array<unsigned char, 8>, 4> precomputed_coeffs = {{{ 1, 7, 13, 3, 9, 15, 5, 11}, { 1, 7, 5, 11, 9, 15, 13, 3 }, {0, 2, 4, 6, 8, 10, 12, 14 }, {0, 10, 4, 14, 8, 2, 12, 6}}};
+static const unsigned char mod2 = 1;
+static const unsigned char mod4 = 3;
+static const unsigned char mod8 = 7;
+static const unsigned char mod16 = 15;
+
+unsigned char WeberGetFromEnum(const std::vector<std::vector<VerySmallIntegerPair>> &coeffs, const std::pair<VerySmallMat, VerySmallMat> &change_mats) {
+
+    VerySmallIntegerPair order_2;
+    std::array<VerySmallIntegerPair, 2> order_3;
+    std::array<VerySmallIntegerPair, 2> order_16;
+
+    assert(coeffs.size() == 3);
+
+    // order 2
+    {
+        order_2 = { ( ((change_mats.first[0][0] * coeffs[0][0].first) & mod2) + ((change_mats.first[1][0] * coeffs[0][0].second) & mod2) ) & mod2 ,  ( ((change_mats.first[0][1] * coeffs[0][0].first) & mod2) + ((change_mats.first[1][1] * coeffs[0][0].second) & mod2) ) & mod2 };
+    }
+    // order 3
+    {
+        order_3[0] = { ((change_mats.second[0][0] * coeffs[1][0].first) % 3 + (change_mats.second[1][0] * coeffs[1][0].second) % 3 ) % 3 ,  ((change_mats.second[0][1] * coeffs[1][0].first) % 3 + (change_mats.second[1][1] * coeffs[1][0].second) % 3 ) % 3 };
+        order_3[1] = { ((change_mats.second[0][0] * coeffs[1][1].first) % 3 + (change_mats.second[1][0] * coeffs[1][1].second) % 3 ) % 3 ,  ((change_mats.second[0][1] * coeffs[1][1].first) % 3 + (change_mats.second[1][1] * coeffs[1][1].second) % 3 ) % 3 };
+    }
+    // order 16
+    {
+        order_16[0] = { (((change_mats.first[0][0] * coeffs[2][0].first) & mod16) + ((change_mats.first[1][0] * coeffs[2][0].second) & mod16) ) & mod16 ,  ( ((change_mats.first[0][1] * coeffs[2][0].first) & mod16) + ((change_mats.first[1][1] * coeffs[2][0].second) & mod16) ) & mod16 };
+        order_16[1] = { (((change_mats.first[0][0] * coeffs[2][1].first) & mod16) + ((change_mats.first[1][0] * coeffs[2][1].second) & mod16) ) & mod16 ,  (((change_mats.first[0][1] * coeffs[2][1].first) & mod16) + ((change_mats.first[1][1] * coeffs[2][1].second) & mod16) ) & mod16 };
+    }
+
+    unsigned char j2;
+    if (!order_2.first) {j2 = 0;}
+    else if (!order_2.second) {j2 = 1;}
+    else {j2 = 2;}
+
+    unsigned char j3;
+    if (!order_3[0].first) {
+        assert(order_3[1].first);
+        if (!order_3[1].second) {j3 = 0;}
+        else if (order_3[1].first == order_3[1].second) {j3 = 2;}
+        else {j3 = 1;}
+    }
+    else if (!order_3[1].first) {
+        if (!order_3[0].second) {j3 = 0;}
+        else if (order_3[0].first == order_3[0].second) {j3 = 2;}
+        else {j3 = 1;}
+    }
+    else {
+        assert(order_3[0].first !=0 && order_3[1].first != 0);
+        if (!order_3[0].second) {
+            if (order_3[1].first == order_3[1].second) { j3 = 1;}
+            else {j3 = 2;}
+        }
+        else if (!order_3[1].second) {
+            if (order_3[0].first == order_3[0].second) { j3 = 1;}
+            else {j3 = 2;}
+        }
+        else {j3 = 0;}
+    }
+
+
+
+    unsigned char web_index;
+    // alternate way to find the correct valus
+    // the treament first depends on the values mod 2
+    if (!order_2.first && order_2.second) {
+
+
+        // checking if we need to swap
+        if (order_16[0].second & mod2) {
+            assert(order_16[1].second%2 == 0);
+            std::swap(order_16[0].first, order_16[1].first);
+            std::swap(order_16[0].second, order_16[1].second);
+            // SmallInteger tmp = order_16[0].first;
+            // order_16[0].first = order_16[1].first;
+            // order_16[1].first = tmp;
+            // tmp = order_16[0].second;
+            // order_16[0].second = order_16[1].second;
+            // order_16[1].second = tmp;
+
+        }
+        assert(order_16[0].second%2 == 0);
+        assert(order_16[1].second%2 == 1);
+        order_16[0].second = (order_16[0].second * InvModSpecial(order_16[0].first)) & mod16;
+        order_16[0].first = 1;
+        order_16[1].second = (order_16[1].second * InvModSpecial(order_16[1].first)) & mod16;
+        order_16[1].first = 1;
+
+        unsigned char index1 = (order_16[0].second) >> 1;
+        unsigned char index2 = precomputed_indices[0][(order_16[1].second - 1) >> 1];
+        web_index = (precomputed_coeffs[0][((8 + index2) - index1) & mod8] - 1) >> 1;
+        // std::cout << "alt index = " << final_index << "\n";
+    }
+    else if (order_2.first && !order_2.second) {
+
+        // std::vector<unsigned char> list_of_coeffs = ;
+        // std::vector<unsigned char> list_of_indices = ;
+
+        // checking if we need to swap
+        if (order_16[0].first & mod2) {
+            assert(order_16[1].first%2 == 0);
+            std::swap(order_16[0].first, order_16[1].first);
+            std::swap(order_16[0].second, order_16[1].second);
+            // SmallInteger tmp = order_16[0].first;
+            // order_16[0].first = order_16[1].first;
+            // order_16[1].first = tmp;
+            // tmp = order_16[0].second;
+            // order_16[0].second = order_16[1].second;
+            // order_16[1].second = tmp;
+
+        }
+        assert(order_16[0].first%2 == 0);
+        assert(order_16[1].first%2 == 1);
+        order_16[0].first = (order_16[0].first * InvModSpecial(order_16[0].second)) & mod16;
+        order_16[0].second = 1;
+        order_16[1].second = (order_16[1].second * InvModSpecial(order_16[1].first)) & mod16;
+        order_16[1].first = 1;
+
+        unsigned char index1 = order_16[0].first >> 1;
+        unsigned char index2 = precomputed_indices[1][(order_16[1].second - 1) >> 1];
+        web_index = (precomputed_coeffs[1][((8 + index2) - index1) & mod8] - 1) >> 1;
+        // std::cout << "alt index = " << final_index << "\n";
+    }
+    else {
+        std::vector<unsigned char> list_of_coeffs;
+        std::vector<unsigned char> list_of_indices;
+        // checking if we need to swap
+        if (order_16[1].first & mod2) {
+            assert(order_16[1].first%2 == 1);
+            std::swap(order_16[0].first, order_16[1].first);
+            std::swap(order_16[0].second, order_16[1].second);
+            // SmallInteger tmp = order_16[0].first;
+            // order_16[0].first = order_16[1].first;
+            // order_16[1].first = tmp;
+            // tmp = order_16[0].second;
+            // order_16[0].second = order_16[1].second;
+            // order_16[1].second = tmp;
+
+        }
+        assert(order_16[0].first%2 == 1);
+        assert(order_16[0].second%2 == 0);
+        assert(order_16[1].first%2 == 0);
+        assert(order_16[1].second%2 == 1);
+        order_16[0].second = (order_16[0].second * InvModSpecial(order_16[0].first)) & mod16;
+        order_16[0].first = 1;
+        order_16[1].first = (order_16[1].first * InvModSpecial(order_16[1].second)) & mod16;
+        order_16[1].second = 1;
+        // the list depends on the value mod 4
+        unsigned char index = 3;
+        if (( ((16 +  order_16[0].second) - order_16[1].first) & mod4) == 2) {
+            index  = 2;
+            // list_of_coeffs = ;
+            // list_of_indices = ;
+        }
+        // else {
+        //     list_of_coeffs = ;
+        //     list_of_indices = ;
+        // }
+        unsigned char index1 = (order_16[0].second) >> 1;
+        unsigned char index2 = precomputed_indices[index][(order_16[1].first) >> 1];
+        web_index = (precomputed_coeffs[index][((8 + index2) - index1) & mod8]) >> 1;
+    }
+
+    assert( web_index + 8* j3 + 24 * j2 < 72 );
+    return web_index + 8* j3 + 24 * j2; 
+}

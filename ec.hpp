@@ -25,9 +25,11 @@ class ec
         // Kohel: b2 = 0, b4 = 2*a, b6 = 4*b
 
     std::optional<ecp> lift_x(Fp2k const &Fext, FpE_elem const &x) const;
+    std::optional<ecp> det_lift_x(Fp2k const &Fext, FpE_elem const &x) const;
 
     ecp random_point(Fp2k const &Fext) const;
     ecp random_point_of_order(Fp2k const &Fext, NTL::ZZ cof, int ell, int k) const;
+    ecp point_of_order_det(Fp2k const &Fext, NTL::ZZ cof, int ell, int e, long &try_x) const;
 
     bool operator==(ec const &other) const { return this == &other || (this->_a == other._a && this->_b == other._b); }
     bool operator!=(ec const &other) const { return !(*this == other); }
@@ -43,6 +45,7 @@ class ec
     ec static from_j(FpE_elem const &j);
 
     std::pair<ecp, ecp> const torsionBasis(Fp2k const &Fext, int ell, int k) const;
+    std::pair<ecp, ecp> const torsionBasisDet(Fp2k const &Fext, int ell, int e) const;
     std::vector<ecp> const allTorsionPoints(Fp2k const &Fext, int ell, int k) const;
     friend std::ostream& operator<<(std::ostream& o, ec const &E) { return o << "{y^2 = x^3 + (" << NTL::rep(E._a) << ")*x + (" << NTL::rep(E._b) << ")}"; }
 

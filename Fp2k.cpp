@@ -7,6 +7,7 @@
 #include <cassert>
 #include <optional>
 #include "Fp2k.hpp"
+#include "fast_ff.hpp"
 
 size_t myroots(FpE_elem *roots, FpEX_elem const &f)
 {
@@ -60,11 +61,137 @@ std::optional<FpE_elem> sqrt(FpE_elem const &alpha)
     return roots[0];
 }
 
-std::optional<FpE_elem> sqrt(Fp2k Fext, FpE_elem const &alpha)
+std::optional<FpE_elem> sqrt(const Fp2k &Fext, FpE_elem const &alpha)
 {
     FpE_push Push(Fext.F);
-    return sqrt(alpha);
+    // return sqrt(alpha);
+    return fast_sqrt(Fext, alpha);
 }
+
+FpE_elem fast_pow(FpE_elem const &a, NTL::ZZ exp) {
+    NTL::ZZ expo = exp;
+    FpE_elem t = a;
+    FpE_elem y(1);
+    while (expo > 0) {
+        if (expo % 2 == 1) {
+            SpecialMul(y, y, t);
+        }
+        SpecialMul(t, t, t);
+        // e >>= 1;
+        expo = expo / 2;
+    }
+    assert( y == NTL::power(a,exp));
+    return y;
+}
+
+// compute a sqrt of new_a over Fq^2
+// assumes the sqrt exists and q = 3 mod 4
+FpE_elem sqrt_3mod4(const Fp2k &Fext, const FpE_elem &new_a, const NTL::ZZ &q) {
+    
+    assert(q % 4 == 3 );
+    FpE_elem a1 = fast_pow(new_a, (q - 1) / 4);  
+    auto alpha = a1 * a1 * new_a;
+    
+    FpE_elem x;
+    auto x0 = a1 * new_a;
+    if (alpha == FpE_elem(-1)) {
+        assert(Fext.Fp2_gen * Fext.Fp2_gen == FpE_elem(-1));
+        x = Fext.Fp2_gen * x0;
+    }
+    else {
+        auto b = fast_pow(1 + alpha, (q-1) / 2);
+        x = b * x0;
+    }
+    assert(x * x == new_a);
+    return x;
+}
+
+std::optional<FpE_elem> fast_sqrt(const Fp2k &Fext, FpE_elem const &a) {
+
+    assert((long) Fext.QR_precomp.size() == Fext.s);
+
+    if (Fext.k % 2 == 0) {
+
+        auto newa = a;
+        long div = 1;
+        
+        // assert(qm2 %4 == 3);
+        FpE_elem x = FpE_elem(1); 
+        for (int i = 0; i < Fext.s; i++) {
+
+            NTL::ZZ q2 = NTL::power( NTL::ZZ(Fp_elem::modulus()), Fext.k / div ); 
+            auto b = fast_pow(newa, ( q2 - 1) / 4);
+            // in that case, we also need to that if there is a solution
+            if (i == 0 ) {
+                auto a0 = b * b;
+                a0 = a0 * fast_pow(a0, q2);
+                if ( a0 == FpE_elem(-1) ) {
+                    // no sqrt
+                    return {};
+                } 
+            }
+            
+            auto b1 = fast_pow(b, q2);
+            x *= b1;
+            if (b * b1 == FpE_elem(1)) {
+                newa = b * b * newa;
+            }
+            else {
+                newa = b * b * newa * Fext.QR_precomp[i].second;
+                x *= Fext.QR_precomp[i].first;
+            }
+
+            div = div * 2;
+        }
+
+        NTL::ZZ q = NTL::power( NTL::ZZ(Fp_elem::modulus()), Fext.k / div );
+        assert(q % 4 == 3); 
+        x *= sqrt_3mod4(Fext, newa, q);
+
+        assert( x * x == a);
+        return x;
+
+    }
+    else {
+        FpE_elem x;
+        NTL::ZZ q = NTL::power( NTL::ZZ(Fp_elem::modulus()), Fext.k );
+        
+        assert(q %4 == 3);
+        FpE_elem a1 = fast_pow(a, (q - 1) / 4);  
+        auto alpha = a1 * a1 * a;
+        auto a0 = NTL::power(alpha, q) * alpha;
+        if (a0 == FpE_elem(-1)) {
+            return {};
+        }
+        else {
+            auto x0 = a1 * a;
+            if (alpha == FpE_elem(-1)) {
+                assert(Fext.Fp2_gen * Fext.Fp2_gen == FpE_elem(-1));
+                x = Fext.Fp2_gen * x0;
+            }
+            else {
+                auto b = fast_pow(1 + alpha, (q-1) / 2);
+                x = b * x0;
+            }
+            return x;
+        }
+        return a1;
+    }
+    return {};    
+
+}
+
+FpE_elem QR_test(const FpE_elem &a, const NTL::ZZ &k) {
+
+    NTL::ZZ expo(0);
+    NTL::ZZ pow = NTL::ZZ(Fp_elem::modulus());
+    for (int i = 0; i < k; i++) {
+        expo = expo + NTL::power(pow, i);
+    }
+    auto b = fast_pow(a, expo);
+    return fast_pow(b, NTL::ZZ((Fp_elem::modulus() - 1) / 2));
+}
+
 
 FpX_elem _construct_f_from_f2(FpEX_elem const &f2) {
     FpEX_elem f2_conj;
@@ -113,6 +240,26 @@ mat_Fp _compute_frobenius_matrix(unsigned degree) {
     return frob_action;
 }
 
+void BuildNiceIrred(FpEX_elem &f, int n) {
+
+    
+    int count = 0;
+    bool found = false;
+    do {
+        count++;
+        SetCoeff(f, n);
+        f[1] = random_FpE_elem(); 
+        f[0] = random_FpE_elem();
+        found = IterIrredTest(f);
+   } while (!found && count < 1000);
+   if (!found) {
+    std::cout << "\nnice irred for degree " << n << " need not nice irred \n";
+    NTL::BuildIrred(f, n);
+   }
+
+
+}
+
 // ZZ_pE must be Fp2
 Fp2k::Fp2k(unsigned degree)
 {
@@ -123,6 +270,7 @@ Fp2k::Fp2k(unsigned degree)
 
     FpE_context F;
     if (degree == 1) {
+        s = 0;
         F.save();
         FpX_elem Fp2_gen_poly;
         FpE_elem Fp2_gen;
@@ -139,8 +287,10 @@ Fp2k::Fp2k(unsigned degree)
         FpX_elem f;
         bool found = false;
         for (size_t i = 0 ; i < 1000 ; i++) {
-            NTL::BuildIrred(f_2, degree);
+            // NTL::BuildIrred(f_2, degree);
+            BuildNiceIrred(f_2, degree);
             f = _construct_f_from_f2(f_2);
+            // std::cout << f << "\n";
 
             if (NTL::SquareFreeDecomp(f)[0].b == 1) { //<- check if irreducible
                 this->mod_Fp2 = f_2;
@@ -158,6 +308,65 @@ Fp2k::Fp2k(unsigned degree)
         FpE_elem roots[2];
         { //init Fp2k temp
             FpE_push push(f);
+
+            // making the QR precomputation 
+            // first we need to compute the 2adic valuation of k
+            s = 0;
+            auto temp = k;
+            while (temp % 2 == 0) {
+                s = s + 1;
+                temp = temp / 2;
+            }
+        
+            // making the actual precomputation
+            QR_precomp = {};
+
+            long div = 1;
+            NTL::ZZ expo(1);
+            
+            for (int i = 0; i < s; i++) {
+                // std::cout << "QR precomp i = " << i << "\n";
+
+                FpE_elem c0(1);
+                FpE_elem c;
+                NTL::ZZ q = NTL::power(NTL::ZZ(Fp_elem::modulus()), (long) k / div);
+                NTL::ZZ q2 = NTL::power(NTL::ZZ(Fp_elem::modulus()), (long) 2 * k / div);
+                
+
+                // std::cout << "expo " << expo << "\n";
+                while (c0 == FpE_elem(1)) {
+                
+                    c = random_FpE_elem();
+                    c = fast_pow(c, expo);
+                    assert(c == fast_pow(c, q2));
+                    
+                    
+                    c0 = QR_test(c, NTL::ZZ(2 * k / div));
+                    assert(c0 == FpE_elem(1) || c0 == FpE_elem(-1));
+                } 
+                auto d = fast_pow(c, (q - 1) / 2 );
+            
+                QR_precomp.push_back({ 1 / (d * c), ( d * c ) * (d * c) });
+                
+                div = div * 2;
+                expo = expo * ( NTL::ZZ(1) + q);
+            }
+            // if (s > 0) {
+            //     FpE_elem c0(1);
+            //     FpE_elem c;
+            //     NTL::ZZ q = NTL::power(NTL::ZZ(Fp_elem::modulus()), (long) k);
+            //     while (c0 == FpE_elem(1)) {
+            //         c = random_FpE_elem();
+            //         c0 = QR_test(c, NTL::ZZ(2 * k));
+            //         assert(c0 == FpE_elem(1) || c0 == FpE_elem(-1));
+            //     } 
+            //     auto d = fast_pow(c, (q - 1) / 2 );
+            
+            //     QR_precomp = {{ 1 / (d * c), ( d * c ) * (d * c) }};
+            
+            // }
+
+
             F.save();
             this->frob_action = _compute_frobenius_matrix(2*k);
 
@@ -371,6 +580,18 @@ Fp2k::Fp2k(unsigned degree)
     this->iota_y_num = ymap_up;
     this->iota_y_denom = ymap_down;
     // std::cout << "Done with one!" << std::endl;
+
+   
+    // for (int i = 0; i < s; i ++) {
+
+    //     FpE_elem c0(1);
+    //     while (c0 == FpE_elem(1)) {
+    //         FpE_elem c = NTL::random_FpE_elem();
+    //         c0 = 
+    //     } 
+
+    // }
+
 }
 
 FpE_elem lift(FpE_elem const &alpha, Fp2k const &Fext)
@@ -423,7 +644,7 @@ FpE_elem coerce(FpE_elem const &alpha, Fp2k const &Fext) //super confusing that 
             conv(alpha_low, alpha_poly);
         }
     }
-    //assert (lift(alpha_low, Fext) == alpha);
+    assert (lift(alpha_low, Fext) == alpha); // if this fails, then this means that we are trying to coerce and element that is not coercible
     return alpha_low;
 }
 

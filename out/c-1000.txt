@@ -1,0 +1,134 @@
++ ./main bigc w 2147483647 1019 2
+1019 10190 31 9.99577
+The target bound is 1094 bits
+Finding primes...
+Done!
+
+Set of primes =
+787 811 823 827 839 859 863 883 887 907 911 919 947 967 971 983 991 1031 1039 1051 1063 1087 1091 1103 1123 1151 1163 1171 1187 1223 1231 1259 1279 1283 1291 1303 1307 1319 1327 1367 1399 1423 1427 1439 1447 1451 1459 1471 1483 1487 1499 1511 1523 1531 1543 1559 1567 1571 1579 1583 1607 1619 1627 1663 1667 1699 1723 1747 1759 1783 1787 1811 1823 1831 1847 1867 1871 1879 1907 1931 1951 1979 1987 1999 2003 2011 2027 2039 2063 2083 2087 2099 2111 2131 2143 2179 2203 2207 2239 2243 2251 2267 2287 2311 2339 
+We are working with 105 primes.
+
+Initialising CRT coeffs...
+Done!
+
+progress = 6/105
+SS Eval WeberCRT of size 6 with: 
+787 811 823 827 839 859 
+
+
+progress = 12/105
+SS Eval WeberCRT of size 6 with: 
+863 883 887 907 911 919 
+
+
+progress = 18/105
+SS Eval WeberCRT of size 6 with: 
+947 967 971 983 991 1031 
+
+
+progress = 23/105
+SS Eval WeberCRT of size 5 with: 
+1039 1051 1063 1087 1091 
+
+
+progress = 28/105
+SS Eval WeberCRT of size 5 with: 
+1103 1123 1151 1163 1171 
+
+
+progress = 33/105
+SS Eval WeberCRT of size 5 with: 
+1187 1223 1231 1259 1279 
+
+
+progress = 38/105
+SS Eval WeberCRT of size 5 with: 
+1283 1291 1303 1307 1319 
+
+
+progress = 43/105
+SS Eval WeberCRT of size 5 with: 
+1327 1367 1399 1423 1427 
+
+
+progress = 48/105
+SS Eval WeberCRT of size 5 with: 
+1439 1447 1451 1459 1471 
+
+
+progress = 53/105
+SS Eval WeberCRT of size 5 with: 
+1483 1487 1499 1511 1523 
+
+
+progress = 58/105
+SS Eval WeberCRT of size 5 with: 
+1531 1543 1559 1567 1571 
+
+
+progress = 63/105
+SS Eval WeberCRT of size 5 with: 
+1579 1583 1607 1619 1627 
+
+
+progress = 68/105
+SS Eval WeberCRT of size 5 with: 
+1663 1667 1699 1723 1747 
+
+
+progress = 73/105
+SS Eval WeberCRT of size 5 with: 
+1759 1783 1787 1811 1823 
+
+
+progress = 78/105
+SS Eval WeberCRT of size 5 with: 
+1831 1847 1867 1871 1879 
+
+
+progress = 83/105
+SS Eval WeberCRT of size 5 with: 
+1907 1931 1951 1979 1987 
+
+
+progress = 88/105
+SS Eval WeberCRT of size 5 with: 
+1999 2003 2011 2027 2039 
+
+
+progress = 93/105
+SS Eval WeberCRT of size 5 with: 
+2063 2083 2087 2099 2111 
+
+
+progress = 98/105
+SS Eval WeberCRT of size 5 with: 
+2131 2143 2179 2203 2207 
+
+
+progress = 103/105
+SS Eval WeberCRT of size 5 with: 
+2239 2243 2251 2267 2287 
+
+
+progress = 105/105
+SS Eval WeberCRT of size 2 with: 
+2311 2339 
+
+
+Finalising CRT coeffs...
+Done!
+
+
+Total ModEvalBigCW time = 46.3891
+Coefficient of x^0 is: 268435456
+Coefficient of x^1 is: 316104367
+Coefficient of x^2 is: 2135506190
+Coefficient of x^1017 is: 1163849228
+Coefficient of x^1018 is: 92978275
+Coefficient of x^1019 is: 1657813746
+Coefficient of x^1020 is: 1
+
+real	0m46,409s
+user	0m46,335s
+sys	0m0,057s

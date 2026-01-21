@@ -1,0 +1,999 @@
++ ./main bigc w 2147483647 8011 2
+8011 104143 31 12.9681
+The target bound is 10325 bits
+Finding primes...
+Done!
+
+Set of primes =
+1951 1979 1987 1999 2003 2011 2027 2039 2063 2083 2087 2099 2111 2131 2143 2179 2203 2207 2239 2243 2251 2267 2287 2311 2339 2347 2351 2371 2383 2399 2411 2423 2447 2459 2467 2503 2531 2539 2543 2551 2579 2591 2647 2659 2663 2671 2683 2687 2699 2707 2711 2719 2731 2767 2791 2803 2819 2843 2851 2879 2887 2903 2927 2939 2963 2971 2999 3011 3019 3023 3067 3079 3083 3119 3163 3167 3187 3191 3203 3251 3259 3271 3299 3307 3319 3323 3331 3343 3347 3359 3371 3391 3407 3463 3467 3491 3499 3511 3527 3539 3547 3559 3571 3583 3607 3623 3631 3643 3659 3671 3691 3719 3727 3739 3767 3779 3803 3823 3847 3851 3863 3907 3911 3919 3923 3931 3943 3947 3967 4003 4007 4019 4027 4051 4079 4091 4099 4111 4127 4139 4159 4211 4219 4231 4243 4259 4271 4283 4327 4339 4363 4391 4423 4447 4451 4463 4483 4507 4519 4523 4547 4567 4583 4591 4603 4639 4643 4651 4663 4679 4691 4703 4723 4751 4759 4783 4787 4799 4831 4871 4903 4919 4931 4943 4951 4967 4987 4999 5003 5011 5023 5039 5051 5059 5087 5099 5107 5119 5147 5167 5171 5179 5227 5231 5279 5303 5323 5347 5351 5387 5399 5407 5419 5431 5443 5471 5479 5483 5503 5507 5519 5527 5531 5563 5591 5623 5639 5647 5651 5659 5683 5711 5743 5779 5783 5791 5807 5827 5839 5843 5851 5867 5879 5903 5923 5927 5939 5987 6007 6011 6043 6047 6067 6079 6091 6131 6143 6151 6163 6199 6203 6211 6247 6263 6271 6287 6299 6311 6323 6343 6359 6367 6379 6427 6451 6491 6547 6551 6563 6571 6599 6607 6619 6659 6679 6691 6703 6719 6763 6779 6791 6803 6823 6827 6863 6871 6883 6899 6907 6911 6947 6959 6967 6971 6983 6991 7019 7027 7039 7043 7079 7103 7127 7151 7159 7187 7207 7211 7219 7243 7247 7283 7307 7331 7351 7411 7451 7459 7487 7499 7507 7523 7547 7559 7583 7591 7603 7607 7639 7643 7687 7691 7699 7703 7723 7727 7759 7823 7867 7879 7883 7907 7919 7927 7951 7963 8039 8059 8087 8111 8123 8147 8167 8171 8179 8191 8219 8231 8243 8263 8287 8291 8311 8363 8387 8419 8423 8431 8443 8447 8467 8527 8539 8543 8563 8599 8623 8627 8647 8663 8699 8707 8719 8731 8747 8779 8783 8803 8807 8819 8831 8839 8863 8867 8887 8923 8951 8963 8971 8999 9007 9011 9043 9059 9067 9091 9103 9127 9151 9187 9199 9203 9227 9239 9283 9311 9319 9323 9343 9371 9391 9403 9419 9431 9439 9463 9467 9479 9491 9511 9539 9547 9551 9587 9619 9623 9631 9643 9679 9719 9739 9743 9767 9787 9791 9803 9811 9839 9851 9859 9871 9883 9887 9907 9923 9931 9967 10007 10039 10067 10079 10091 10099 10103 10111 10139 10151 10159 10163 10211 10223 10243 10247 10259 10267 10271 10303 10331 10343 10391 10399 10427 10459 10463 10487 10499 10531 10559 10567 10607 10627 10631 10639 10651 10663 10667 10687 10691 10711 10723 10739 10771 10799 10831 10847 10859 10867 10883 10891 10903 10939 10979 10987 11003 11027 11047 11059 11071 11083 11087 11119 11131 11159 11171 11239 11243 11251 11279 11287 11299 11311 11351 11383 11399 11411 11423 11443 11447 11467 11471 11483 11491 11503 11519 11527 11551 11579 11587 11699 11719 11731 11743 11779 11783 11807 11827 11831 11839 11863 11867 11887 11903 11923 11927 11939 11959 11971 11987 12007 12011 12043 12071 12107 12119 12143 12163 12203 12211 12227 12239 12251 12263 12323 12343 12347 12379 12391 12451 12479 12487 12491 12503 12511 12527 12539 12547 12583 12611 12619 12647 12659 12671 12703 12739 12743 12763 12791 12799 12823 12899 12907 12911 12919 12923 12959 12967 12979 12983 13003 13007 13043 13063 13099 13103 13127 13147 13151 13159 13163 13171 13183 13187 13219 13259 13267 13291 13327 13331 13339 13367 13399 13411 13451 13463 13487 13499 13523 13567 13591 13619 13627 13679 13687 13691 13711 13723 13751 13759 13763 13799 13807 13831 13859 13879 13883 13903 13907 13931 13963 13967 13999 14011 14051 14071 14083 14087 14107 14143 14159 14207 14243 14251 14303 14323 14327 14347 14387 14407 14411 14419 14423 14431 14447 14479 14503 14519 14543 14551 14563 14591 14627 14639 14683 14699 14723 14731 14747 14759 14767 14771 14779 14783 14827 14831 14843 14851 14867 14879 14887 14891 14923 14939 14947 14951 14983 15031 15083 15091 15107 15131 15139 15187 15199 15227 15259 15263 15271 15287 15299 15307 15319 15331 15359 15383 15391 15427 15439 15443 15451 15467 15511 15527 15551 15559 15583 15607 15619 15643 15647 15667 15671 15679 15683 15727 15731 15739 15767 15787 15791 15803 15823 15859 15887 15907 15919 15923 15959 15971 15991 16007 16063 16067 16087 16091 16103 16111 16127 16139 16183 16187 
+We are working with 800 primes.
+
+Initialising CRT coeffs...
+Done!
+
+progress = 5/800
+SS Eval WeberCRT of size 5 with: 
+1951 1979 1987 1999 2003 
+
+
+progress = 10/800
+SS Eval WeberCRT of size 5 with: 
+2011 2027 2039 2063 2083 
+
+
+progress = 15/800
+SS Eval WeberCRT of size 5 with: 
+2087 2099 2111 2131 2143 
+
+
+progress = 20/800
+SS Eval WeberCRT of size 5 with: 
+2179 2203 2207 2239 2243 
+
+
+progress = 25/800
+SS Eval WeberCRT of size 5 with: 
+2251 2267 2287 2311 2339 
+
+
+progress = 30/800
+SS Eval WeberCRT of size 5 with: 
+2347 2351 2371 2383 2399 
+
+
+progress = 35/800
+SS Eval WeberCRT of size 5 with: 
+2411 2423 2447 2459 2467 
+
+
+progress = 40/800
+SS Eval WeberCRT of size 5 with: 
+2503 2531 2539 2543 2551 
+
+
+progress = 45/800
+SS Eval WeberCRT of size 5 with: 
+2579 2591 2647 2659 2663 
+
+
+progress = 50/800
+SS Eval WeberCRT of size 5 with: 
+2671 2683 2687 2699 2707 
+
+
+progress = 55/800
+SS Eval WeberCRT of size 5 with: 
+2711 2719 2731 2767 2791 
+
+
+progress = 60/800
+SS Eval WeberCRT of size 5 with: 
+2803 2819 2843 2851 2879 
+
+
+progress = 65/800
+SS Eval WeberCRT of size 5 with: 
+2887 2903 2927 2939 2963 
+
+
+progress = 70/800
+SS Eval WeberCRT of size 5 with: 
+2971 2999 3011 3019 3023 
+
+
+progress = 75/800
+SS Eval WeberCRT of size 5 with: 
+3067 3079 3083 3119 3163 
+
+
+progress = 80/800
+SS Eval WeberCRT of size 5 with: 
+3167 3187 3191 3203 3251 
+
+
+progress = 85/800
+SS Eval WeberCRT of size 5 with: 
+3259 3271 3299 3307 3319 
+
+
+progress = 90/800
+SS Eval WeberCRT of size 5 with: 
+3323 3331 3343 3347 3359 
+
+
+progress = 95/800
+SS Eval WeberCRT of size 5 with: 
+3371 3391 3407 3463 3467 
+
+
+progress = 100/800
+SS Eval WeberCRT of size 5 with: 
+3491 3499 3511 3527 3539 
+
+
+progress = 105/800
+SS Eval WeberCRT of size 5 with: 
+3547 3559 3571 3583 3607 
+
+
+progress = 110/800
+SS Eval WeberCRT of size 5 with: 
+3623 3631 3643 3659 3671 
+
+
+progress = 115/800
+SS Eval WeberCRT of size 5 with: 
+3691 3719 3727 3739 3767 
+
+
+progress = 120/800
+SS Eval WeberCRT of size 5 with: 
+3779 3803 3823 3847 3851 
+
+
+progress = 125/800
+SS Eval WeberCRT of size 5 with: 
+3863 3907 3911 3919 3923 
+
+
+progress = 130/800
+SS Eval WeberCRT of size 5 with: 
+3931 3943 3947 3967 4003 
+
+
+progress = 135/800
+SS Eval WeberCRT of size 5 with: 
+4007 4019 4027 4051 4079 
+
+
+progress = 139/800
+SS Eval WeberCRT of size 4 with: 
+4091 4099 4111 4127 
+
+
+progress = 143/800
+SS Eval WeberCRT of size 4 with: 
+4139 4159 4211 4219 
+
+
+progress = 147/800
+SS Eval WeberCRT of size 4 with: 
+4231 4243 4259 4271 
+
+
+progress = 151/800
+SS Eval WeberCRT of size 4 with: 
+4283 4327 4339 4363 
+
+
+progress = 155/800
+SS Eval WeberCRT of size 4 with: 
+4391 4423 4447 4451 
+
+
+progress = 159/800
+SS Eval WeberCRT of size 4 with: 
+4463 4483 4507 4519 
+
+
+progress = 163/800
+SS Eval WeberCRT of size 4 with: 
+4523 4547 4567 4583 
+
+
+progress = 167/800
+SS Eval WeberCRT of size 4 with: 
+4591 4603 4639 4643 
+
+
+progress = 171/800
+SS Eval WeberCRT of size 4 with: 
+4651 4663 4679 4691 
+
+
+progress = 175/800
+SS Eval WeberCRT of size 4 with: 
+4703 4723 4751 4759 
+
+
+progress = 179/800
+SS Eval WeberCRT of size 4 with: 
+4783 4787 4799 4831 
+
+
+progress = 183/800
+SS Eval WeberCRT of size 4 with: 
+4871 4903 4919 4931 
+
+
+progress = 187/800
+SS Eval WeberCRT of size 4 with: 
+4943 4951 4967 4987 
+
+
+progress = 191/800
+SS Eval WeberCRT of size 4 with: 
+4999 5003 5011 5023 
+
+
+progress = 195/800
+SS Eval WeberCRT of size 4 with: 
+5039 5051 5059 5087 
+
+
+progress = 199/800
+SS Eval WeberCRT of size 4 with: 
+5099 5107 5119 5147 
+
+
+progress = 203/800
+SS Eval WeberCRT of size 4 with: 
+5167 5171 5179 5227 
+
+
+progress = 207/800
+SS Eval WeberCRT of size 4 with: 
+5231 5279 5303 5323 
+
+
+progress = 211/800
+SS Eval WeberCRT of size 4 with: 
+5347 5351 5387 5399 
+
+
+progress = 215/800
+SS Eval WeberCRT of size 4 with: 
+5407 5419 5431 5443 
+
+
+progress = 219/800
+SS Eval WeberCRT of size 4 with: 
+5471 5479 5483 5503 
+
+
+progress = 223/800
+SS Eval WeberCRT of size 4 with: 
+5507 5519 5527 5531 
+
+
+progress = 227/800
+SS Eval WeberCRT of size 4 with: 
+5563 5591 5623 5639 
+
+
+progress = 231/800
+SS Eval WeberCRT of size 4 with: 
+5647 5651 5659 5683 
+
+
+progress = 235/800
+SS Eval WeberCRT of size 4 with: 
+5711 5743 5779 5783 
+
+
+progress = 239/800
+SS Eval WeberCRT of size 4 with: 
+5791 5807 5827 5839 
+
+
+progress = 243/800
+SS Eval WeberCRT of size 4 with: 
+5843 5851 5867 5879 
+
+
+progress = 247/800
+SS Eval WeberCRT of size 4 with: 
+5903 5923 5927 5939 
+
+
+progress = 251/800
+SS Eval WeberCRT of size 4 with: 
+5987 6007 6011 6043 
+
+
+progress = 255/800
+SS Eval WeberCRT of size 4 with: 
+6047 6067 6079 6091 
+
+
+progress = 259/800
+SS Eval WeberCRT of size 4 with: 
+6131 6143 6151 6163 
+
+
+progress = 263/800
+SS Eval WeberCRT of size 4 with: 
+6199 6203 6211 6247 
+
+
+progress = 267/800
+SS Eval WeberCRT of size 4 with: 
+6263 6271 6287 6299 
+
+
+progress = 271/800
+SS Eval WeberCRT of size 4 with: 
+6311 6323 6343 6359 
+
+
+progress = 275/800
+SS Eval WeberCRT of size 4 with: 
+6367 6379 6427 6451 
+
+
+progress = 279/800
+SS Eval WeberCRT of size 4 with: 
+6491 6547 6551 6563 
+
+
+progress = 283/800
+SS Eval WeberCRT of size 4 with: 
+6571 6599 6607 6619 
+
+
+progress = 287/800
+SS Eval WeberCRT of size 4 with: 
+6659 6679 6691 6703 
+
+
+progress = 291/800
+SS Eval WeberCRT of size 4 with: 
+6719 6763 6779 6791 
+
+
+progress = 295/800
+SS Eval WeberCRT of size 4 with: 
+6803 6823 6827 6863 
+
+
+progress = 299/800
+SS Eval WeberCRT of size 4 with: 
+6871 6883 6899 6907 
+
+
+progress = 303/800
+SS Eval WeberCRT of size 4 with: 
+6911 6947 6959 6967 
+
+
+progress = 307/800
+SS Eval WeberCRT of size 4 with: 
+6971 6983 6991 7019 
+
+
+progress = 311/800
+SS Eval WeberCRT of size 4 with: 
+7027 7039 7043 7079 
+
+
+progress = 315/800
+SS Eval WeberCRT of size 4 with: 
+7103 7127 7151 7159 
+
+
+progress = 319/800
+SS Eval WeberCRT of size 4 with: 
+7187 7207 7211 7219 
+
+
+progress = 323/800
+SS Eval WeberCRT of size 4 with: 
+7243 7247 7283 7307 
+
+
+progress = 327/800
+SS Eval WeberCRT of size 4 with: 
+7331 7351 7411 7451 
+
+
+progress = 331/800
+SS Eval WeberCRT of size 4 with: 
+7459 7487 7499 7507 
+
+
+progress = 335/800
+SS Eval WeberCRT of size 4 with: 
+7523 7547 7559 7583 
+
+
+progress = 339/800
+SS Eval WeberCRT of size 4 with: 
+7591 7603 7607 7639 
+
+
+progress = 343/800
+SS Eval WeberCRT of size 4 with: 
+7643 7687 7691 7699 
+
+
+progress = 347/800
+SS Eval WeberCRT of size 4 with: 
+7703 7723 7727 7759 
+
+
+progress = 351/800
+SS Eval WeberCRT of size 4 with: 
+7823 7867 7879 7883 
+
+
+progress = 355/800
+SS Eval WeberCRT of size 4 with: 
+7907 7919 7927 7951 
+
+
+progress = 359/800
+SS Eval WeberCRT of size 4 with: 
+7963 8039 8059 8087 
+
+
+progress = 363/800
+SS Eval WeberCRT of size 4 with: 
+8111 8123 8147 8167 
+
+
+progress = 367/800
+SS Eval WeberCRT of size 4 with: 
+8171 8179 8191 8219 
+
+
+progress = 371/800
+SS Eval WeberCRT of size 4 with: 
+8231 8243 8263 8287 
+
+
+progress = 375/800
+SS Eval WeberCRT of size 4 with: 
+8291 8311 8363 8387 
+
+
+progress = 379/800
+SS Eval WeberCRT of size 4 with: 
+8419 8423 8431 8443 
+
+
+progress = 383/800
+SS Eval WeberCRT of size 4 with: 
+8447 8467 8527 8539 
+
+
+progress = 387/800
+SS Eval WeberCRT of size 4 with: 
+8543 8563 8599 8623 
+
+
+progress = 391/800
+SS Eval WeberCRT of size 4 with: 
+8627 8647 8663 8699 
+
+
+progress = 395/800
+SS Eval WeberCRT of size 4 with: 
+8707 8719 8731 8747 
+
+
+progress = 399/800
+SS Eval WeberCRT of size 4 with: 
+8779 8783 8803 8807 
+
+
+progress = 403/800
+SS Eval WeberCRT of size 4 with: 
+8819 8831 8839 8863 
+
+
+progress = 407/800
+SS Eval WeberCRT of size 4 with: 
+8867 8887 8923 8951 
+
+
+progress = 411/800
+SS Eval WeberCRT of size 4 with: 
+8963 8971 8999 9007 
+
+
+progress = 415/800
+SS Eval WeberCRT of size 4 with: 
+9011 9043 9059 9067 
+
+
+progress = 419/800
+SS Eval WeberCRT of size 4 with: 
+9091 9103 9127 9151 
+
+
+progress = 423/800
+SS Eval WeberCRT of size 4 with: 
+9187 9199 9203 9227 
+
+
+progress = 427/800
+SS Eval WeberCRT of size 4 with: 
+9239 9283 9311 9319 
+
+
+progress = 431/800
+SS Eval WeberCRT of size 4 with: 
+9323 9343 9371 9391 
+
+
+progress = 435/800
+SS Eval WeberCRT of size 4 with: 
+9403 9419 9431 9439 
+
+
+progress = 439/800
+SS Eval WeberCRT of size 4 with: 
+9463 9467 9479 9491 
+
+
+progress = 443/800
+SS Eval WeberCRT of size 4 with: 
+9511 9539 9547 9551 
+
+
+progress = 447/800
+SS Eval WeberCRT of size 4 with: 
+9587 9619 9623 9631 
+
+
+progress = 451/800
+SS Eval WeberCRT of size 4 with: 
+9643 9679 9719 9739 
+
+
+progress = 455/800
+SS Eval WeberCRT of size 4 with: 
+9743 9767 9787 9791 
+
+
+progress = 459/800
+SS Eval WeberCRT of size 4 with: 
+9803 9811 9839 9851 
+
+
+progress = 463/800
+SS Eval WeberCRT of size 4 with: 
+9859 9871 9883 9887 
+
+
+progress = 467/800
+SS Eval WeberCRT of size 4 with: 
+9907 9923 9931 9967 
+
+
+progress = 471/800
+SS Eval WeberCRT of size 4 with: 
+10007 10039 10067 10079 
+
+
+progress = 475/800
+SS Eval WeberCRT of size 4 with: 
+10091 10099 10103 10111 
+
+
+progress = 479/800
+SS Eval WeberCRT of size 4 with: 
+10139 10151 10159 10163 
+
+
+progress = 483/800
+SS Eval WeberCRT of size 4 with: 
+10211 10223 10243 10247 
+
+
+progress = 487/800
+SS Eval WeberCRT of size 4 with: 
+10259 10267 10271 10303 
+
+
+progress = 491/800
+SS Eval WeberCRT of size 4 with: 
+10331 10343 10391 10399 
+
+
+progress = 495/800
+SS Eval WeberCRT of size 4 with: 
+10427 10459 10463 10487 
+
+
+progress = 499/800
+SS Eval WeberCRT of size 4 with: 
+10499 10531 10559 10567 
+
+
+progress = 503/800
+SS Eval WeberCRT of size 4 with: 
+10607 10627 10631 10639 
+
+
+progress = 507/800
+SS Eval WeberCRT of size 4 with: 
+10651 10663 10667 10687 
+
+
+progress = 511/800
+SS Eval WeberCRT of size 4 with: 
+10691 10711 10723 10739 
+
+
+progress = 515/800
+SS Eval WeberCRT of size 4 with: 
+10771 10799 10831 10847 
+
+
+progress = 519/800
+SS Eval WeberCRT of size 4 with: 
+10859 10867 10883 10891 
+
+
+progress = 523/800
+SS Eval WeberCRT of size 4 with: 
+10903 10939 10979 10987 
+
+
+progress = 527/800
+SS Eval WeberCRT of size 4 with: 
+11003 11027 11047 11059 
+
+
+progress = 531/800
+SS Eval WeberCRT of size 4 with: 
+11071 11083 11087 11119 
+
+
+progress = 535/800
+SS Eval WeberCRT of size 4 with: 
+11131 11159 11171 11239 
+
+
+progress = 539/800
+SS Eval WeberCRT of size 4 with: 
+11243 11251 11279 11287 
+
+
+progress = 543/800
+SS Eval WeberCRT of size 4 with: 
+11299 11311 11351 11383 
+
+
+progress = 547/800
+SS Eval WeberCRT of size 4 with: 
+11399 11411 11423 11443 
+
+
+progress = 551/800
+SS Eval WeberCRT of size 4 with: 
+11447 11467 11471 11483 
+
+
+progress = 555/800
+SS Eval WeberCRT of size 4 with: 
+11491 11503 11519 11527 
+
+
+progress = 559/800
+SS Eval WeberCRT of size 4 with: 
+11551 11579 11587 11699 
+
+
+progress = 563/800
+SS Eval WeberCRT of size 4 with: 
+11719 11731 11743 11779 
+
+
+progress = 567/800
+SS Eval WeberCRT of size 4 with: 
+11783 11807 11827 11831 
+
+
+progress = 571/800
+SS Eval WeberCRT of size 4 with: 
+11839 11863 11867 11887 
+
+
+progress = 575/800
+SS Eval WeberCRT of size 4 with: 
+11903 11923 11927 11939 
+
+
+progress = 579/800
+SS Eval WeberCRT of size 4 with: 
+11959 11971 11987 12007 
+
+
+progress = 583/800
+SS Eval WeberCRT of size 4 with: 
+12011 12043 12071 12107 
+
+
+progress = 587/800
+SS Eval WeberCRT of size 4 with: 
+12119 12143 12163 12203 
+
+
+progress = 591/800
+SS Eval WeberCRT of size 4 with: 
+12211 12227 12239 12251 
+
+
+progress = 595/800
+SS Eval WeberCRT of size 4 with: 
+12263 12323 12343 12347 
+
+
+progress = 599/800
+SS Eval WeberCRT of size 4 with: 
+12379 12391 12451 12479 
+
+
+progress = 603/800
+SS Eval WeberCRT of size 4 with: 
+12487 12491 12503 12511 
+
+
+progress = 607/800
+SS Eval WeberCRT of size 4 with: 
+12527 12539 12547 12583 
+
+
+progress = 611/800
+SS Eval WeberCRT of size 4 with: 
+12611 12619 12647 12659 
+
+
+progress = 615/800
+SS Eval WeberCRT of size 4 with: 
+12671 12703 12739 12743 
+
+
+progress = 619/800
+SS Eval WeberCRT of size 4 with: 
+12763 12791 12799 12823 
+
+
+progress = 623/800
+SS Eval WeberCRT of size 4 with: 
+12899 12907 12911 12919 
+
+
+progress = 627/800
+SS Eval WeberCRT of size 4 with: 
+12923 12959 12967 12979 
+
+
+progress = 631/800
+SS Eval WeberCRT of size 4 with: 
+12983 13003 13007 13043 
+
+
+progress = 635/800
+SS Eval WeberCRT of size 4 with: 
+13063 13099 13103 13127 
+
+
+progress = 639/800
+SS Eval WeberCRT of size 4 with: 
+13147 13151 13159 13163 
+
+
+progress = 643/800
+SS Eval WeberCRT of size 4 with: 
+13171 13183 13187 13219 
+
+
+progress = 647/800
+SS Eval WeberCRT of size 4 with: 
+13259 13267 13291 13327 
+
+
+progress = 651/800
+SS Eval WeberCRT of size 4 with: 
+13331 13339 13367 13399 
+
+
+progress = 655/800
+SS Eval WeberCRT of size 4 with: 
+13411 13451 13463 13487 
+
+
+progress = 659/800
+SS Eval WeberCRT of size 4 with: 
+13499 13523 13567 13591 
+
+
+progress = 663/800
+SS Eval WeberCRT of size 4 with: 
+13619 13627 13679 13687 
+
+
+progress = 667/800
+SS Eval WeberCRT of size 4 with: 
+13691 13711 13723 13751 
+
+
+progress = 671/800
+SS Eval WeberCRT of size 4 with: 
+13759 13763 13799 13807 
+
+
+progress = 675/800
+SS Eval WeberCRT of size 4 with: 
+13831 13859 13879 13883 
+
+
+progress = 679/800
+SS Eval WeberCRT of size 4 with: 
+13903 13907 13931 13963 
+
+
+progress = 683/800
+SS Eval WeberCRT of size 4 with: 
+13967 13999 14011 14051 
+
+
+progress = 687/800
+SS Eval WeberCRT of size 4 with: 
+14071 14083 14087 14107 
+
+
+progress = 691/800
+SS Eval WeberCRT of size 4 with: 
+14143 14159 14207 14243 
+
+
+progress = 695/800
+SS Eval WeberCRT of size 4 with: 
+14251 14303 14323 14327 
+
+
+progress = 699/800
+SS Eval WeberCRT of size 4 with: 
+14347 14387 14407 14411 
+
+
+progress = 703/800
+SS Eval WeberCRT of size 4 with: 
+14419 14423 14431 14447 
+
+
+progress = 707/800
+SS Eval WeberCRT of size 4 with: 
+14479 14503 14519 14543 
+
+
+progress = 711/800
+SS Eval WeberCRT of size 4 with: 
+14551 14563 14591 14627 
+
+
+progress = 715/800
+SS Eval WeberCRT of size 4 with: 
+14639 14683 14699 14723 
+
+
+progress = 719/800
+SS Eval WeberCRT of size 4 with: 
+14731 14747 14759 14767 
+
+
+progress = 723/800
+SS Eval WeberCRT of size 4 with: 
+14771 14779 14783 14827 
+
+
+progress = 727/800
+SS Eval WeberCRT of size 4 with: 
+14831 14843 14851 14867 
+
+
+progress = 731/800
+SS Eval WeberCRT of size 4 with: 
+14879 14887 14891 14923 
+
+
+progress = 735/800
+SS Eval WeberCRT of size 4 with: 
+14939 14947 14951 14983 
+
+
+progress = 739/800
+SS Eval WeberCRT of size 4 with: 
+15031 15083 15091 15107 
+
+
+progress = 743/800
+SS Eval WeberCRT of size 4 with: 
+15131 15139 15187 15199 
+
+
+progress = 747/800
+SS Eval WeberCRT of size 4 with: 
+15227 15259 15263 15271 
+
+
+progress = 751/800
+SS Eval WeberCRT of size 4 with: 
+15287 15299 15307 15319 
+
+
+progress = 755/800
+SS Eval WeberCRT of size 4 with: 
+15331 15359 15383 15391 
+
+
+progress = 759/800
+SS Eval WeberCRT of size 4 with: 
+15427 15439 15443 15451 
+
+
+progress = 763/800
+SS Eval WeberCRT of size 4 with: 
+15467 15511 15527 15551 
+
+
+progress = 767/800
+SS Eval WeberCRT of size 4 with: 
+15559 15583 15607 15619 
+
+
+progress = 771/800
+SS Eval WeberCRT of size 4 with: 
+15643 15647 15667 15671 
+
+
+progress = 775/800
+SS Eval WeberCRT of size 4 with: 
+15679 15683 15727 15731 
+
+
+progress = 779/800
+SS Eval WeberCRT of size 4 with: 
+15739 15767 15787 15791 
+
+
+progress = 783/800
+SS Eval WeberCRT of size 4 with: 
+15803 15823 15859 15887 
+
+
+progress = 787/800
+SS Eval WeberCRT of size 4 with: 
+15907 15919 15923 15959 
+
+
+progress = 791/800
+SS Eval WeberCRT of size 4 with: 
+15971 15991 16007 16063 
+
+
+progress = 795/800
+SS Eval WeberCRT of size 4 with: 
+16067 16087 16091 16103 
+
+
+progress = 799/800
+SS Eval WeberCRT of size 4 with: 
+16111 16127 16139 16183 
+
+
+progress = 800/800
+SS Eval WeberCRT of size 1 with: 
+16187 
+
+
+Finalising CRT coeffs...
+Done!
+
+
+Total ModEvalBigCW time = 2063.68
+Coefficient of x^0 is: 16384
+Coefficient of x^1 is: 353319385
+Coefficient of x^2 is: 45328568
+Coefficient of x^8009 is: 150268379
+Coefficient of x^8010 is: 925680749
+Coefficient of x^8011 is: 1613158131
+Coefficient of x^8012 is: 1
+
+real	34m24,022s
+user	34m21,318s
+sys	0m2,365s

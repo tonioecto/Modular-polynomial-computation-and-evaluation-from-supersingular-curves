@@ -1,0 +1,525 @@
+File: main
+Type: cpu
+Showing nodes accounting for 11.01s, 93.62% of 11.76s total
+Dropped 130 nodes (cum <= 0.06s)
+----------------------------------------------------------+-------------
+      flat  flat%   sum%        cum   cum%   calls calls% + context 	 	 
+----------------------------------------------------------+-------------
+                                            11.74s   100% |   main
+         0     0%     0%     11.74s 99.83%                | SpecialSupersingularEvaluationWeber
+                                             7.25s 61.75% |   FastInterpolateFromRoots
+                                             2.52s 21.47% |   FastSSEvalWeber
+                                             0.95s  8.09% |   order_to_weber_inv_full_list
+                                             0.31s  2.64% |   FastInterpolate
+                                             0.13s  1.11% |   Fp2k::Fp2k
+                                             0.13s  1.11% |   _GI___libc_free
+                                             0.10s  0.85% |   _ntl_gsadd
+                                             0.07s   0.6% |   NTL::mul
+                                             0.07s   0.6% |   _ntl_gscompare
+                                             0.07s   0.6% |   left_ideals_of_prime_norm_O0
+                                             0.05s  0.43% |   NTL::MulMod
+                                             0.03s  0.26% |   NTL::Vec::~Vec
+                                             0.02s  0.17% |   NTL::add
+----------------------------------------------------------+-------------
+                                            11.74s   100% |   _libc_start_main_impl
+         0     0%     0%     11.74s 99.83%                | _libc_start_call_main
+                                            11.74s   100% |   main
+----------------------------------------------------------+-------------
+                                            11.74s   100% |   start
+         0     0%     0%     11.74s 99.83%                | _libc_start_main_impl
+                                            11.74s   100% |   _libc_start_call_main
+----------------------------------------------------------+-------------
+                                            11.74s   100% |   _libc_start_call_main
+         0     0%     0%     11.74s 99.83%                | main
+                                            11.74s   100% |   SpecialSupersingularEvaluationWeber
+----------------------------------------------------------+-------------
+         0     0%     0%     11.74s 99.83%                | start
+                                            11.74s   100% |   _libc_start_main_impl
+----------------------------------------------------------+-------------
+                                             7.25s   100% |   SpecialSupersingularEvaluationWeber
+         0     0%     0%      7.25s 61.65%                | FastInterpolateFromRoots
+                                             6.65s 91.72% |   FastInterpolateFromRootsRec
+                                             0.55s  7.59% |   NTL::mul
+                                             0.05s  0.69% |   _GI___libc_free
+----------------------------------------------------------+-------------
+                                             5.92s 85.43% |   FastInterpolateFromRootsRec
+                                             0.55s  7.94% |   FastInterpolateFromRoots
+                                             0.14s  2.02% |   EnumerateAllWeberFast
+                                             0.10s  1.44% |   NTL::UseMulRem
+                                             0.09s  1.30% |   NTL::FFTMul
+                                             0.07s  1.01% |   SpecialSupersingularEvaluationWeber
+                                             0.05s  0.72% |   LinearCombo
+                                             0.04s  0.58% |   NTL::MulMod
+                                             0.04s  0.58% |   NTL::PlainMul
+                                             0.03s  0.43% |   FastInterpolate
+                                             0.02s  0.29% |   NTL::SqrMod
+     0.52s  4.42%  4.42%      6.93s 58.93%                | NTL::mul
+                                             2.29s 33.04% |   NTL::FFTMul
+                                             1.82s 26.26% |   NTL::PlainRem
+                                             1.04s 15.01% |   NTL::PlainMul
+                                             0.38s  5.48% |   NTL::MulMod
+                                             0.26s  3.75% |   NTL::UniqueArray::fake_null_function
+                                             0.15s  2.16% |   NTL::rem
+                                             0.12s  1.73% |   NTL::eval
+                                             0.12s  1.73% |   NTL::rem21
+                                             0.12s  1.73% |   NTL::zz_pX::normalize
+                                             0.11s  1.59% |   NTL::build
+                                             0.08s  1.15% |   _GI___libc_free
+                                             0.03s  0.43% |   _tls_get_addr
+                                             0.02s  0.29% |   [libntl.so.44.0.1]
+----------------------------------------------------------+-------------
+                                             6.65s   100% |   FastInterpolateFromRoots
+     0.07s   0.6%  5.02%      6.65s 56.55%                | FastInterpolateFromRootsRec
+                                             5.92s 89.02% |   NTL::mul
+                                             0.33s  4.96% |   _GI___libc_free
+                                             0.17s  2.56% |   NTL::SetCoeff
+                                             0.07s  1.05% |   NTL::negate
+                                             0.03s  0.45% |   NTL::Vec::AllocateTo
+                                             0.03s  0.45% |   [main]
+----------------------------------------------------------+-------------
+                                             2.52s   100% |   SpecialSupersingularEvaluationWeber
+     0.17s  1.45%  6.46%      2.52s 21.43%                | FastSSEvalWeber
+                                             1.16s 46.03% |   FastGreedyReduction3
+                                             0.58s 23.02% |   commutatorfind
+                                             0.13s  5.16% |   FastQuatLat::fast_right_order_and_gram
+                                             0.13s  5.16% |   WeberGetFromEnum
+                                             0.08s  3.17% |   WeberBasApplicationRemoteEndo
+                                             0.07s  2.78% |   Frob
+                                             0.05s  1.98% |   _GI___libc_free
+                                             0.03s  1.19% |   NTL::Vec::AllocateTo
+----------------------------------------------------------+-------------
+                                             2.29s   100% |   NTL::mul
+         0     0%  6.46%      2.29s 19.47%                | NTL::FFTMul
+                                             1.15s 50.22% |   NTL::TofftRep_trunc
+                                             1.03s 44.98% |   NTL::FromfftRep
+                                             0.09s  3.93% |   NTL::mul
+                                             0.02s  0.87% |   _GI___libc_malloc
+----------------------------------------------------------+-------------
+                                             1.82s 81.61% |   NTL::mul
+                                             0.26s 11.66% |   NTL::MulMod
+                                             0.11s  4.93% |   NTL::PlainGCD
+                                             0.03s  1.35% |   GoingDownTree
+     0.75s  6.38% 12.84%      2.23s 18.96%                | NTL::PlainRem
+                                             0.65s 29.15% |   NTL::UniqueArray::fake_null_function
+                                             0.33s 14.80% |   NTL::build
+                                             0.26s 11.66% |   _GI___libc_free
+                                             0.08s  3.59% |   NTL::zz_pX::normalize
+                                             0.04s  1.79% |   NTL::InvMod
+                                             0.04s  1.79% |   [libntl.so.44.0.1]
+                                             0.03s  1.35% |   _tls_get_addr
+                                             0.02s   0.9% |   NTL::PlainMul
+----------------------------------------------------------+-------------
+                                             0.65s 37.57% |   NTL::PlainRem
+                                             0.42s 24.28% |   NTL::build
+                                             0.26s 15.03% |   NTL::mul
+                                             0.22s 12.72% |   NTL::PlainMul
+                                             0.10s  5.78% |   NTL::SetCoeff
+                                             0.03s  1.73% |   NTL::FromfftRep
+                                             0.02s  1.16% |   NTL::negate
+     0.43s  3.66% 16.50%      1.73s 14.71%                | NTL::UniqueArray::fake_null_function
+                                             1.07s 61.85% |   _GI___libc_malloc
+                                             0.19s 10.98% |   _memset_avx2_unaligned_erms
+                                             0.04s  2.31% |   [libntl.so.44.0.1]
+----------------------------------------------------------+-------------
+                                             1.04s 71.72% |   NTL::mul
+                                             0.25s 17.24% |   NTL::MulMod
+                                             0.13s  8.97% |   NTL::FromfftRep
+                                             0.02s  1.38% |   NTL::PlainRem
+     0.22s  1.87% 18.37%      1.45s 12.33%                | NTL::PlainMul
+                                             0.68s 46.90% |   NTL::KarMul_long
+                                             0.22s 15.17% |   NTL::UniqueArray::fake_null_function
+                                             0.21s 14.48% |   NTL::PlainMul_long
+                                             0.05s  3.45% |   NTL::build
+                                             0.04s  2.76% |   NTL::mul
+                                             0.02s  1.38% |   _GI___libc_free
+----------------------------------------------------------+-------------
+                                             1.07s 84.25% |   NTL::UniqueArray::fake_null_function
+                                             0.08s  6.30% |   NTL::eval
+                                             0.05s  3.94% |   NTL::Vec::AllocateTo
+                                             0.04s  3.15% |   _ntl_gsetlength
+                                             0.02s  1.57% |   NTL::FFTMul
+     0.26s  2.21% 20.58%      1.27s 10.80%                | _GI___libc_malloc
+                                             0.81s 63.78% |   int_malloc
+                                             0.12s  9.45% |   tcache_get (inline)
+                                             0.08s  6.30% |   checked_request2size (inline)
+----------------------------------------------------------+-------------
+                                             1.16s   100% |   FastSSEvalWeber
+     0.06s  0.51% 21.09%      1.16s  9.86%                | FastGreedyReduction3
+                                             0.75s 64.66% |   FastCVP3
+                                             0.35s 30.17% |   binLagrange
+----------------------------------------------------------+-------------
+                                             1.15s   100% |   NTL::FFTMul
+     0.03s  0.26% 21.34%      1.15s  9.78%                | NTL::TofftRep_trunc
+                                             1.12s 97.39% |   NTL::new_fft
+----------------------------------------------------------+-------------
+                                             1.12s   100% |   NTL::TofftRep_trunc
+     0.07s   0.6% 21.94%      1.12s  9.52%                | NTL::new_fft
+                                             1.05s 93.75% |   NTL::new_fft_base
+----------------------------------------------------------+-------------
+                                             0.33s 29.46% |   FastInterpolateFromRootsRec
+                                             0.26s 23.21% |   NTL::PlainRem
+                                             0.13s 11.61% |   SpecialSupersingularEvaluationWeber
+                                             0.08s  7.14% |   NTL::mul
+                                             0.07s  6.25% |   NTL::Vec::~Vec
+                                             0.05s  4.46% |   FastInterpolateFromRoots
+                                             0.05s  4.46% |   FastSSEvalWeber
+                                             0.04s  3.57% |   NTL::MulMod
+                                             0.02s  1.79% |   FastInterpolate
+                                             0.02s  1.79% |   Frob
+                                             0.02s  1.79% |   LinearCombo
+                                             0.02s  1.79% |   NTL::PlainMul
+     0.29s  2.47% 24.40%      1.12s  9.52%                | _GI___libc_free
+                                             0.69s 61.61% |   int_free
+                                             0.07s  6.25% |   int_free_maybe_consolidate
+----------------------------------------------------------+-------------
+                                             1.05s   100% |   NTL::new_fft
+     1.05s  8.93% 33.33%      1.05s  8.93%                | NTL::new_fft_base
+----------------------------------------------------------+-------------
+                                             1.03s   100% |   NTL::FFTMul
+     0.01s 0.085% 33.42%      1.03s  8.76%                | NTL::FromfftRep
+                                             0.86s 83.50% |   NTL::new_ifft
+                                             0.13s 12.62% |   NTL::PlainMul
+                                             0.03s  2.91% |   NTL::UniqueArray::fake_null_function
+----------------------------------------------------------+-------------
+                                             0.95s   100% |   SpecialSupersingularEvaluationWeber
+         0     0% 33.42%      0.95s  8.08%                | order_to_weber_inv_full_list
+                                             0.66s 69.47% |   EnumerateAllWeberFast
+                                             0.07s  7.37% |   isog_chain::operator()
+                                             0.05s  5.26% |   isog_chain::isog_chain
+                                             0.02s  2.11% |   NTL::InvMod
+                                             0.02s  2.11% |   [main]
+                                             0.02s  2.11% |   left_ideals_of_prime_norm_O0
+                                             0.02s  2.11% |   operator*
+----------------------------------------------------------+-------------
+                                             0.86s   100% |   NTL::FromfftRep
+     0.08s  0.68% 34.10%      0.86s  7.31%                | NTL::new_ifft
+                                             0.78s 90.70% |   NTL::UniquePtr::fake_null_function
+----------------------------------------------------------+-------------
+                                             0.38s 45.24% |   NTL::mul
+                                             0.23s 27.38% |   ecp::operator+
+                                             0.06s  7.14% |   isog::operator()
+                                             0.05s  5.95% |   NTL::PowerMod
+                                             0.05s  5.95% |   SpecialSupersingularEvaluationWeber
+                                             0.04s  4.76% |   EvaluateBivariate
+                                             0.02s  2.38% |   NTL::build
+     0.03s  0.26% 34.35%      0.84s  7.14%                | NTL::MulMod
+                                             0.26s 30.95% |   NTL::PlainRem
+                                             0.25s 29.76% |   NTL::PlainMul
+                                             0.14s 16.67% |   NTL::build
+                                             0.07s  8.33% |   NTL::rem21
+                                             0.04s  4.76% |   NTL::mul
+                                             0.04s  4.76% |   _GI___libc_free
+----------------------------------------------------------+-------------
+                                             0.81s   100% |   _GI___libc_malloc
+     0.55s  4.68% 39.03%      0.81s  6.89%                | int_malloc
+                                             0.19s 23.46% |   malloc_consolidate
+                                             0.05s  6.17% |   tcache_put (inline)
+----------------------------------------------------------+-------------
+                                             0.78s   100% |   NTL::new_ifft
+     0.78s  6.63% 45.66%      0.78s  6.63%                | NTL::UniquePtr::fake_null_function
+----------------------------------------------------------+-------------
+                                             0.75s   100% |   FastGreedyReduction3
+     0.43s  3.66% 49.32%      0.75s  6.38%                | FastCVP3
+                                             0.22s 29.33% |   _llroundl
+                                             0.08s 10.67% |   IntToFloat
+----------------------------------------------------------+-------------
+                                             0.50s 70.42% |   NTL::KarMul_long
+                                             0.21s 29.58% |   NTL::PlainMul
+     0.71s  6.04% 55.36%      0.71s  6.04%                | NTL::PlainMul_long
+----------------------------------------------------------+-------------
+                                             0.33s 46.48% |   NTL::PlainRem
+                                             0.14s 19.72% |   NTL::MulMod
+                                             0.11s 15.49% |   NTL::mul
+                                             0.06s  8.45% |   NTL::SetCoeff
+                                             0.05s  7.04% |   NTL::PlainMul
+     0.14s  1.19% 56.55%      0.71s  6.04%                | NTL::build
+                                             0.42s 59.15% |   NTL::UniqueArray::fake_null_function
+                                             0.13s 18.31% |   NTL::SmartPtr::fake_null_function
+                                             0.02s  2.82% |   NTL::MulMod
+----------------------------------------------------------+-------------
+                                             0.69s   100% |   _GI___libc_free
+     0.63s  5.36% 61.90%      0.69s  5.87%                | int_free
+                                             0.05s  7.25% |   tcache_put (inline)
+----------------------------------------------------------+-------------
+                                             0.68s   100% |   NTL::PlainMul
+     0.02s  0.17% 62.07%      0.68s  5.78%                | NTL::KarMul_long
+                                             0.50s 73.53% |   NTL::PlainMul_long
+                                             0.09s 13.24% |   NTL::KarFold
+----------------------------------------------------------+-------------
+                                             0.66s   100% |   order_to_weber_inv_full_list
+                                             0.08s 12.12% |   SpecialEnumFastWeber
+         0     0% 62.07%      0.66s  5.61%                | EnumerateAllWeberFast
+                                             0.15s 22.73% |   isog_chain::isog_chain
+                                             0.14s 21.21% |   NTL::mul
+                                             0.13s 19.70% |   SpecialEnumFastWeber
+                                             0.06s  9.09% |   CommonRootTwoResultants
+                                             0.06s  9.09% |   EvaluateBivariate
+                                             0.06s  9.09% |   NTL::GCD
+                                             0.05s  7.58% |   operator*
+                                             0.04s  6.06% |   NTL::Vec::~Vec
+                                             0.02s  3.03% |   NTL::add
+----------------------------------------------------------+-------------
+                                             0.58s   100% |   FastSSEvalWeber
+     0.29s  2.47% 64.54%      0.58s  4.93%                | commutatorfind
+                                             0.24s 41.38% |   FastQuat::scalar_remove
+                                             0.03s  5.17% |   _llroundl
+----------------------------------------------------------+-------------
+                                             0.35s   100% |   FastGreedyReduction3
+     0.35s  2.98% 67.52%      0.35s  2.98%                | binLagrange
+----------------------------------------------------------+-------------
+                                             0.31s   100% |   SpecialSupersingularEvaluationWeber
+         0     0% 67.52%      0.31s  2.64%                | FastInterpolate
+                                             0.17s 54.84% |   GoingDownTree
+                                             0.07s 22.58% |   LinearCombo
+                                             0.03s  9.68% |   NTL::mul
+                                             0.02s  6.45% |   _GI___libc_free
+----------------------------------------------------------+-------------
+                                             0.22s 84.62% |   FastCVP3
+                                             0.03s 11.54% |   commutatorfind
+     0.26s  2.21% 69.73%      0.26s  2.21%                | _llroundl
+----------------------------------------------------------+-------------
+                                             0.19s 73.08% |   int_malloc
+                                             0.07s 26.92% |   int_free_maybe_consolidate
+     0.22s  1.87% 71.60%      0.26s  2.21%                | malloc_consolidate
+----------------------------------------------------------+-------------
+                                             0.24s   100% |   commutatorfind
+     0.24s  2.04% 73.64%      0.24s  2.04%                | FastQuat::scalar_remove
+----------------------------------------------------------+-------------
+                                             0.12s 52.17% |   NTL::mul
+                                             0.08s 34.78% |   NTL::PlainRem
+                                             0.02s  8.70% |   Frob
+     0.23s  1.96% 75.60%      0.23s  1.96%                | NTL::zz_pX::normalize
+----------------------------------------------------------+-------------
+                                             0.19s 82.61% |   NTL::UniqueArray::fake_null_function
+                                             0.03s 13.04% |   NTL::eval
+     0.23s  1.96% 77.55%      0.23s  1.96%                | _memset_avx2_unaligned_erms
+----------------------------------------------------------+-------------
+                                             0.22s 95.65% |   operator*
+         0     0% 77.55%      0.23s  1.96%                | ecp::operator+
+                                             0.23s   100% |   NTL::MulMod
+----------------------------------------------------------+-------------
+                                             0.11s 50.00% |   isog_chain::isog_chain
+                                             0.05s 22.73% |   EnumerateAllWeberFast
+                                             0.03s 13.64% |   SpecialEnumFastWeber
+                                             0.02s  9.09% |   order_to_weber_inv_full_list
+         0     0% 77.55%      0.22s  1.87%                | operator*
+                                             0.22s   100% |   ecp::operator+
+----------------------------------------------------------+-------------
+                                             0.12s 57.14% |   NTL::mul
+                                             0.07s 33.33% |   NTL::MulMod
+     0.21s  1.79% 79.34%      0.21s  1.79%                | NTL::rem21
+----------------------------------------------------------+-------------
+                                             0.17s 85.00% |   FastInterpolateFromRootsRec
+                                             0.02s 10.00% |   Frob
+     0.03s  0.26% 79.59%      0.20s  1.70%                | NTL::SetCoeff
+                                             0.10s 50.00% |   NTL::UniqueArray::fake_null_function
+                                             0.06s 30.00% |   NTL::build
+----------------------------------------------------------+-------------
+                                             0.15s 75.00% |   EnumerateAllWeberFast
+                                             0.05s 25.00% |   order_to_weber_inv_full_list
+         0     0% 79.59%      0.20s  1.70%                | isog_chain::isog_chain
+                                             0.11s 55.00% |   operator*
+                                             0.08s 40.00% |   isogeny
+----------------------------------------------------------+-------------
+                                             0.17s   100% |   FastInterpolate
+         0     0% 79.59%      0.17s  1.45%                | GoingDownTree
+                                             0.13s 76.47% |   NTL::UseMulRem
+                                             0.03s 17.65% |   NTL::PlainRem
+----------------------------------------------------------+-------------
+                                             0.15s 93.75% |   NTL::mul
+     0.16s  1.36% 80.95%      0.16s  1.36%                | NTL::rem
+----------------------------------------------------------+-------------
+                                             0.07s 50.00% |   NTL::div
+                                             0.04s 28.57% |   NTL::PlainRem
+                                             0.02s 14.29% |   order_to_weber_inv_full_list
+         0     0% 80.95%      0.14s  1.19%                | NTL::InvMod
+                                             0.12s 85.71% |   NTL::XGCD
+----------------------------------------------------------+-------------
+                                             0.08s 57.14% |   _ntl_gsadd
+                                             0.03s 21.43% |   left_ideals_of_prime_norm_O0
+                                             0.02s 14.29% |   _ntl_gintoz
+     0.10s  0.85% 81.80%      0.14s  1.19%                | _ntl_gsetlength
+                                             0.04s 28.57% |   _GI___libc_malloc
+----------------------------------------------------------+-------------
+                                             0.13s   100% |   FastSSEvalWeber
+     0.07s   0.6% 82.40%      0.13s  1.11%                | FastQuatLat::fast_right_order_and_gram
+----------------------------------------------------------+-------------
+                                             0.13s   100% |   SpecialSupersingularEvaluationWeber
+         0     0% 82.40%      0.13s  1.11%                | Fp2k::Fp2k
+                                             0.05s 38.46% |   myroots
+                                             0.04s 30.77% |   NTL::PowerMod
+                                             0.02s 15.38% |   NTL::SqrMod
+----------------------------------------------------------+-------------
+                                             0.13s   100% |   NTL::build
+     0.13s  1.11% 83.50%      0.13s  1.11%                | NTL::SmartPtr::fake_null_function
+----------------------------------------------------------+-------------
+                                             0.13s   100% |   GoingDownTree
+         0     0% 83.50%      0.13s  1.11%                | NTL::UseMulRem
+                                             0.10s 76.92% |   NTL::mul
+                                             0.02s 15.38% |   NTL::div
+----------------------------------------------------------+-------------
+                                             0.12s 92.31% |   NTL::mul
+     0.01s 0.085% 83.59%      0.13s  1.11%                | NTL::eval
+                                             0.08s 61.54% |   _GI___libc_malloc
+                                             0.03s 23.08% |   _memset_avx2_unaligned_erms
+----------------------------------------------------------+-------------
+                                             0.13s   100% |   EnumerateAllWeberFast
+         0     0% 83.59%      0.13s  1.11%                | SpecialEnumFastWeber
+                                             0.08s 61.54% |   EnumerateAllWeberFast
+                                             0.03s 23.08% |   operator*
+----------------------------------------------------------+-------------
+                                             0.13s   100% |   FastSSEvalWeber
+     0.11s  0.94% 84.52%      0.13s  1.11%                | WeberGetFromEnum
+----------------------------------------------------------+-------------
+                                             0.06s 50.00% |   CommonRootTwoResultants
+                                             0.06s 50.00% |   EnumerateAllWeberFast
+         0     0% 84.52%      0.12s  1.02%                | NTL::GCD
+                                             0.11s 91.67% |   NTL::PlainGCD
+----------------------------------------------------------+-------------
+                                             0.12s   100% |   NTL::XGCD
+     0.01s 0.085% 84.61%      0.12s  1.02%                | NTL::IterHalfGCD
+                                             0.06s 50.00% |   NTL::PlainDivRem
+----------------------------------------------------------+-------------
+                                             0.12s   100% |   NTL::InvMod
+     0.01s 0.085% 84.69%      0.12s  1.02%                | NTL::XGCD
+                                             0.12s   100% |   NTL::IterHalfGCD
+----------------------------------------------------------+-------------
+                                             0.12s   100% |   _GI___libc_malloc (inline)
+         0     0% 84.69%      0.12s  1.02%                | tcache_get
+                                             0.12s   100% |   tcache_get_n (inline)
+----------------------------------------------------------+-------------
+                                             0.12s   100% |   tcache_get (inline)
+     0.12s  1.02% 85.71%      0.12s  1.02%                | tcache_get_n
+----------------------------------------------------------+-------------
+                                             0.11s   100% |   NTL::GCD
+         0     0% 85.71%      0.11s  0.94%                | NTL::PlainGCD
+                                             0.11s   100% |   NTL::PlainRem
+----------------------------------------------------------+-------------
+                                             0.04s 36.36% |   NTL::PlainRem
+                                             0.04s 36.36% |   NTL::UniqueArray::fake_null_function
+                                             0.02s 18.18% |   NTL::mul
+     0.11s  0.94% 86.65%      0.11s  0.94%                | [libntl.so.44.0.1]
+----------------------------------------------------------+-------------
+                                             0.10s   100% |   SpecialSupersingularEvaluationWeber
+     0.02s  0.17% 86.82%      0.10s  0.85%                | _ntl_gsadd
+                                             0.08s 80.00% |   _ntl_gsetlength
+----------------------------------------------------------+-------------
+                                             0.03s 30.00% |   NTL::KarFold
+                                             0.03s 30.00% |   NTL::PlainRem
+                                             0.03s 30.00% |   NTL::mul
+     0.10s  0.85% 87.67%      0.10s  0.85%                | _tls_get_addr
+----------------------------------------------------------+-------------
+                                             0.05s 50.00% |   int_free (inline)
+                                             0.05s 50.00% |   int_malloc (inline)
+     0.10s  0.85% 88.52%      0.10s  0.85%                | tcache_put
+----------------------------------------------------------+-------------
+                                             0.09s   100% |   NTL::KarMul_long
+     0.06s  0.51% 89.03%      0.09s  0.77%                | NTL::KarFold
+                                             0.03s 33.33% |   _tls_get_addr
+----------------------------------------------------------+-------------
+                                             0.03s 33.33% |   FastInterpolateFromRootsRec
+                                             0.03s 33.33% |   FastSSEvalWeber
+                                             0.02s 22.22% |   left_ideals_of_prime_norm_O0
+     0.04s  0.34% 89.37%      0.09s  0.77%                | NTL::Vec::AllocateTo
+                                             0.05s 55.56% |   _GI___libc_malloc
+----------------------------------------------------------+-------------
+                                             0.04s 44.44% |   isogeny
+                                             0.02s 22.22% |   NTL::UseMulRem
+     0.01s 0.085% 89.46%      0.09s  0.77%                | NTL::div
+                                             0.07s 77.78% |   NTL::InvMod
+----------------------------------------------------------+-------------
+                                             0.07s 77.78% |   SpecialSupersingularEvaluationWeber
+                                             0.02s 22.22% |   order_to_weber_inv_full_list
+         0     0% 89.46%      0.09s  0.77%                | left_ideals_of_prime_norm_O0
+                                             0.03s 33.33% |   _ntl_gsetlength
+                                             0.02s 22.22% |   NTL::Vec::AllocateTo
+----------------------------------------------------------+-------------
+                                             0.08s   100% |   FastCVP3
+     0.08s  0.68% 90.14%      0.08s  0.68%                | IntToFloat
+----------------------------------------------------------+-------------
+                                             0.04s 50.00% |   Fp2k::Fp2k
+                                             0.04s 50.00% |   myroots
+         0     0% 90.14%      0.08s  0.68%                | NTL::PowerMod
+                                             0.05s 62.50% |   NTL::MulMod
+                                             0.03s 37.50% |   NTL::SqrMod
+----------------------------------------------------------+-------------
+                                             0.03s 37.50% |   NTL::PowerMod
+                                             0.03s 37.50% |   myroots
+                                             0.02s 25.00% |   Fp2k::Fp2k
+         0     0% 90.14%      0.08s  0.68%                | NTL::SqrMod
+                                             0.02s 25.00% |   NTL::mul
+----------------------------------------------------------+-------------
+                                             0.07s 87.50% |   FastInterpolateFromRootsRec
+     0.06s  0.51% 90.65%      0.08s  0.68%                | NTL::negate
+                                             0.02s 25.00% |   NTL::UniqueArray::fake_null_function
+----------------------------------------------------------+-------------
+                                             0.08s   100% |   FastSSEvalWeber
+     0.08s  0.68% 91.33%      0.08s  0.68%                | WeberBasApplicationRemoteEndo
+----------------------------------------------------------+-------------
+                                             0.08s   100% |   _GI___libc_malloc (inline)
+     0.08s  0.68% 92.01%      0.08s  0.68%                | checked_request2size
+----------------------------------------------------------+-------------
+                                             0.07s 87.50% |   isog_chain::operator()
+         0     0% 92.01%      0.08s  0.68%                | isog::operator()
+                                             0.06s 75.00% |   NTL::MulMod
+----------------------------------------------------------+-------------
+                                             0.08s   100% |   isog_chain::isog_chain
+         0     0% 92.01%      0.08s  0.68%                | isogeny
+                                             0.04s 50.00% |   NTL::div
+----------------------------------------------------------+-------------
+                                             0.07s   100% |   FastSSEvalWeber
+         0     0% 92.01%      0.07s   0.6%                | Frob
+                                             0.02s 28.57% |   NTL::SetCoeff
+                                             0.02s 28.57% |   NTL::zz_pX::normalize
+                                             0.02s 28.57% |   _GI___libc_free
+----------------------------------------------------------+-------------
+                                             0.07s   100% |   FastInterpolate
+         0     0% 92.01%      0.07s   0.6%                | LinearCombo
+                                             0.05s 71.43% |   NTL::mul
+                                             0.02s 28.57% |   _GI___libc_free
+----------------------------------------------------------+-------------
+                                             0.04s 57.14% |   EnumerateAllWeberFast
+                                             0.03s 42.86% |   SpecialSupersingularEvaluationWeber
+         0     0% 92.01%      0.07s   0.6%                | NTL::Vec::~Vec
+                                             0.07s   100% |   _GI___libc_free
+----------------------------------------------------------+-------------
+                                             0.02s 28.57% |   EnumerateAllWeberFast
+                                             0.02s 28.57% |   SpecialSupersingularEvaluationWeber
+     0.04s  0.34% 92.35%      0.07s   0.6%                | NTL::add
+----------------------------------------------------------+-------------
+                                             0.07s   100% |   SpecialSupersingularEvaluationWeber
+     0.02s  0.17% 92.52%      0.07s   0.6%                | _ntl_gscompare
+                                             0.04s 57.14% |   _ntl_gintoz
+----------------------------------------------------------+-------------
+                                             0.07s   100% |   _GI___libc_free
+         0     0% 92.52%      0.07s   0.6%                | int_free_maybe_consolidate
+                                             0.07s   100% |   malloc_consolidate
+----------------------------------------------------------+-------------
+                                             0.07s   100% |   order_to_weber_inv_full_list
+         0     0% 92.52%      0.07s   0.6%                | isog_chain::operator()
+                                             0.07s   100% |   isog::operator()
+----------------------------------------------------------+-------------
+                                             0.05s 71.43% |   Fp2k::Fp2k
+         0     0% 92.52%      0.07s   0.6%                | myroots
+                                             0.04s 57.14% |   NTL::PowerMod
+                                             0.03s 42.86% |   NTL::SqrMod
+----------------------------------------------------------+-------------
+                                             0.06s   100% |   EnumerateAllWeberFast
+         0     0% 92.52%      0.06s  0.51%                | CommonRootTwoResultants
+                                             0.06s   100% |   NTL::GCD
+----------------------------------------------------------+-------------
+                                             0.06s   100% |   EnumerateAllWeberFast
+         0     0% 92.52%      0.06s  0.51%                | EvaluateBivariate
+                                             0.04s 66.67% |   NTL::MulMod
+----------------------------------------------------------+-------------
+                                             0.06s   100% |   NTL::IterHalfGCD
+     0.03s  0.26% 92.77%      0.06s  0.51%                | NTL::PlainDivRem
+----------------------------------------------------------+-------------
+                                             0.03s 50.00% |   FastInterpolateFromRootsRec
+                                             0.02s 33.33% |   order_to_weber_inv_full_list
+     0.06s  0.51% 93.28%      0.06s  0.51%                | [main]
+----------------------------------------------------------+-------------
+                                             0.04s 66.67% |   _ntl_gscompare
+     0.04s  0.34% 93.62%      0.06s  0.51%                | _ntl_gintoz
+                                             0.02s 33.33% |   _ntl_gsetlength
+----------------------------------------------------------+-------------

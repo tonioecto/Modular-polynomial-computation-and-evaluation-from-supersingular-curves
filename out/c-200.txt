@@ -1,0 +1,49 @@
++ ./main bigc w 2147483647 211 2
+211 1688 31 7.73471
+The target bound is 222 bits
+Finding primes...
+Done!
+
+Set of primes =
+643 647 659 683 691 719 727 739 743 751 787 811 823 827 839 859 863 883 887 907 911 919 947 967 
+We are working with 24 primes.
+
+Initialising CRT coeffs...
+Done!
+
+progress = 6/24
+SS Eval WeberCRT of size 6 with: 
+643 647 659 683 691 719 
+
+
+progress = 12/24
+SS Eval WeberCRT of size 6 with: 
+727 739 743 751 787 811 
+
+
+progress = 18/24
+SS Eval WeberCRT of size 6 with: 
+823 827 839 859 863 883 
+
+
+progress = 24/24
+SS Eval WeberCRT of size 6 with: 
+887 907 911 919 947 967 
+
+
+Finalising CRT coeffs...
+Done!
+
+
+Total ModEvalBigCW time = 8.54746
+Coefficient of x^0 is: 67108864
+Coefficient of x^1 is: 1300273903
+Coefficient of x^2 is: 1109865550
+Coefficient of x^209 is: 368015117
+Coefficient of x^210 is: 395329900
+Coefficient of x^211 is: 47746043
+Coefficient of x^212 is: 1
+
+real	0m8,558s
+user	0m8,540s
+sys	0m0,011s
