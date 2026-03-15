@@ -1132,7 +1132,7 @@ FastQuatLat create_from_generator_O0(const FastQuat &gen, const FastInteger &nor
             a = convert(NTL::SqrRootMod(Integer(norm  - gen.alg.q), Integer(norm)));
 
             
-            FastQuat special_gen = FastQuat({ {a, 1, 0, 0, 0}, gen.alg });
+            FastQuat special_gen = FastQuat({ {a, 1, 0, 0, 1}, gen.alg });
             FastQuat prod = gen * special_gen;
 
             // if the result is on NO0 then the generator is the conjugate of special_gen
