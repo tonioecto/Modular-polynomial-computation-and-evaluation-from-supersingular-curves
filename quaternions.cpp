@@ -1230,7 +1230,7 @@ quatlat create_from_generator_O0(const quat &gen, const NTL::ZZ &norm) {
             quat special_gen = quat({ {a, Integer(1), Integer(0), Integer(0), Integer(1)}, gen.alg });
             quat prod = (gen)*(special_gen);
             // if the result is on NO0 then the generator is the conjugate of special_gen
-            if ( prod[0] % norm == 0 && prod[1] % norm == 0 && prod[2] % norm == 0, prod[3] % norm == 0 ) {
+            if ( prod[0] % norm == 0 && prod[1] % norm == 0 && prod[2] % norm == 0 && prod[3] % norm == 0 ) {
                 newbasis[1][0] = 2*norm - 2*a;
                 newbasis[1][1] = Integer(2);
                 newbasis[2][0] = Integer(0);
