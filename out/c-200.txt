@@ -35,7 +35,7 @@ Finalising CRT coeffs...
 Done!
 
 
-Total ModEvalBigCW time = 8.54746
+Total ModEvalBigCW time = 9.75472
 Coefficient of x^0 is: 67108864
 Coefficient of x^1 is: 1300273903
 Coefficient of x^2 is: 1109865550
@@ -44,6 +44,6 @@ Coefficient of x^210 is: 395329900
 Coefficient of x^211 is: 47746043
 Coefficient of x^212 is: 1
 
-real	0m8,558s
-user	0m8,540s
-sys	0m0,011s
+real	0m9,786s
+user	0m9,746s
+sys	0m0,014s

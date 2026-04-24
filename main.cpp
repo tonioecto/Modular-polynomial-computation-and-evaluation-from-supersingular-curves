@@ -393,9 +393,9 @@ int main(int argc, char **argv)
         goto bad_args;
 
     for(int i = 0; i <= NTL::deg(F); i++) {
-        if (i < 3 || i >= NTL::deg(F) - 3) {
+        // if (i < 3 || i >= NTL::deg(F) - 3) {
             std::cout << "Coefficient of x^" << i << " is: " << NTL::coeff(F,i) << "\n";
-        }
+        // }
     }
         
     std::cout << std::flush;

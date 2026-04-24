@@ -19,15 +19,13 @@ $ make -j
 The general usage is
 
 ```bash
-./main bigl j [p] [l] [j]  # p = characteristic, l = level, j = j-invariant
-./main bigl w [p] [l] [w]  # p = characteristic, l = level, w = Weber invariant
 ./main bigc w [p] [l] [w]  # p = characteristic, l = level, w = Weber invariant
 ```
 Alternatively, run `make -j debug` and call `./debug` with the same possible arguments to run the code single-threaded and with assertions enabled.
 
 For example, to compute the evaluated Weber polynomial $\Phi^\mathfrak{f}_{11}(X, 2)$ over $\mathbb{F}_p$ for $p = 1073741827$, run
 ```bash
-$ ./main bigl w 1073741827 5 2
+$ ./main bigc w 1073741827 11 2
 #....
 Done!
 Coefficient of x^0 is: 4096
@@ -44,7 +42,6 @@ Coefficient of x^10 is: 0
 Coefficient of x^11 is: 1073739779
 Coefficient of x^12 is: 1
 ```
-for evaluation using the "ModularEvaluationBigLevel" algorithm, or use the `bigc` argument to select the "ModularEvaluationBigCharacteristic" algorithm.
 
 ### How to reproduce the experiments
 
@@ -54,12 +51,12 @@ To reproduce the experiments detailed in the accompanying paper run the followin
 $ ./experiments.sh
 ```
 
-WARNING: The experiments should only be run on a machine with sufficient computing power. In total, the runtime exceeds 50 core days.
+WARNING: The experiments will take a few hours to run. 
 
 ### Profiling 
 For profiling with gperftools : 
 - compile with -lprofiler
-- LD_PRELOAD=/usr/local/lib/libprofiler.so CPUPROFILE=prof.out ./main ssse w 1051 1601 2 (or whatever command we want to use). It might be another path to libprofiler.so like /usr/lib/x86_64-linux-gnu/libprofiler.so 
+- LD_PRELOAD=/usr/local/lib/libprofiler.so CPUPROFILE=prof.out ./main bigc w 1051 1601 2 (or whatever command we want to use). It might be another path to libprofiler.so like /usr/lib/x86_64-linux-gnu/libprofiler.so 
 - google-pprof -gv main prof.out (for a graphical representation)
 - pprof -tree -cum main prof.out > prof.tree (for a textual representation as some tree of calls sorted by decreasing weight)
 
