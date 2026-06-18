@@ -1,6 +1,6 @@
 # Evaluation of Modular Polynomials
 
-This repository contains a C++ implementation of the algorithms in the research paper *Evaluation of Modular Polynomials from Supersingular Elliptic Curves* by Maria Corte‑Real Santos, Jonathan Komada Eriksen, Antonin Leroux, Michael Meyer, and Lorenz Panny, it includes the latest algorithmic improvement described in the paper *Efficient quaternion algorithms for the Deuring correspondence, and application to the evaluation of modular polynomials* by Antonin Leroux.  
+This repository contains a C++ implementation of the algorithms in the research paper [*Evaluation of Modular Polynomials from Supersingular Elliptic Curves*](https://eprint.iacr.org/2025/1154) by Maria Corte‑Real Santos, Jonathan Komada Eriksen, Antonin Leroux, Michael Meyer, and Lorenz Panny, it includes the latest algorithmic improvement described in the paper *Efficient quaternion algorithms for the Deuring correspondence, and application to the evaluation of modular polynomials* by Antonin Leroux.  
 
 ## Requirements
 
